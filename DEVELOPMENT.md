@@ -1,0 +1,64 @@
+# Development Guidelines
+
+## Setup
+
+Install uv
+
+```bash
+pipx install uv
+```
+
+and set up a venv
+
+```bash
+uv venv
+```
+
+Then install the pre-commit hooks
+
+```bash
+pre-commit install
+```
+
+## Testing
+
+### Unittests
+
+The projects tests are in the test/ directory.
+You can run them from the project root with
+
+```bash
+pytest test
+```
+
+## Validation and Linting
+
+You can use the tools in tools/ to lint and check your changes.
+
+The code is formatted using ruff.
+
+Before every commit the code is formatted, checked and linted by pre-commit.
+
+## IDE setups
+
+## Zed
+
+```json
+"lsp": {
+    "ruff": {
+      "initialization_options": {
+        "settings": {
+          "configuration": "tools/ruff.toml",
+        },
+      },
+    },
+  },
+  "languages": {
+    "Markdown": {
+      "remove_trailing_whitespace_on_save": true,
+    },
+    "Python": {
+      "format_on_save": "on",
+    },
+  }
+```

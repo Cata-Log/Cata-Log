@@ -1,0 +1,20 @@
+[project]
+name = "cata-log"
+version = "0.1.0"
+description = "The central hub for grocery store catalogues"
+authors = [
+    {name = "David Aderbauer & The Cata-Log Contributors", email = ""}
+]
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+requires-python = ">=3.14,<3.15"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+]
+docs = [
+    "sphinx>=9.1.0",
+]

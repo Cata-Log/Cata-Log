@@ -1,0 +1,5 @@
+MD012:
+  maximum: 3
+MD024:
+  siblings_only: true
+MD036: false
