@@ -1,0 +1,15 @@
+services:
+  cata-log:
+    image: dacid99/cata-log:latest
+    container_name: cata-log
+    volumes:
+      - /path/to/cata-log/storage:/mnt/storage
+      - /path/to/cata-log/db:/mnt/db
+      - /path/to/cata-log/log:/var/log/cata-log
+    ports:
+      - 4848:8000
+    environment:
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy

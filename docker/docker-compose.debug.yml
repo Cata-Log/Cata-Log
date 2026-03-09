@@ -1,0 +1,14 @@
+services:
+  cata-log:
+    image: cata-log:latest
+    container_name: cata-log
+    volumes:
+      - /path/to/cata-log/storage:/mnt/storage
+      - /path/to/cata-log/db:/mnt/db
+      - /path/to/cata-log/log:/var/log/cata-log
+    ports:
+      - 2424:8000
+    environment:
+      - DEBUG=True
+      - ENABLE_FLOWER=False
+    restart: unless-stopped

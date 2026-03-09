@@ -1,0 +1,7 @@
+#!/command/with-contenv sh
+cd /opt/
+if [ ${DEBUG} = 'True' ]; then
+    fastapi dev cata_log/main.py --host 0.0.0.0
+else
+    fastapi run cata_log/main.py
+fi

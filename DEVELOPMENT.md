@@ -20,6 +20,12 @@ Then install the pre-commit hooks
 pre-commit install
 ```
 
+## Debug
+
+To browse the sqlite3 db for debugging, install [sqlitebrowser](https://github.com/sqlitebrowser/sqlitebrowser).
+
+There is a debug docker-compose file that can be used to run the application in debug mode.
+
 ## Testing
 
 ### Unittests

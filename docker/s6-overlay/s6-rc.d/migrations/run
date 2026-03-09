@@ -1,0 +1,3 @@
+#!/command/with-contenv sh
+cd /opt/
+alembic --config cata_log/migrations/alembic.ini upgrade head

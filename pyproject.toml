@@ -9,7 +9,14 @@ readme = "README.md"
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
 requires-python = ">=3.14,<3.15"
-dependencies = []
+dependencies = [
+    "alembic>=1.18.4",
+    "celery>=5.6.2",
+    "celery-sqlalchemy-v2-scheduler>=0.1.2",
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.135.1",
+    "flower>=2.0.1",
+    "sqlalchemy>=2.0.48",
+]
 
 [dependency-groups]
 dev = [
@@ -17,4 +24,10 @@ dev = [
 ]
 docs = [
     "sphinx>=9.1.0",
+]
+test = [
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "pytest-html>=4.2.0",
+    "pytest-sqlalchemy>=0.3.0",
 ]

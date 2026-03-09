@@ -67,11 +67,16 @@ select = [
   "YTT",  # flake8-2020
 ]
 ignore = [
+  "COM812",  # this one is annoying
+  "D100",    # no module docstring
   "D202",    # allow blank line after function docstring
   "D203",    # no blank line before class docstring
   "D205",    # docstring summary can span more than one line
   "D401",    # docstring does not need to be imperative
   "ISC003",  # prefer explicit string concat over implicit concat
+  "TC001",   # type checking blocks can mess up dataclasses at runtime
+  "TC002",
+  "TC003",
 ]
 external = [ "WPS" ]
 
@@ -80,8 +85,8 @@ mccabe.max-complexity = 8
 convention = "google"
 
 [lint.isort]
-known-first-party = ['src', 'test']
-known-local-folder = ['src', 'test']
+known-first-party = ['cata_log', 'test']
+known-local-folder = ['cata_log', 'test']
 
 [lint.flake8-annotations]
 allow-star-arg-any = true
