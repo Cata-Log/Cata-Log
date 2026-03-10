@@ -26,7 +26,6 @@ router = APIRouter(prefix="/config", tags=["config"])
 
 
 class Config(BaseModel):
-    id: int
     key: str
     value: str
 
@@ -61,6 +60,14 @@ async def get_config(key: str, db_session: orm.Session = database.depends_db_ses
 async def post_config(
     new_config: NewConfig, db_session: orm.Session = database.depends_db_session
 ):
+    if (
+        db_session.query(database.Config)
+        .filter(database.Config.key == new_config.key)
+        .one_or_none()
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Config already exists"
+        )
     config = database.Config(**new_config.model_dump())
     db_session.add(config)
     db_session.commit()
@@ -85,7 +92,7 @@ async def put_config(
     return config
 
 
-@router.patch("/{key}")
+@router.patch("/{key}", response_model=Config)
 async def patch_config(
     key: str,
     config_update: ConfigUpdate,
@@ -108,4 +115,14 @@ async def patch_config(
 async def delete_config(
     key: str, db_session: orm.Session = database.depends_db_session
 ):
-    db_session.query(database.Config).filter(database.Config.key == key).delete()
+    config = (
+        db_session.query(database.Config)
+        .filter(database.Config.key == key)
+        .one_or_none()
+    )
+    if not config:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Config not found"
+        )
+    db_session.delete(config)
+    db_session.commit()

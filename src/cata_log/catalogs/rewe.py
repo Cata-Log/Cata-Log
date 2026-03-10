@@ -36,7 +36,7 @@ class Rewe(Base):
     id = "rewe"
     description = "Rewe Katalog"
     region = Germany
-    config_explanation = MappingProxyType({"markt_id": "ID des Rewe Markts"})
+    configuration = MappingProxyType({"markt_id": "ID des Rewe Markts"})
 
     overview_url_format = "https://view.publitas.com/rewe-markt/rewe_{year}_wk{week_number:02}_{markt_id}/spreads.json"
     url = "https://view.publitas.com"

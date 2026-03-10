@@ -105,6 +105,7 @@ parametrize-values-type = "list"
 
 [lint.per-file-ignores]
 "/**/test/**" = [  # ignores for all test files
+  "ARG001", # unused args required for fixture usage
   "SLF001", # private accessed
   "PLR2004", # magic numbers
   "ANN",  # no type annotations in tests needed

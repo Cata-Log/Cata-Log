@@ -52,19 +52,23 @@ async def get_page(page_id: int, db_session: Session = database.depends_db_sessi
 @router.get("/{page_id}/download")
 async def download_page(
     page_id: int,
-    file_name: str | None = None,
+    filename: str | None = None,
     db_session: Session = database.depends_db_session,
 ):
-    page = db_session.query(database.Page).filter(database.Page.id == page_id).first()
+    page = (
+        db_session.query(database.Page)
+        .filter(database.Page.id == page_id)
+        .one_or_none()
+    )
     if not page:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
     file_path = page.storage_path
-    file_name = file_name if file_name else os.path.basename(file_path)
+    filename = filename or os.path.basename(file_path)
     return FileResponse(
         path=file_path,
-        filename=file_name,
+        filename=filename,
         content_disposition_type="attachment",
     )
 
@@ -72,18 +76,22 @@ async def download_page(
 @router.get("/{page_id}/embed")
 async def embed_page(
     page_id: int,
-    file_name: str | None = None,
+    filename: str | None = None,
     db_session: Session = database.depends_db_session,
 ):
-    page = db_session.query(database.Page).filter(database.Page.id == page_id).first()
+    page = (
+        db_session.query(database.Page)
+        .filter(database.Page.id == page_id)
+        .one_or_none()
+    )
     if not page:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
     file_path = page.storage_path
-    file_name = file_name if file_name else os.path.basename(file_path)
+    filename = filename or os.path.basename(file_path)
     return FileResponse(
         path=file_path,
-        filename=file_name,
+        filename=filename,
         content_disposition_type="inline",
     )

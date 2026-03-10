@@ -34,7 +34,7 @@ from .registry import catalog_registry
 class EdekaBasis(Base):
     id = "edeka-basis"
     description = "Edeka Basis Angebote"
-    config_explanation = MappingProxyType(
+    configuration = MappingProxyType(
         {
             "region": "Name der Edeka Region",
         }
@@ -80,7 +80,7 @@ class EdekaMarkt(EdekaBasis):
     id = "edeka-markt"
     description = "Edeka Markt Angebote"
     region = Germany
-    config_explanation = MappingProxyType(
+    configuration = MappingProxyType(
         {
             "region": "Name der Edeka Region",
             "edeka_markt": "Name des Edeka Marktes",

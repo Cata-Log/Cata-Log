@@ -45,7 +45,7 @@ class NewProvider(BaseModel):
 
 class ProviderInfo(BaseModel):
     id: str
-    config_explanation: dict[str, str]
+    configuration: dict[str, str | None]
     description: str
     region: RegionInfo
 

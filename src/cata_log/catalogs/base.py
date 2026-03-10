@@ -86,6 +86,6 @@ class Base(abc.ABC):
         return {
             "id": cls.id,
             "description": cls.description,
-            "config_explanation": dict(cls.configuration),
+            "configuration": dict(cls.configuration),
             "region": cls.region.info(),
         }

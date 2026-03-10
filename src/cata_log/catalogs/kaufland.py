@@ -34,7 +34,7 @@ from .registry import catalog_registry
 class Kaufland(Base):
     id = "kaufland"
     description = "Kaufland Angebote"
-    config_explanation = MappingProxyType(
+    configuration = MappingProxyType(
         {
             "filial_id": "ID der Filiale",
             "region_id": "ID der Region",

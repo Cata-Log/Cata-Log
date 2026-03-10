@@ -33,7 +33,7 @@ class Lidl(Base):
     id = "lidl"
     description = "Lidl Angebote"
     region = Germany
-    config_explanation = MappingProxyType(
+    configuration = MappingProxyType(
         {
             "region_id": "ID der Lidl Region",
         }
