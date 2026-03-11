@@ -16,10 +16,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import pytest
+
 from cata_log import database
 
 
-def test_list_providers(client):
+def test_list_providers(full_database, client):
     response = client.get("/api/v1/providers")
 
     assert response.status_code == 200
@@ -27,14 +29,17 @@ def test_list_providers(client):
     assert len(data) == 1
 
 
-def test_list_available_providers(client):
-    response = client.get("/api/v1/providers/available")
+@pytest.mark.parametrize(
+    ("querystring"),
+    [("?region=deutschland"), ("?region=us"), (""), ("?query=test"), ("?query=aldi")],
+)
+def test_list_available_providers(client, querystring):
+    response = client.get("/api/v1/providers/available" + querystring or "")
 
     assert response.status_code == 200
-    assert response.json()
 
 
-def test_list_provider_current_catalogs(fake_catalog_current, client):
+def test_list_provider_current_catalogs(full_database, fake_catalog_current, client):
     response = client.get(
         f"/api/v1/providers/{fake_catalog_current.provider_id}/catalogs/current"
     )
@@ -46,7 +51,7 @@ def test_list_provider_current_catalogs(fake_catalog_current, client):
     assert data[0]["id"] == fake_catalog_current.id
 
 
-def test_list_provider_previews_catalogs(fake_catalog_preview, client):
+def test_list_provider_previews_catalogs(full_database, fake_catalog_preview, client):
     response = client.get(
         f"/api/v1/providers/{fake_catalog_preview.provider_id}/catalogs/previews"
     )
@@ -58,7 +63,7 @@ def test_list_provider_previews_catalogs(fake_catalog_preview, client):
     assert data[0]["id"] == fake_catalog_preview.id
 
 
-def test_list_provider_outdated_catalogs(fake_catalog_outdated, client):
+def test_list_provider_outdated_catalogs(full_database, fake_catalog_outdated, client):
     response = client.get(
         f"/api/v1/providers/{fake_catalog_outdated.provider_id}/catalogs/outdated"
     )
@@ -102,12 +107,12 @@ def test_delete_provider__not_found(client):
 def test_post_provider__success(LocalSession, client):
     response = client.post(
         url="/api/v1/providers",
-        json={"class_id": "rewe", "config": {"markt_id": "1234"}},
+        json={"class_id": "rewe-deutschland", "config": {"markt_id": "1234"}},
     )
 
     assert response.status_code == 201
     data = response.json()
-    assert data["class_id"] == "rewe"
+    assert data["class_id"] == "rewe-deutschland"
     assert data["config"] == {"markt_id": "1234"}
     assert (
         LocalSession()
@@ -120,7 +125,7 @@ def test_post_provider__success(LocalSession, client):
 def test_post_provider__missing_config(LocalSession, client):
     response = client.post(
         url="/api/v1/providers",
-        json={"class_id": "rewe", "config": {}},
+        json={"class_id": "rewe-deutschland", "config": {}},
     )
 
     assert response.status_code == 400

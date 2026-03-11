@@ -43,17 +43,17 @@ class NewProvider(BaseModel):
     config: dict[str, str]
 
 
-class ProviderInfo(BaseModel):
-    id: str
-    configuration: dict[str, str | None]
-    description: str
-    region: RegionInfo
-
-
 class RegionInfo(BaseModel):
     local_name: str
     language_code: str
     timezone: str
+
+
+class ProviderInfo(BaseModel):
+    id: str
+    configuration: dict[str, str]
+    description: str
+    region: RegionInfo
 
 
 @router.get("", response_model=list[Provider])
@@ -62,7 +62,7 @@ async def list_providers(db_session: Session = database.depends_db_session):
 
 
 @router.get("/available", response_model=list[ProviderInfo])
-async def list_available_providers(query: str | None, region: str | None):
+async def list_available_providers(query: str | None = None, region: str | None = None):
     if region:
         region = region.lower()
     if query:
