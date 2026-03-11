@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import contextlib
 import logging
 import os
 from collections.abc import Generator
@@ -40,8 +41,8 @@ from sqlalchemy import (
     orm,
 )
 
-from cata_log.catalogs import catalog_registry
 from cata_log.constants import DATABASE_URL
+from cata_log.providers import catalog_registry
 
 engine = create_engine(url=DATABASE_URL, echo=True)
 
@@ -80,11 +81,12 @@ class Provider(ModelBase, TimestampMixin):
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     class_id: orm.Mapped[str] = orm.mapped_column()
     config = Column(JSON, default={})
+    task: orm.Mapped[PeriodicTask] = orm.relationship()
     task_id: orm.Mapped[int] = orm.mapped_column(
         ForeignKey(PeriodicTask.__tablename__ + ".id", ondelete="CASCADE"),
         nullable=True,
     )
-    catalogs: orm.Mapped[list["Catalog"]] = orm.relationship(
+    catalogs: orm.Mapped[list[Catalog]] = orm.relationship(
         back_populates="provider", cascade="all, delete-orphan"
     )
     __tablename__ = "providers"
@@ -96,11 +98,11 @@ class Catalog(ModelBase, TimestampMixin):
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     valid_since: orm.Mapped[datetime] = orm.mapped_column(DateTime(timezone=True))
     valid_until: orm.Mapped[datetime] = orm.mapped_column(DateTime(timezone=True))
-    provider: orm.Mapped["Provider"] = orm.relationship(back_populates="catalogs")
+    provider: orm.Mapped[Provider] = orm.relationship(back_populates="catalogs")
     provider_id: orm.Mapped[int] = orm.mapped_column(
-        ForeignKey(Provider.__tablename__ + ".id", ondelete="SET NULL"), nullable=False
+        ForeignKey(Provider.__tablename__ + ".id", ondelete="CASCADE"), nullable=False
     )
-    pages: orm.Mapped[list["Page"]] = orm.relationship(
+    pages: orm.Mapped[list[Page]] = orm.relationship(
         back_populates="catalog", cascade="all, delete-orphan"
     )
 
@@ -109,7 +111,7 @@ class Page(ModelBase, TimestampMixin):
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     number: orm.Mapped[int] = orm.mapped_column()
     storage_path: orm.Mapped[str] = orm.mapped_column(unique=True)
-    catalog: orm.Mapped["Catalog"] = orm.relationship(back_populates="pages")
+    catalog: orm.Mapped[Catalog] = orm.relationship(back_populates="pages")
     catalog_id: orm.Mapped[int] = orm.mapped_column(
         ForeignKey(Catalog.__tablename__ + ".id", ondelete="CASCADE"), nullable=False
     )
@@ -120,19 +122,20 @@ class Page(ModelBase, TimestampMixin):
 @event.listens_for(Page, "before_delete")
 def before_page_delete(mapper, connection, target):
     if target.storage_path:
-        os.remove(target.storage_path)
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(target.storage_path)
 
 
 @event.listens_for(Provider, "after_insert")
-def before_provider_insert(mapper, connection, target):
-    logging.getLogger()
+def after_provider_insert(mapper, connection, target):
     db_session = orm.Session(bind=connection)
     provider_class = catalog_registry.get(target.class_id)
     if not provider_class:
+        logging.getLogger().critical("no provider class")
         return
     crontab = CrontabSchedule.from_schedule(db_session, provider_class.schedule)
     task = PeriodicTask(
-        name=target.id,
+        name=f"{target.class_id}-{target.config}",
         task="cata_log.tasks.fetch_catalog",
         args=f"[{target.id}]",
         crontab_id=crontab.id,
