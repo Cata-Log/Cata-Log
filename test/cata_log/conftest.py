@@ -46,11 +46,8 @@ def LocalSession(engine):
 
 @pytest.fixture
 def db_session(LocalSession):
-    session = LocalSession()
-
-    yield session
-
-    session.close()
+    with LocalSession() as db_session:
+        yield db_session
 
 
 @pytest.fixture
@@ -87,7 +84,9 @@ def fake_config(faker, db_session):
 
 @pytest.fixture
 def fake_provider(db_session):
-    fake_provider = database.Provider(class_id="rewe", config={"markt_id": "rewe123"})
+    fake_provider = database.Provider(
+        class_id="rewe-deutschland", config={"markt_id": "rewe123"}
+    )
     db_session.add(fake_provider)
     db_session.commit()
     db_session.refresh(fake_provider)
@@ -160,3 +159,14 @@ def fake_page(db_session, fake_catalog_current, fake_page_file):
     db_session.commit()
     db_session.refresh(fake_page)
     return fake_page
+
+
+@pytest.fixture
+def full_database(
+    fake_provider,
+    fake_catalog_current,
+    fake_catalog_outdated,
+    fake_catalog_preview,
+    fake_page,
+):
+    pass

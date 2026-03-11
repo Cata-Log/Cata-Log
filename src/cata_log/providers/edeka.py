@@ -25,14 +25,14 @@ import httpx
 
 from cata_log import exceptions
 
-from .base import Base
+from .base import BaseProvider
 from .regions import Germany
 from .registry import catalog_registry
 
 
 @catalog_registry.register
-class EdekaBasis(Base):
-    id = "edeka-basis"
+class EdekaBasis(BaseProvider):
+    name = "edeka-basis"
     description = "Edeka Basis Angebote"
     configuration = MappingProxyType(
         {
@@ -46,6 +46,10 @@ class EdekaBasis(Base):
     @override
     def __init__(self, region: str, edeka_region: str, **kwargs: Any) -> None:
         super().__init__(**kwargs, region=region, edeka_region=edeka_region)
+
+    @override
+    def get_catalog_data(self) -> None:
+        pass
 
     @override
     def get_page(self, page_number: int) -> bytes:
@@ -77,7 +81,7 @@ class EdekaBasis(Base):
 
 @catalog_registry.register
 class EdekaMarkt(EdekaBasis):
-    id = "edeka-markt"
+    name = "edeka-markt"
     description = "Edeka Markt Angebote"
     region = Germany
     configuration = MappingProxyType(

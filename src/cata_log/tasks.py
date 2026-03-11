@@ -23,8 +23,8 @@ from celery import Celery
 from celery.schedules import crontab
 
 from cata_log import constants, database
-from cata_log.catalogs import catalog_registry
 from cata_log.constants import BROKER_URL, DATABASE_URL
+from cata_log.providers import catalog_registry
 
 app = Celery()
 

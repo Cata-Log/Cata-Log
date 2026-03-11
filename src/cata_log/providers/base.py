@@ -29,10 +29,10 @@ from cata_log.exceptions import NotFoundError
 from .regions import Region
 
 
-class Base(abc.ABC):
+class BaseProvider(abc.ABC):
     """Abstract base class for all catalog providers."""
 
-    id: str
+    name: str
     region: type[Region]
     first_page_number: int = 1
     description: str
@@ -42,6 +42,9 @@ class Base(abc.ABC):
     def __init__(self, **kwargs: Any):
         self._config = kwargs
         self._relevant_datetime = self.get_relevant_datetime()
+
+    def __str__(self) -> str:
+        return f"Catalog {self.id}"
 
     def get_relevant_datetime(self) -> datetime:
         return datetime.now(tz=self.region.timezone)
@@ -58,6 +61,7 @@ class Base(abc.ABC):
     def get_page(self, page_number: int) -> bytes:
         pass
 
+    @abc.abstractmethod
     def get_catalog_data(self) -> None:
         pass
 
@@ -78,13 +82,17 @@ class Base(abc.ABC):
                 page_number += 1
 
     @classmethod
+    def id(cls) -> str:
+        return cls.name + "-" + cls.region.local_name.lower()
+
+    @classmethod
     def get_storage_path(cls, datetime: datetime, page_number: int):
         return f"{cls.id}_{datetime}_{page_number}"
 
     @classmethod
     def info(cls) -> dict[str, str | dict[str, str]]:
         return {
-            "id": cls.id,
+            "id": cls.id(),
             "description": cls.description,
             "configuration": dict(cls.configuration),
             "region": cls.region.info(),

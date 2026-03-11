@@ -18,48 +18,60 @@
 
 from calendar import Day
 from datetime import datetime, time, timedelta
-from typing import override
+from typing import Any, override
 
 import httpx
 
 from cata_log.exceptions import NotFoundError
-from cata_log.utils import dates, page_numbers
+from cata_log.utils import page_numbers
+from cata_log.utils.dates import get_calendar_week_number
 
-from .base import Base
+from .base import BaseProvider
 from .regions import Germany
 from .registry import catalog_registry
 
 
 @catalog_registry.register
-class Netto(Base):
-    id = "netto"
-    description = "Netto Angebote"
+class AldiNord(BaseProvider):
+    name = "aldi-nord"
     region = Germany
+    description = "Aldi Nord Katalog"
 
+
+@catalog_registry.register
+class AldiSued(BaseProvider):
+    name = "aldi-sued"
+    region = Germany
+    description = "Aldi Süd Katalog"
     overview_url_format = (
-        "https://wochenprospekt.netto-online.de/hz{week_number}_kisa/spreads.json"
+        "https://prospekt.aldi-sued.de/kw{week_number:02}-{year}-op-mp/spreads.json"
     )
-    url = "https://wochenprospekt.netto-online.de"
+    url = "https://view.publitas.com"
 
     @override
-    def get_catalog_data(self) -> None:
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+
+    @override
+    def get_catalog_data(self, *args: Any) -> None:
         self.catalog_data = httpx.get(
             self.overview_url_format.format(
-                week_number=dates.get_calendar_week_number(self._relevant_datetime),
+                week_number=get_calendar_week_number(self._relevant_datetime),
+                year=self._relevant_datetime.year % 100,
             )
         ).json()
 
     @override
     def get_page(self, page_number: int) -> bytes:
         try:
-            page_url = self.catalog_data[
+            image_url = self.catalog_data[
                 page_numbers.page_number_2_double_page_number(page_number)
             ]["pages"][page_numbers.page_number_2_double_page_index(page_number)][
                 "images"
             ]["at800"]
         except IndexError as error:
             raise NotFoundError from error
-        response = httpx.get(self.url + page_url)
+        response = httpx.get(self.url + image_url)
         return response.content
 
     @override
@@ -77,10 +89,26 @@ class Netto(Base):
 
 
 @catalog_registry.register
-class NettoPreview(Netto):
-    id = "netto-preview"
-    description = Netto.description + " nächste Woche"
+class AldiSuedPreview(AldiSued):
+    name = "aldi-sued-preview"
+    description = "Aldi Süd Katalog für nächste Woche"
+    overview_url_format = (
+        "https://prospekt.aldi-sued.de/kw{week_number:02}-{year}-op/spreads.json"
+    )
 
     @override
     def get_relevant_datetime(self) -> datetime:
         return super().get_relevant_datetime() + timedelta(days=7)
+
+
+@catalog_registry.register
+class AldiSuedPreview2(AldiSued):
+    name = "aldi-sued-preview2"
+    description = "Aldi Süd Katalog für übernächste Woche"
+    overview_url_format = (
+        "https://prospekt.aldi-sued.de/kw{week_number:02}-{year}-vop/spreads.json"
+    )
+
+    @override
+    def get_relevant_datetime(self) -> datetime:
+        return super().get_relevant_datetime() + timedelta(days=14)

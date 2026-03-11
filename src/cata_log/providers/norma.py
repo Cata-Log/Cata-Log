@@ -18,49 +18,49 @@
 
 from calendar import Day
 from datetime import datetime, time, timedelta
-from types import MappingProxyType
-from typing import Any, override
+from typing import override
 
 import httpx
 
-from .base import Base
+from cata_log import exceptions
+from cata_log.utils.dates import get_calendar_week_number
+
+from .base import BaseProvider
 from .regions import Germany
 from .registry import catalog_registry
 
 
 @catalog_registry.register
-class Lidl(Base):
-    id = "lidl"
-    description = "Lidl Angebote"
+class Norma(BaseProvider):
+    name = "norma"
+    description = "Norma Angebote"
     region = Germany
-    configuration = MappingProxyType(
-        {
-            "region_id": "ID der Lidl Region",
-        }
-    )
 
-    overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?client_locale=lidl/de-DE&region_id={region_id}"
-    flyer_json_url_template = "https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=aktionsprospekt-{week_start_date}-{week_end_date}-21f2e9&region_id={region_id}"
+    catalog_url_format = "https://www.norma-online.de/de/angebote/online-prospekt/{year}-{week_number:02}_FG/files/page/{page_number}.jpg"
 
     @override
-    def __init__(self, region_id: str, **kwargs: Any) -> None:
-        super().__init__(
-            **kwargs,
-            region_id=region_id,
-        )
+    def get_catalog_data(self) -> None:
+        pass
 
     @override
     def get_page(self, page_number: int) -> bytes:
         response = httpx.get(
-            self.flyer_json_url_template.format(
-                week_start_date=self.get_valid_since().strftime("%d-%m-%Y"),
-                week_end_date=(self.get_valid_until() - timedelta(days=1)).strftime(
-                    "%d-%m-%Y"
+            url=self.catalog_url_format.format(
+                year=self._relevant_datetime.year,
+                week_number=get_calendar_week_number(
+                    self._relevant_datetime, self.region.week_counting_startpoint
                 ),
-                **self._config,
-            )
+                page_number=page_number,
+            ),
+            follow_redirects=True,
         )
-        return response.json()
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as error:
+            if error.response.status_code == httpx.codes.NOT_FOUND:
+                raise exceptions.NotFoundError from error
+            raise exceptions.InvalidURLError from error
+        return response.content
 
     @override
     def get_valid_since(self) -> datetime:
@@ -77,9 +77,9 @@ class Lidl(Base):
 
 
 @catalog_registry.register
-class LidlPreview(Lidl):
-    id = "lidl-preview"
-    description = Lidl.description + " nächste Woche"
+class NormaPreview(Norma):
+    name = "norma-preview"
+    description = Norma.description + " nächste Woche"
 
     @override
     def get_relevant_datetime(self) -> datetime:
@@ -87,9 +87,9 @@ class LidlPreview(Lidl):
 
 
 @catalog_registry.register
-class LidlPreview2(Lidl):
-    id = "lidl-preview2"
-    description = Lidl.description + " übernächste Woche"
+class NormaPreview2(Norma):
+    name = "norma-preview2"
+    description = Norma.description + " übernächste Woche"
 
     @override
     def get_relevant_datetime(self) -> datetime:

@@ -34,14 +34,3 @@ def patched_fastapi_app(fake_fs, mock_get_db_session):
 @pytest.fixture
 def client(patched_fastapi_app):
     return TestClient(patched_fastapi_app)
-
-
-@pytest.fixture(autouse=True)
-def full_database(
-    fake_provider,
-    fake_catalog_current,
-    fake_catalog_outdated,
-    fake_catalog_preview,
-    fake_page,
-):
-    pass

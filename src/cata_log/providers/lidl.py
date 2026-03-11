@@ -23,50 +23,48 @@ from typing import Any, override
 
 import httpx
 
-from cata_log.exceptions import NotFoundError
-from cata_log.utils import dates, page_numbers
-
-from .base import Base
+from .base import BaseProvider
 from .regions import Germany
 from .registry import catalog_registry
 
 
 @catalog_registry.register
-class Rewe(Base):
-    id = "rewe"
-    description = "Rewe Katalog"
+class Lidl(BaseProvider):
+    name = "lidl"
+    description = "Lidl Angebote"
     region = Germany
-    configuration = MappingProxyType({"markt_id": "ID des Rewe Markts"})
+    configuration = MappingProxyType(
+        {
+            "region_id": "ID der Lidl Region",
+        }
+    )
 
-    overview_url_format = "https://view.publitas.com/rewe-markt/rewe_{year}_wk{week_number:02}_{markt_id}/spreads.json"
-    url = "https://view.publitas.com"
+    overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?client_locale=lidl/de-DE&region_id={region_id}"
+    flyer_json_url_template = "https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=aktionsprospekt-{week_start_date}-{week_end_date}-21f2e9&region_id={region_id}"
 
     @override
-    def __init__(self, markt_id: str, **kwargs: Any) -> None:
-        super().__init__(**kwargs, markt_id=markt_id)
+    def __init__(self, region_id: str, **kwargs: Any) -> None:
+        super().__init__(
+            **kwargs,
+            region_id=region_id,
+        )
 
     @override
     def get_catalog_data(self) -> None:
-        self.catalog_data = httpx.get(
-            self.overview_url_format.format(
-                week_number=dates.get_calendar_week_number(self._relevant_datetime),
-                year=self._relevant_datetime.year,
-                **self._config,
-            )
-        ).json()
+        pass
 
     @override
     def get_page(self, page_number: int) -> bytes:
-        try:
-            image_url = self.catalog_data[
-                page_numbers.page_number_2_double_page_number(page_number)
-            ]["pages"][page_numbers.page_number_2_double_page_index(page_number)][
-                "images"
-            ]["at800"]
-        except IndexError as error:
-            raise NotFoundError from error
-        response = httpx.get(self.url + image_url)
-        return response.content
+        response = httpx.get(
+            self.flyer_json_url_template.format(
+                week_start_date=self.get_valid_since().strftime("%d-%m-%Y"),
+                week_end_date=(self.get_valid_until() - timedelta(days=1)).strftime(
+                    "%d-%m-%Y"
+                ),
+                **self._config,
+            )
+        )
+        return response.json()
 
     @override
     def get_valid_since(self) -> datetime:
@@ -80,3 +78,23 @@ class Rewe(Base):
     @override
     def get_valid_until(self) -> datetime:
         return self.get_valid_since() + timedelta(days=7)
+
+
+@catalog_registry.register
+class LidlPreview(Lidl):
+    name = "lidl-preview"
+    description = Lidl.description + " nächste Woche"
+
+    @override
+    def get_relevant_datetime(self) -> datetime:
+        return super().get_relevant_datetime() + timedelta(days=7)
+
+
+@catalog_registry.register
+class LidlPreview2(Lidl):
+    name = "lidl-preview2"
+    description = Lidl.description + " übernächste Woche"
+
+    @override
+    def get_relevant_datetime(self) -> datetime:
+        return super().get_relevant_datetime() + timedelta(days=14)

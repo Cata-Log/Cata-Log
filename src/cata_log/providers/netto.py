@@ -22,40 +22,44 @@ from typing import override
 
 import httpx
 
-from cata_log import exceptions
-from cata_log.utils.dates import get_calendar_week_number
+from cata_log.exceptions import NotFoundError
+from cata_log.utils import dates, page_numbers
 
-from .base import Base
+from .base import BaseProvider
 from .regions import Germany
 from .registry import catalog_registry
 
 
 @catalog_registry.register
-class Norma(Base):
-    id = "norma"
-    description = "Norma Angebote"
+class Netto(BaseProvider):
+    name = "netto"
+    description = "Netto Angebote"
     region = Germany
 
-    catalog_url_format = "https://www.norma-online.de/de/angebote/online-prospekt/{year}-{week_number:02}_FG/files/page/{page_number}.jpg"
+    overview_url_format = (
+        "https://wochenprospekt.netto-online.de/hz{week_number}_kisa/spreads.json"
+    )
+    url = "https://wochenprospekt.netto-online.de"
+
+    @override
+    def get_catalog_data(self) -> None:
+        self.catalog_data = httpx.get(
+            self.overview_url_format.format(
+                week_number=dates.get_calendar_week_number(self._relevant_datetime),
+            )
+        ).json()
 
     @override
     def get_page(self, page_number: int) -> bytes:
-        response = httpx.get(
-            url=self.catalog_url_format.format(
-                year=self._relevant_datetime.year,
-                week_number=get_calendar_week_number(
-                    self._relevant_datetime, self.region.week_counting_startpoint
-                ),
-                page_number=page_number,
-            ),
-            follow_redirects=True,
-        )
         try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as error:
-            if error.response.status_code == httpx.codes.NOT_FOUND:
-                raise exceptions.NotFoundError from error
-            raise exceptions.InvalidURLError from error
+            page_url = self.catalog_data[
+                page_numbers.page_number_2_double_page_number(page_number)
+            ]["pages"][page_numbers.page_number_2_double_page_index(page_number)][
+                "images"
+            ]["at800"]
+        except IndexError as error:
+            raise NotFoundError from error
+        response = httpx.get(self.url + page_url)
         return response.content
 
     @override
@@ -73,20 +77,10 @@ class Norma(Base):
 
 
 @catalog_registry.register
-class NormaPreview(Norma):
-    id = "norma-preview"
-    description = Norma.description + " nächste Woche"
+class NettoPreview(Netto):
+    name = "netto-preview"
+    description = Netto.description + " nächste Woche"
 
     @override
     def get_relevant_datetime(self) -> datetime:
         return super().get_relevant_datetime() + timedelta(days=7)
-
-
-@catalog_registry.register
-class NormaPreview2(Norma):
-    id = "norma-preview2"
-    description = Norma.description + " übernächste Woche"
-
-    @override
-    def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() + timedelta(days=14)

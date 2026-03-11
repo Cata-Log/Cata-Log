@@ -23,7 +23,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from cata_log import database
-from cata_log.catalogs import catalog_registry
+from cata_log.providers import catalog_registry
 from cata_log.tasks import fetch_provider
 
 from .catalogs import Catalog
@@ -62,8 +62,24 @@ async def list_providers(db_session: Session = database.depends_db_session):
 
 
 @router.get("/available", response_model=list[ProviderInfo])
-async def list_available_providers():
-    return [catalog_class.info() for catalog_class in catalog_registry.values()]
+async def list_available_providers(query: str | None, region: str | None):
+    if region:
+        region = region.lower()
+    if query:
+        query = query.lower()
+    return [
+        catalog_class.info()
+        for catalog_class in catalog_registry.values()
+        if (not query and not region)
+        or (region and (region in catalog_class.region.local_name.lower()))
+        or (
+            query
+            and (
+                (query in catalog_class.id())
+                or (query in catalog_class.description.lower())
+            )
+        )
+    ]
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=Provider)

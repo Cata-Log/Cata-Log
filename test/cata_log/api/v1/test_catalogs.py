@@ -20,7 +20,7 @@
 import pytest
 
 
-def test_list_catalogs(client):
+def test_list_catalogs(full_database, client):
     response = client.get("/api/v1/catalogs")
 
     assert response.status_code == 200
@@ -28,7 +28,7 @@ def test_list_catalogs(client):
     assert len(data) == 3
 
 
-def test_list_previews_catalogs(fake_catalog_preview, client):
+def test_list_previews_catalogs(full_database, fake_catalog_preview, client):
     response = client.get("/api/v1/catalogs/previews")
 
     assert response.status_code == 200
@@ -38,7 +38,7 @@ def test_list_previews_catalogs(fake_catalog_preview, client):
     assert data[0]["id"] == fake_catalog_preview.id
 
 
-def test_list_current_catalogs(fake_catalog_current, client):
+def test_list_current_catalogs(full_database, fake_catalog_current, client):
     response = client.get("/api/v1/catalogs/current")
 
     assert response.status_code == 200
@@ -48,7 +48,7 @@ def test_list_current_catalogs(fake_catalog_current, client):
     assert data[0]["id"] == fake_catalog_current.id
 
 
-def test_list_outdated_catalogs(fake_catalog_outdated, client):
+def test_list_outdated_catalogs(full_database, fake_catalog_outdated, client):
     response = client.get("/api/v1/catalogs/outdated")
 
     assert response.status_code == 200

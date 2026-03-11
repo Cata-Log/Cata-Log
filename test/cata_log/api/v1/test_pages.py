@@ -20,7 +20,7 @@
 import pytest
 
 
-def test_list_pages(fake_page, client):
+def test_list_pages(full_database, fake_page, client):
     response = client.get("/api/v1/pages")
 
     assert response.status_code == 200

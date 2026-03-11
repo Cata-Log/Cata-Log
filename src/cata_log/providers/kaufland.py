@@ -25,14 +25,14 @@ import httpx
 
 from cata_log.utils.dates import get_week_limit_dates
 
-from .base import Base
+from .base import BaseProvider
 from .regions import Germany
 from .registry import catalog_registry
 
 
 @catalog_registry.register
-class Kaufland(Base):
-    id = "kaufland"
+class Kaufland(BaseProvider):
+    name = "kaufland"
     description = "Kaufland Angebote"
     configuration = MappingProxyType(
         {
@@ -56,6 +56,10 @@ class Kaufland(Base):
             region_id=region_id,
             region_code=region_code,
         )
+
+    @override
+    def get_catalog_data(self) -> None:
+        pass
 
     @override
     def get_page(self, page_number: int) -> bytes:
