@@ -18,6 +18,7 @@
 
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from celery import Celery
 from celery.schedules import crontab
@@ -39,7 +40,7 @@ app.conf.update(
 
 
 @app.on_after_configure.connect
-def setup_periodic_tasks(sender: Celery, **kwargs):
+def setup_periodic_tasks(sender: Celery, **kwargs: Any) -> None:
     sender.add_periodic_task(schedule=crontab(hour=1), sig=cleanup_catalogs.s())
 
 

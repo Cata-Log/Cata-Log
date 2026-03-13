@@ -40,12 +40,16 @@ class Catalog(BaseModel):
 
 
 @router.get("", response_model=list[Catalog])
-async def list_catalogs(db_session: Session = database.depends_db_session):
+async def list_catalogs(
+    db_session: Session = database.depends_db_session,
+) -> list[database.Catalog]:
     return db_session.query(database.Catalog).all()
 
 
 @router.get("/previews", response_model=list[Catalog])
-async def list_previews_catalogs(db_session: Session = database.depends_db_session):
+async def list_previews_catalogs(
+    db_session: Session = database.depends_db_session,
+) -> list[database.Catalog]:
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
@@ -54,7 +58,9 @@ async def list_previews_catalogs(db_session: Session = database.depends_db_sessi
 
 
 @router.get("/current", response_model=list[Catalog])
-async def list_current_catalogs(db_session: Session = database.depends_db_session):
+async def list_current_catalogs(
+    db_session: Session = database.depends_db_session,
+) -> list[database.Catalog]:
     now = datetime.now(tz=UTC)
     return (
         db_session.query(database.Catalog)
@@ -65,7 +71,9 @@ async def list_current_catalogs(db_session: Session = database.depends_db_sessio
 
 
 @router.get("/outdated", response_model=list[Catalog])
-async def list_outdated_catalogs(db_session: Session = database.depends_db_session):
+async def list_outdated_catalogs(
+    db_session: Session = database.depends_db_session,
+) -> list[database.Catalog]:
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
@@ -76,7 +84,7 @@ async def list_outdated_catalogs(db_session: Session = database.depends_db_sessi
 @router.get("/{catalog_id}", response_model=Catalog)
 async def get_catalog(
     catalog_id: int, db_session: Session = database.depends_db_session
-):
+) -> database.Catalog:
     catalog = (
         db_session.query(database.Catalog)
         .filter(database.Catalog.id == catalog_id)
@@ -92,7 +100,7 @@ async def get_catalog(
 @router.get("/{catalog_id}/pages/{page_number}", response_model=Page)
 async def get_catalog_page(
     catalog_id: int, page_number: int, db_session: Session = database.depends_db_session
-):
+) -> database.Catalog:
     page = (
         db_session.query(database.Page)
         .filter(database.Page.catalog_id == catalog_id)
@@ -112,7 +120,7 @@ async def download_catalog_page(
     page_number: int,
     filename: str | None = None,
     db_session: Session = database.depends_db_session,
-):
+) -> FileResponse:
     page = (
         db_session.query(database.Page)
         .filter(database.Page.catalog_id == catalog_id)
@@ -138,7 +146,7 @@ async def embed_catalog_page(
     page_number: int,
     filename: str | None = None,
     db_session: Session = database.depends_db_session,
-):
+) -> FileResponse:
     page = (
         db_session.query(database.Page)
         .filter(database.Page.catalog_id == catalog_id)

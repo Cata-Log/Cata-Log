@@ -57,12 +57,16 @@ class ProviderInfo(BaseModel):
 
 
 @router.get("", response_model=list[Provider])
-async def list_providers(db_session: Session = database.depends_db_session):
+async def list_providers(
+    db_session: Session = database.depends_db_session,
+) -> list[database.Provider]:
     return db_session.query(database.Provider).all()
 
 
 @router.get("/available", response_model=list[ProviderInfo])
-async def list_available_providers(query: str | None = None, region: str | None = None):
+async def list_available_providers(
+    query: str | None = None, region: str | None = None
+) -> list[dict[str, str | dict[str, str]]]:
     if region:
         region = region.lower()
     if query:
@@ -85,7 +89,7 @@ async def list_available_providers(query: str | None = None, region: str | None 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=Provider)
 async def post_provider(
     new_provider: NewProvider, db_session: Session = database.depends_db_session
-):
+) -> database.Provider:
     provider_class = catalog_registry.get(new_provider.class_id)
     if not provider_class:
         raise HTTPException(
@@ -110,7 +114,7 @@ async def post_provider(
 @router.get("/{provider_id}", response_model=Provider)
 async def get_provider(
     provider_id: int, db_session: Session = database.depends_db_session
-):
+) -> database.Provider:
     provider = (
         db_session.query(database.Provider)
         .filter(database.Provider.id == provider_id)
@@ -126,7 +130,7 @@ async def get_provider(
 @router.delete("/{provider_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_provider(
     provider_id: int, db_session: Session = database.depends_db_session
-):
+) -> None:
     provider = (
         db_session.query(database.Provider)
         .filter(database.Provider.id == provider_id)
@@ -143,7 +147,7 @@ async def delete_provider(
 @router.get("/{provider_id}/catalogs/current", response_model=list[Catalog])
 async def list_provider_current_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
-):
+) -> list[database.Catalog]:
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
@@ -156,7 +160,7 @@ async def list_provider_current_catalogs(
 @router.get("/{provider_id}/catalogs/previews", response_model=list[Catalog])
 async def list_provider_preview_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
-):
+) -> list[database.Catalog]:
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
@@ -168,7 +172,7 @@ async def list_provider_preview_catalogs(
 @router.get("/{provider_id}/catalogs/outdated", response_model=list[Catalog])
 async def list_provider_outdated_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
-):
+) -> list[database.Catalog]:
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
@@ -184,7 +188,7 @@ async def list_provider_outdated_catalogs(
 )
 async def post_provider_update(
     provider_id: int, db_session: Session = database.depends_db_session
-):
+) -> dict[str, str]:
     if (
         not db_session.query(database.Provider)
         .filter(database.Provider.id == provider_id)

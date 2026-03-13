@@ -25,6 +25,9 @@ class PageNumber:
     def __repr__(self) -> str:
         return f"Page {self._number}"
 
+    def __hash__(self) -> int:
+        return hash(self._number)
+
     def __int__(self) -> int:
         return self._number + self._offset
 
@@ -71,7 +74,10 @@ class DoublePageNumber:
     def __repr__(self) -> str:
         return f"Double page {self._number}, side {self._index}"
 
-    def __int__(self):
+    def __hash__(self) -> int:
+        return hash((self._number, self._index))
+
+    def __int__(self) -> int:
         return self._number
 
     def __eq__(self, other: object) -> bool:

@@ -40,12 +40,16 @@ class NewConfig(BaseModel):
 
 
 @router.get("", response_model=list[Config])
-async def list_config(db_session: orm.Session = database.depends_db_session):
+async def list_config(
+    db_session: orm.Session = database.depends_db_session,
+) -> list[database.Config]:
     return db_session.query(database.Config).all()
 
 
 @router.get("/{key}", response_model=Config)
-async def get_config(key: str, db_session: orm.Session = database.depends_db_session):
+async def get_config(
+    key: str, db_session: orm.Session = database.depends_db_session
+) -> database.Config:
     config = (
         db_session.query(database.Config).filter(database.Config.key == key).first()
     )
@@ -59,7 +63,7 @@ async def get_config(key: str, db_session: orm.Session = database.depends_db_ses
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=Config)
 async def post_config(
     new_config: NewConfig, db_session: orm.Session = database.depends_db_session
-):
+) -> database.Config:
     if (
         db_session.query(database.Config)
         .filter(database.Config.key == new_config.key)
@@ -80,7 +84,7 @@ async def put_config(
     key: str,
     config_update: ConfigUpdate,
     db_session: orm.Session = database.depends_db_session,
-):
+) -> database.Config:
     config = (
         db_session.query(database.Config).filter(database.Config.key == key).first()
     )
@@ -97,7 +101,7 @@ async def patch_config(
     key: str,
     config_update: ConfigUpdate,
     db_session: orm.Session = database.depends_db_session,
-):
+) -> database.Config:
     config = (
         db_session.query(database.Config).filter(database.Config.key == key).first()
     )
@@ -114,7 +118,7 @@ async def patch_config(
 @router.delete("/{key}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_config(
     key: str, db_session: orm.Session = database.depends_db_session
-):
+) -> None:
     config = (
         db_session.query(database.Config)
         .filter(database.Config.key == key)

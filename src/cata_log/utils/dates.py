@@ -24,7 +24,7 @@ from cata_log import constants
 def get_calendar_week_number(
     dt: datetime.datetime,
     week_startpoint: constants.WeekCountingStartpoints = constants.WeekCountingStartpoints.MONDAY,
-):
+) -> int:
     week_number_offset = (
         1
         if (

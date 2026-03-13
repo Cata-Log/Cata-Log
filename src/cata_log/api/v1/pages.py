@@ -35,12 +35,16 @@ class Page(BaseModel):
 
 
 @router.get("", response_model=list[Page])
-async def list_pages(db_session: Session = database.depends_db_session):
+async def list_pages(
+    db_session: Session = database.depends_db_session,
+) -> list[database.Page]:
     return db_session.query(database.Page).all()
 
 
 @router.get("/{page_id}", response_model=Page)
-async def get_page(page_id: int, db_session: Session = database.depends_db_session):
+async def get_page(
+    page_id: int, db_session: Session = database.depends_db_session
+) -> database.Page:
     page = db_session.query(database.Page).filter(database.Page.id == page_id).first()
     if not page:
         raise HTTPException(
@@ -54,7 +58,7 @@ async def download_page(
     page_id: int,
     filename: str | None = None,
     db_session: Session = database.depends_db_session,
-):
+) -> FileResponse:
     page = (
         db_session.query(database.Page)
         .filter(database.Page.id == page_id)
@@ -78,7 +82,7 @@ async def embed_page(
     page_id: int,
     filename: str | None = None,
     db_session: Session = database.depends_db_session,
-):
+) -> FileResponse:
     page = (
         db_session.query(database.Page)
         .filter(database.Page.id == page_id)

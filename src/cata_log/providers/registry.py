@@ -1,10 +1,11 @@
 from _collections_abc import Iterator, dict_items, dict_keys, dict_values
+from typing import ClassVar
 
 from .base import BaseProvider
 
 
 class CatalogRegistry:
-    _registered_catalogs: dict[str, type[BaseProvider]] = {}
+    _registered_catalogs: ClassVar[dict[str, type[BaseProvider]]] = {}
 
     def register(self, cls: type[BaseProvider]) -> type[BaseProvider]:
         if not issubclass(cls, BaseProvider):

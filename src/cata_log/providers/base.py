@@ -54,7 +54,7 @@ class BaseProvider(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_valid_until(cls) -> datetime:
+    def get_valid_until(self) -> datetime:
         pass
 
     @abc.abstractmethod
@@ -86,7 +86,7 @@ class BaseProvider(abc.ABC):
         return cls.name + "-" + cls.region.local_name.lower()
 
     @classmethod
-    def get_storage_path(cls, datetime: datetime, page_number: int):
+    def get_storage_path(cls, datetime: datetime, page_number: int) -> str:
         return f"{cls.id}_{datetime}_{page_number}"
 
     @classmethod

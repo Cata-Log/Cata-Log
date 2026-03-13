@@ -31,6 +31,7 @@ from fastapi import Depends
 from sqlalchemy import (
     JSON,
     Column,
+    Connection,
     DateTime,
     ForeignKey,
     UniqueConstraint,
@@ -120,14 +121,18 @@ class Page(ModelBase, TimestampMixin):
 
 
 @event.listens_for(Page, "before_delete")
-def before_page_delete(mapper, connection, target):
+def before_page_delete(
+    mapper: orm.Mapper, connection: Connection, target: Page
+) -> None:
     if target.storage_path:
         with contextlib.suppress(FileNotFoundError):
             os.remove(target.storage_path)
 
 
 @event.listens_for(Provider, "after_insert")
-def after_provider_insert(mapper, connection, target):
+def after_provider_insert(
+    mapper: orm.Mapper, connection: Connection, target: Provider
+) -> None:
     db_session = orm.Session(bind=connection)
     provider_class = catalog_registry.get(target.class_id)
     if not provider_class:
@@ -151,5 +156,7 @@ def after_provider_insert(mapper, connection, target):
 
 
 @event.listens_for(Provider, "before_delete")
-def before_provider_delete(mapper, connection, target):
+def before_provider_delete(
+    mapper: orm.Mapper, connection: Connection, target: Provider
+) -> None:
     connection.execute(delete(PeriodicTask).where(PeriodicTask.id == target.task_id))
