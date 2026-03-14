@@ -26,6 +26,7 @@ from celery.schedules import crontab
 from cata_log import constants, database
 from cata_log.constants import BROKER_URL, DATABASE_URL
 from cata_log.providers import Provider
+from cata_log.utils.shortcuts import get_config
 
 app = Celery()
 
@@ -82,18 +83,11 @@ def fetch_provider(provider_id: int) -> None:
 @app.task
 def cleanup_catalogs() -> None:
     db_session = next(database.get_db_session())
-    expiration_config = (
-        db_session.query(database.Config)
-        .filter(database.Config.key == "expiration_days")
-        .one_or_none()
-    )
-    if not expiration_config:
-        expiration_days = constants.DEFAULT_EXPIRATION_DAYS
-    else:
-        try:
-            expiration_days = int(expiration_config.value)
-        except ValueError:
-            expiration_days = constants.DEFAULT_EXPIRATION_DAYS
+    expiration_days_string = get_config("expiration_days")
+    try:
+        expiration_days = int(expiration_days_string)
+    except ValueError:
+        expiration_days = int(constants.DefaultConfig.expiration_days)
     expiration_date = datetime.now(tz=UTC) - timedelta(days=expiration_days)
     for catalog in (
         db_session.query(database.Catalog)

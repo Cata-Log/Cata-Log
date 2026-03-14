@@ -21,12 +21,13 @@ from pydantic import BaseModel
 from sqlalchemy import orm
 
 from cata_log import database
+from cata_log.constants import DefaultConfig
 
 router = APIRouter(prefix="/config", tags=["config"])
 
 
 class Config(BaseModel):
-    key: str
+    name: str
     value: str
 
 
@@ -35,7 +36,7 @@ class ConfigUpdate(BaseModel):
 
 
 class NewConfig(BaseModel):
-    key: str
+    name: str
     value: str
 
 
@@ -46,12 +47,17 @@ async def list_config(
     return db_session.query(database.Config).all()
 
 
+@router.get("/defaults", response_model=list[Config])
+async def list_config_defaults() -> list[DefaultConfig]:
+    return list(DefaultConfig)
+
+
 @router.get("/{key}", response_model=Config)
 async def get_config(
     key: str, db_session: orm.Session = database.depends_db_session
 ) -> database.Config:
     config = (
-        db_session.query(database.Config).filter(database.Config.key == key).first()
+        db_session.query(database.Config).filter(database.Config.name == key).first()
     )
     if not config:
         raise HTTPException(
@@ -66,7 +72,7 @@ async def post_config(
 ) -> database.Config:
     if (
         db_session.query(database.Config)
-        .filter(database.Config.key == new_config.key)
+        .filter(database.Config.name == new_config.name)
         .one_or_none()
     ):
         raise HTTPException(
@@ -86,7 +92,7 @@ async def put_config(
     db_session: orm.Session = database.depends_db_session,
 ) -> database.Config:
     config = (
-        db_session.query(database.Config).filter(database.Config.key == key).first()
+        db_session.query(database.Config).filter(database.Config.name == key).first()
     )
     if not config:
         raise HTTPException(status_code=404, detail="Config not found")
@@ -103,7 +109,7 @@ async def patch_config(
     db_session: orm.Session = database.depends_db_session,
 ) -> database.Config:
     config = (
-        db_session.query(database.Config).filter(database.Config.key == key).first()
+        db_session.query(database.Config).filter(database.Config.name == key).first()
     )
     if not config:
         raise HTTPException(
@@ -121,7 +127,7 @@ async def delete_config(
 ) -> None:
     config = (
         db_session.query(database.Config)
-        .filter(database.Config.key == key)
+        .filter(database.Config.name == key)
         .one_or_none()
     )
     if not config:

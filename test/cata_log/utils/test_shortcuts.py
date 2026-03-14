@@ -17,11 +17,20 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-from fastapi.testclient import TestClient
+
+from cata_log.utils.shortcuts import get_config
 
 
-@pytest.fixture
-def client(fake_fs):
-    from cata_log.main import app  # noqa: PLC0415
+@pytest.mark.parametrize(
+    ("config_name", "expected_config_value"),
+    [("test_conf", "test_val"), ("expiration_days", "28")],
+)
+def test_get_config__success(fake_config, config_name, expected_config_value):
+    result = get_config(config_name)
 
-    return TestClient(app)
+    assert result == expected_config_value
+
+
+def test_get_config__failure(fake_config):
+    with pytest.raises(AttributeError):
+        get_config("non-config")

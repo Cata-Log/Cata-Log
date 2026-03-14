@@ -29,13 +29,13 @@ from cata_log.providers import AldiSued
 
 def test_Config_insertion(LocalSession):
     with LocalSession() as db_session:
-        config = database.Config(key="testkey", value="testvalue")
+        config = database.Config(name="testkey", value="testvalue")
         db_session.add(config)
         db_session.commit()
         db_session.refresh(config)
 
         assert config.id
-        assert config.key == "testkey"
+        assert config.name == "testkey"
         assert config.value == "testvalue"
         assert config.created_at
         assert config.updated_at

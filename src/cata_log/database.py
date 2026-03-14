@@ -73,7 +73,7 @@ class TimestampMixin:
 
 class Config(ModelBase, TimestampMixin):
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
-    key: orm.Mapped[str] = orm.mapped_column(unique=True)
+    name: orm.Mapped[str] = orm.mapped_column(unique=True)
     value: orm.Mapped[str] = orm.mapped_column()
     __tablename__ = "config"
 

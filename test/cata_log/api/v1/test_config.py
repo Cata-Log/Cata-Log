@@ -18,6 +18,7 @@
 
 
 from cata_log import database
+from cata_log.constants import DefaultConfig
 
 
 def test_list_config(fake_config, client):
@@ -27,15 +28,26 @@ def test_list_config(fake_config, client):
     data = response.json()
     assert len(data) == 1
     assert data[0]
-    assert data[0]["key"] == fake_config.key
+    assert data[0]["name"] == fake_config.name
 
 
-def test_get_config(fake_config, client):
-    response = client.get(f"/api/v1/config/{fake_config.key}")
+def test_list_config_defaults(client):
+    response = client.get("api/v1/config/defaults")
 
     assert response.status_code == 200
     data = response.json()
-    assert data["key"] == fake_config.key
+    assert len(data) == len(DefaultConfig)
+    assert data[0]
+    assert data[0]["name"]
+    assert data[0]["value"] == getattr(DefaultConfig, data[0]["name"])
+
+
+def test_get_config(fake_config, client):
+    response = client.get(f"/api/v1/config/{fake_config.name}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == fake_config.name
     assert data["value"] == fake_config.value
 
 
@@ -47,7 +59,7 @@ def test_get_config__not_found(client):
 
 
 def test_post_config(faker, LocalSession, client):
-    config_json = {"key": faker.word(), "value": faker.word()}
+    config_json = {"name": faker.word(), "value": faker.word()}
     db_session = LocalSession()
 
     assert not db_session.query(database.Config).all()
@@ -59,7 +71,7 @@ def test_post_config(faker, LocalSession, client):
     assert len(db_session.query(database.Config).all()) == 1
     config = (
         db_session.query(database.Config)
-        .filter(database.Config.key == config_json["key"])
+        .filter(database.Config.name == config_json["name"])
         .one_or_none()
     )
     assert config
@@ -67,7 +79,7 @@ def test_post_config(faker, LocalSession, client):
 
 
 def test_post_config__duplicate(LocalSession, client, fake_config):
-    config_json = {"key": fake_config.key, "value": "something"}
+    config_json = {"name": fake_config.name, "value": "something"}
     db_session = LocalSession()
 
     response = client.post("/api/v1/config", json=config_json)
@@ -79,11 +91,11 @@ def test_post_config__duplicate(LocalSession, client, fake_config):
 def test_put_config(faker, fake_config, client):
     config_json = {"value": faker.word()}
 
-    response = client.put(f"/api/v1/config/{fake_config.key}", json=config_json)
+    response = client.put(f"/api/v1/config/{fake_config.name}", json=config_json)
 
     assert response.status_code == 200
     data = response.json()
-    assert data["key"] == fake_config.key
+    assert data["name"] == fake_config.name
     assert data["value"] == config_json["value"]
 
 
@@ -99,11 +111,11 @@ def test_put_config__not_found(client):
 def test_patch_config(faker, fake_config, client):
     config_json = {"value": faker.word()}
 
-    response = client.patch(f"/api/v1/config/{fake_config.key}", json=config_json)
+    response = client.patch(f"/api/v1/config/{fake_config.name}", json=config_json)
 
     assert response.status_code == 200
     data = response.json()
-    assert data["key"] == fake_config.key
+    assert data["name"] == fake_config.name
     assert data["value"] == config_json["value"]
 
 
@@ -117,7 +129,7 @@ def test_patch_config__not_found(client):
 
 
 def test_delete_config(fake_config, client):
-    response = client.delete(f"/api/v1/config/{fake_config.key}")
+    response = client.delete(f"/api/v1/config/{fake_config.name}")
 
     assert response.status_code == 204
 

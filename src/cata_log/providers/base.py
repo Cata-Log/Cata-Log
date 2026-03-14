@@ -25,13 +25,13 @@ from typing import Any, ClassVar, Self, final
 import httpx
 from celery.schedules import crontab
 
-from cata_log import constants
 from cata_log.exceptions import (
     NetworkError,
     PagesExhausted,
     ProviderBrokenWarning,
     ProviderMisconfiguredOrBrokenWarning,
 )
+from cata_log.utils.shortcuts import get_config
 
 from .regions import Region
 
@@ -56,7 +56,7 @@ class Provider(abc.ABC):
         self._relevant_datetime = self.get_relevant_datetime()
         self._client = httpx.Client(
             follow_redirects=True,
-            headers={"User-Agent": constants.FAKE_USER_AGENT},
+            headers={"User-Agent": get_config("fake_user_agent")},
             event_hooks={
                 "response": [
                     lambda r, *_, **__: r.raise_for_status(),

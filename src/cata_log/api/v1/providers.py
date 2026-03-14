@@ -98,8 +98,7 @@ async def post_provider(
             detail="The given provider is unknown",
         )
     if any(
-        not new_provider.config.get(config_key)
-        for config_key in provider_class.configuration
+        not new_provider.config.get(config) for config in provider_class.configuration
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
