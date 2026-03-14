@@ -32,6 +32,8 @@ router = APIRouter(prefix="/providers", tags=["providers"])
 
 
 class Provider(BaseModel):
+    """Provider data model."""
+
     id: int
     class_id: str
     config: dict[str, str]
@@ -39,17 +41,23 @@ class Provider(BaseModel):
 
 
 class NewProvider(BaseModel):
+    """Provider creation data model."""
+
     class_id: str
     config: dict[str, str]
 
 
 class RegionInfo(BaseModel):
+    """Region info data model."""
+
     local_name: str
     language_code: str
     timezone: str
 
 
 class ProviderInfo(BaseModel):
+    """Provider info data model."""
+
     id: str
     configuration: dict[str, str]
     description: str
@@ -61,6 +69,7 @@ class ProviderInfo(BaseModel):
 async def list_providers(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Provider]:
+    """List all providers."""
     return db_session.query(database.Provider).all()
 
 
@@ -68,6 +77,7 @@ async def list_providers(
 async def list_available_providers(
     query: str | None = None, region: str | None = None
 ) -> list[dict[str, str | dict[str, str]]]:
+    """List all available providers."""
     if region:
         region = region.lower()
     if query:
@@ -91,6 +101,7 @@ async def list_available_providers(
 async def post_provider(
     new_provider: NewProvider, db_session: Session = database.depends_db_session
 ) -> database.Provider:
+    """Set up a new provider."""
     provider_class = ProviderType.registry.get(new_provider.class_id)
     if not provider_class:
         raise HTTPException(
@@ -115,6 +126,7 @@ async def post_provider(
 async def get_provider(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> database.Provider:
+    """Get a single provider."""
     provider = (
         db_session.query(database.Provider)
         .filter(database.Provider.id == provider_id)
@@ -131,6 +143,7 @@ async def get_provider(
 async def delete_provider(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> None:
+    """Delete a single provider. This also deletes all its catalogs and their pages."""
     provider = (
         db_session.query(database.Provider)
         .filter(database.Provider.id == provider_id)
@@ -144,10 +157,23 @@ async def delete_provider(
     db_session.commit()
 
 
+@router.get("/{provider_id}/catalogs", response_model=list[Catalog])
+async def list_provider_catalogs(
+    provider_id: int, db_session: Session = database.depends_db_session
+) -> list[database.Catalog]:
+    """List all catalogs of a provider."""
+    return (
+        db_session.query(database.Catalog)
+        .filter(database.Catalog.provider_id == provider_id)
+        .all()
+    )
+
+
 @router.get("/{provider_id}/catalogs/current", response_model=list[Catalog])
 async def list_provider_current_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> list[database.Catalog]:
+    """List all current catalogs of a provider."""
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
@@ -161,6 +187,7 @@ async def list_provider_current_catalogs(
 async def list_provider_preview_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> list[database.Catalog]:
+    """List all preview catalogs of a provider."""
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
@@ -173,6 +200,7 @@ async def list_provider_preview_catalogs(
 async def list_provider_outdated_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> list[database.Catalog]:
+    """List all outdated catalogs of a provider."""
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
@@ -189,6 +217,7 @@ async def list_provider_outdated_catalogs(
 async def post_provider_update(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> dict[str, str]:
+    """Trigger an update of a providers catalogs."""
     if (
         not db_session.query(database.Provider)
         .filter(database.Provider.id == provider_id)

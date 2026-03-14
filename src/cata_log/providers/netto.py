@@ -28,6 +28,8 @@ from .regions import Germany
 
 
 class Netto(Provider):
+    """Provider class for Netto catalog."""
+
     name = "netto"
     description = "Netto Angebote"
     region = Germany
@@ -74,6 +76,8 @@ class Netto(Provider):
 
 
 class NettoPreview(Netto):
+    """Provider class for Netto preview catalog for next week."""
+
     name = "netto-preview"
     description = Netto.description + " nächste Woche"
 

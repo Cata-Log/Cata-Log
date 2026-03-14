@@ -23,6 +23,8 @@ from cata_log.constants import WeekCountingStartpoints
 
 
 class Region(abc.ABC):
+    """Base region class."""
+
     local_name: str
     week_counting_startpoint: WeekCountingStartpoints
     timezone: zoneinfo.ZoneInfo
@@ -31,6 +33,11 @@ class Region(abc.ABC):
 
     @classmethod
     def info(cls) -> dict[str, str]:
+        """Get info about the region.
+
+        Returns:
+            A dictionary of the region classes attributes.
+        """
         return {
             "timezone": str(cls.timezone),
             "language_code": cls.language_code,
@@ -39,6 +46,8 @@ class Region(abc.ABC):
 
 
 class Germany(Region):
+    """Region class for germany."""
+
     week_counting_startpoint = WeekCountingStartpoints.MONDAY
     timezone = zoneinfo.ZoneInfo("Europe/Berlin")
     language_code = "de"
@@ -46,5 +55,7 @@ class Germany(Region):
 
 
 class Austria(Germany):
+    """Region class for austria."""
+
     local_name = "Österreich"
     timezone = zoneinfo.ZoneInfo("Europe/Vienna")

@@ -44,12 +44,18 @@ logger = logging.getLogger(__name__)
 
 
 @app.on_after_configure.connect
-def setup_periodic_tasks(sender: Celery, **kwargs: Any) -> None:
+def setup_periodic_tasks(sender: Celery, **kwargs: Any) -> None:  # noqa: ARG001  # extra kwargs required by celery decorator
+    """Set up and register the default catalog cleanup task."""
     sender.add_periodic_task(schedule=crontab(hour=1), sig=cleanup_catalogs.s())
 
 
 @app.task
 def fetch_provider(provider_id: int) -> None:
+    """Task for fetching all pages of a catalog from a provider.
+
+    Args:
+        provider_id: The database id of the provider to fetch.
+    """
     logger.info("Fetching provider catalog ...", extra={"provider_id": provider_id})
     db_session = next(database.get_db_session())
     provider = (
@@ -119,6 +125,7 @@ def fetch_provider(provider_id: int) -> None:
 
 @app.task
 def cleanup_catalogs() -> None:
+    """Task to cleanup outdated catalogs."""
     db_session = next(database.get_db_session())
     expiration_days_string = get_config("expiration_days")
     try:

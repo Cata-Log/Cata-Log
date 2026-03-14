@@ -26,4 +26,4 @@ __all__ = ["router"]
 
 @router.get("/", response_class=HTMLResponse)
 def get_webui():
-    pass
+    """Get the web interface."""

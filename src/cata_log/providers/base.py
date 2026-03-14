@@ -42,15 +42,26 @@ class Provider(abc.ABC):
 
     registry: ClassVar[dict[str, type[Provider]]] = {}
     name: str
+    """The name of this catalog provider"""
     description: str
+    """The user-facing description for this provider"""
     url: str
+    """The url of this catalog provider"""
     region: type[Region]
+    """The region this catalog is issued in"""
     first_page_number: int = 1
+    """The number of the first page in the providers api"""
     configuration: MappingProxyType[str, str] = MappingProxyType({})
+    """The configuration parameters with helptexts for this provider"""
     schedule: crontab = crontab(hour=4)
+    """The crontab schedule for fetching this provider"""
 
     @final
     def __init__(self, **kwargs: Any):
+        """Constructor for a provider instance.
+
+        Stores all kwargs into a the :attr:`_config` member.
+        """
         if any(config_key not in kwargs for config_key in self.configuration):
             raise TypeError("Configuration keyword-argument missing.")
         self._config = kwargs
@@ -68,6 +79,9 @@ class Provider(abc.ABC):
 
     @final
     def __init_subclass__(cls) -> None:
+        """Subclass constructor.
+        Adds the subclass to the registry.
+        """
         super().__init_subclass__()
         if cls.id() in cls.registry:
             raise AttributeError(f"The ID of {cls} is not unique.")
@@ -75,6 +89,7 @@ class Provider(abc.ABC):
 
     @final
     def __enter__(self) -> Self:
+        """Entrypoint for the context manager."""
         return self
 
     @final
@@ -84,33 +99,65 @@ class Provider(abc.ABC):
         exc_value: BaseException | None,
         exc_traceback: TracebackType | None,
     ) -> None:
+        """Exitpoint for the context manager.
+        Closes the httpx client.
+
+        Args:
+            exc_type: The type of the exception raised in the context.
+            exc_value: The exception raised in the context.
+            exc_traceback: The traceback of the exception raised in the context.
+        """
         self._client.close()
 
     @final
     def __str__(self) -> str:
+        """String representation of this provider."""
         return f"Catalog {self.id}"
 
     def get_relevant_datetime(self) -> datetime:
+        """Get the datetime that defines the catalog offered by this provider.
+        The current datetime for current catalogs, a future datetime for preview catalogs.
+
+        Returns:
+            The current datetime in the providers regional timezone.
+        """
         return datetime.now(tz=self.region.timezone)
 
     @abc.abstractmethod
     def get_valid_since(self) -> datetime:
-        pass
+        """Get the datetime since which this providers catalog is valid."""
 
     @abc.abstractmethod
     def get_valid_until(self) -> datetime:
-        pass
+        """Get the datetime until which this providers catalog is valid."""
 
     @abc.abstractmethod
     def get_page(self, page_number: int) -> bytes:
-        pass
+        """Get one page from the provider.
+
+        Args:
+            page_number: The number of the page in the numbering of the provider.
+
+        Returns:
+            The downloaded page in bytes.
+        """
 
     @abc.abstractmethod
     def get_catalog_data(self) -> None:
-        pass
+        """Get and store the data for this providers catalog.
+        Can be passed if no data beside the pagenumber is required to fetch pages from the provider.
+        """
 
     @final
     def iter_catalog_pages(self) -> Generator[tuple[int, bytes]]:
+        """Iterate over pages of this providers catalog.
+
+        Args:
+            page_range: An optional range of pagenumbers to fetch. Omit this to fetch all.
+
+        Returns:
+            A generator of the pages data as bytes.
+        """
         try:
             self._logger.debug("Getting catalog data ...")
             try:
@@ -152,11 +199,20 @@ class Provider(abc.ABC):
     @final
     @classmethod
     def id(cls) -> str:
+        """Build a unique identifier for this provider class based on :attr:`name and the local name of :attr:`region`.
+
+        Returns:
+            A unique id for this provider class.
+        """
         return cls.name + "-" + cls.region.local_name.lower()
 
-    @final
     @classmethod
     def info(cls) -> dict[str, str | dict[str, str]]:
+        """Get user-relevant info about this provider.
+
+        Returns:
+            A dictionary containing class attributes of this provider class.
+        """
         return {
             "id": cls.id(),
             "description": cls.description,

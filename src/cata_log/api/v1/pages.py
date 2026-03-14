@@ -29,6 +29,8 @@ router = APIRouter(prefix="/pages", tags=["pages"])
 
 
 class Page(BaseModel):
+    """Page data model."""
+
     id: int
     number: int
     catalog_id: int
@@ -38,6 +40,7 @@ class Page(BaseModel):
 async def list_pages(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Page]:
+    """List all pages."""
     return db_session.query(database.Page).all()
 
 
@@ -45,6 +48,7 @@ async def list_pages(
 async def get_page(
     page_id: int, db_session: Session = database.depends_db_session
 ) -> database.Page:
+    """Get a single page."""
     page = db_session.query(database.Page).filter(database.Page.id == page_id).first()
     if not page:
         raise HTTPException(
@@ -59,6 +63,7 @@ async def download_page(
     filename: str | None = None,
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
+    """Download a single page."""
     page = (
         db_session.query(database.Page)
         .filter(database.Page.id == page_id)
@@ -83,6 +88,7 @@ async def embed_page(
     filename: str | None = None,
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
+    """Embed a single page."""
     page = (
         db_session.query(database.Page)
         .filter(database.Page.id == page_id)

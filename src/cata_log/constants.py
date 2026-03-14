@@ -18,7 +18,6 @@
 
 import calendar
 import enum
-from datetime import timedelta
 from pathlib import Path
 
 STORAGE_PATH = Path("/mnt/storage/").resolve()
@@ -28,6 +27,8 @@ LOG_DIRECTORY_PATH = Path("/var/log/cata-log/").resolve()
 
 
 class DefaultConfig(enum.StrEnum):
+    """Enum listing all configuration defaults."""
+
     expiration_days = "28"
     fake_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
     log_level = "INFO"
@@ -53,8 +54,9 @@ class WeekCountingStartpoints(enum.Enum):
 
     @property
     def week_number_format(self) -> str:
-        return "%U" if self == calendar.Day.SUNDAY else "%W"
+        """The datetime formatter for the enum value.
 
-    @property
-    def week_start_weekday(self) -> timedelta:
-        return timedelta(days=-1) if self == calendar.Day.SUNDAY else timedelta(days=0)
+        Returns:
+            The datetime formatter string.
+        """
+        return "%U" if self == calendar.Day.SUNDAY else "%W"

@@ -29,6 +29,8 @@ from .regions import Germany
 
 
 class Rewe(Provider):
+    """Provider class for Rewe catalog."""
+
     name = "rewe"
     description = "Rewe Katalog"
     url = "https://www.rewe.de/angebote/"

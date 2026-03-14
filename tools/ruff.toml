@@ -69,6 +69,7 @@ select = [
 ignore = [
   "COM812",  # this one is annoying
   "D100",    # no module docstring
+  "D104",    # no package docstring
   "D202",    # allow blank line after function docstring
   "D203",    # no blank line before class docstring
   "D205",    # docstring summary can span more than one line
@@ -77,6 +78,7 @@ ignore = [
   "TC001",   # type checking blocks can mess up dataclasses at runtime
   "TC002",
   "TC003",
+  "TRY003",  # allow setting error messages outside the exc class
 ]
 external = [ "WPS" ]
 

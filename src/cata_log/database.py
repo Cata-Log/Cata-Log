@@ -51,6 +51,7 @@ DBSession = orm.sessionmaker(bind=engine)
 
 
 def get_db_session() -> Generator[orm.Session]:
+    """Shortcut to get a new database session."""
     with DBSession() as db_session:
         yield db_session
 
@@ -59,6 +60,8 @@ depends_db_session = Depends(get_db_session)
 
 
 class TimestampMixin:
+    """Mixin adding standard creation and update timestamps to an ORM model."""
+
     created_at: orm.Mapped[datetime] = orm.mapped_column(
         DateTime(timezone=True), server_default=func.current_timestamp(), nullable=False
     )
@@ -72,6 +75,8 @@ class TimestampMixin:
 
 
 class Config(ModelBase, TimestampMixin):
+    """ORM model for a cata_log instance configuration."""
+
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     name: orm.Mapped[str] = orm.mapped_column(unique=True)
     value: orm.Mapped[str] = orm.mapped_column()
@@ -79,6 +84,8 @@ class Config(ModelBase, TimestampMixin):
 
 
 class Provider(ModelBase, TimestampMixin):
+    """ORM model for a catalog provider."""
+
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     class_id: orm.Mapped[str] = orm.mapped_column()
     config = Column(JSON, default={})
@@ -95,7 +102,8 @@ class Provider(ModelBase, TimestampMixin):
 
 
 class Catalog(ModelBase, TimestampMixin):
-    __tablename__ = "catalogs"
+    """ORM model for a catalog."""
+
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     valid_since: orm.Mapped[datetime] = orm.mapped_column(DateTime(timezone=True))
     valid_until: orm.Mapped[datetime] = orm.mapped_column(DateTime(timezone=True))
@@ -106,9 +114,12 @@ class Catalog(ModelBase, TimestampMixin):
     pages: orm.Mapped[list[Page]] = orm.relationship(
         back_populates="catalog", cascade="all, delete-orphan"
     )
+    __tablename__ = "catalogs"
 
 
 class Page(ModelBase, TimestampMixin):
+    """ORM model for a catalog page."""
+
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     number: orm.Mapped[int] = orm.mapped_column()
     storage_path: orm.Mapped[str] = orm.mapped_column(unique=True)
@@ -122,8 +133,11 @@ class Page(ModelBase, TimestampMixin):
 
 @event.listens_for(Page, "before_delete")
 def before_page_delete(
-    mapper: orm.Mapper, connection: Connection, target: Page
+    mapper: orm.Mapper,  # noqa: ARG001  # required for event decorator
+    connection: Connection,  # noqa: ARG001  # required for event decorator
+    target: Page,
 ) -> None:
+    """Event cleaning up a page file before deleting the page."""
     if target.storage_path:
         with contextlib.suppress(FileNotFoundError):
             os.remove(target.storage_path)
@@ -131,8 +145,11 @@ def before_page_delete(
 
 @event.listens_for(Provider, "after_insert")
 def after_provider_insert(
-    mapper: orm.Mapper, connection: Connection, target: Provider
+    mapper: orm.Mapper,  # noqa: ARG001  # required for event decorator
+    connection: Connection,
+    target: Provider,
 ) -> None:
+    """Event setting up a providers task after its insertion."""
     db_session = orm.Session(bind=connection)
     provider_class = ProviderType.registry.get(target.class_id)
     if not provider_class:
@@ -157,6 +174,9 @@ def after_provider_insert(
 
 @event.listens_for(Provider, "before_delete")
 def before_provider_delete(
-    mapper: orm.Mapper, connection: Connection, target: Provider
+    mapper: orm.Mapper,  # noqa: ARG001  # required for event decorator
+    connection: Connection,
+    target: Provider,
 ) -> None:
+    """Event cleaning up a providers task before deleting the provider."""
     connection.execute(delete(PeriodicTask).where(PeriodicTask.id == target.task_id))

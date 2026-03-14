@@ -25,6 +25,15 @@ def get_calendar_week_number(
     dt: datetime.datetime,
     week_startpoint: constants.WeekCountingStartpoints = constants.WeekCountingStartpoints.MONDAY,
 ) -> int:
+    """Get the calendar week number of a datetime.
+
+    Args:
+        dt: The datetime.
+        week_startpoint: The day a week starts with.
+
+    Returns:
+        The week number starting with 1.
+    """
     week_number_offset = (
         1
         if (
@@ -38,18 +47,3 @@ def get_calendar_week_number(
         else 0
     )
     return int(dt.strftime(week_startpoint.week_number_format)) + week_number_offset
-
-
-def get_week_limit_dates(
-    dt: datetime.datetime,
-    week_startpoint: constants.WeekCountingStartpoints = constants.WeekCountingStartpoints.MONDAY,
-) -> tuple[datetime.datetime, datetime.datetime]:
-    start = (
-        dt - datetime.timedelta(days=dt.weekday()) + week_startpoint.week_start_weekday
-    )
-    end = (
-        dt
-        + datetime.timedelta(days=6 - dt.weekday())
-        + week_startpoint.week_start_weekday
-    )
-    return start, end

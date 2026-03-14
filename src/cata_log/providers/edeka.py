@@ -26,6 +26,8 @@ from .regions import Germany
 
 
 class EdekaBasissortiment(Provider):
+    """Provider class for Edeka Basissortiment catalog."""
+
     name = "edeka-basissortiment"
     description = "Edeka Basis Angebote"
     url = "https://www.edeka-wochenangebote.de/"
@@ -65,6 +67,8 @@ class EdekaBasissortiment(Provider):
 
 
 class EdekaMarkt(EdekaBasissortiment):
+    """Provider class for Edeka Marktangebote catalog."""
+
     name = "edeka-markt"
     description = "Edeka Markt Angebote"
     configuration = MappingProxyType(

@@ -27,6 +27,8 @@ from .regions import Germany
 
 
 class KauflandWoche(Provider):
+    """Provider class for Kaufland Wochenangebote catalog."""
+
     name = "kaufland"
     description = "Kaufland Angebote"
     configuration = MappingProxyType(
@@ -75,6 +77,8 @@ class KauflandWoche(Provider):
 
 
 class KauflandWochePreview(KauflandWoche):
+    """Provider class for Kaufland Wochenangebote preview catalog for next week."""
+
     name = "kaufland-preview"
     description = KauflandWoche.description + " im nächsten Katalog"
 

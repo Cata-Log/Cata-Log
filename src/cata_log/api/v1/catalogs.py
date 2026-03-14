@@ -32,6 +32,8 @@ router = APIRouter(prefix="/catalogs", tags=["catalogs"])
 
 
 class Catalog(BaseModel):
+    """Catalog data model."""
+
     id: int
     provider_id: int
     valid_since: datetime
@@ -43,6 +45,7 @@ class Catalog(BaseModel):
 async def list_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
+    """List all catalogs."""
     return db_session.query(database.Catalog).all()
 
 
@@ -50,6 +53,7 @@ async def list_catalogs(
 async def list_previews_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
+    """List all preview catalogs."""
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
@@ -61,6 +65,7 @@ async def list_previews_catalogs(
 async def list_current_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
+    """List all current catalogs."""
     now = datetime.now(tz=UTC)
     return (
         db_session.query(database.Catalog)
@@ -74,6 +79,7 @@ async def list_current_catalogs(
 async def list_outdated_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
+    """List all outdated catalogs."""
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
@@ -85,6 +91,7 @@ async def list_outdated_catalogs(
 async def get_catalog(
     catalog_id: int, db_session: Session = database.depends_db_session
 ) -> database.Catalog:
+    """Get a single catalog."""
     catalog = (
         db_session.query(database.Catalog)
         .filter(database.Catalog.id == catalog_id)
@@ -101,6 +108,7 @@ async def get_catalog(
 async def get_catalog_page(
     catalog_id: int, page_number: int, db_session: Session = database.depends_db_session
 ) -> database.Catalog:
+    """Get a single catalog page by its page number."""
     page = (
         db_session.query(database.Page)
         .filter(database.Page.catalog_id == catalog_id)
@@ -121,6 +129,7 @@ async def download_catalog_page(
     filename: str | None = None,
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
+    """Download a single catalog page by its page number."""
     page = (
         db_session.query(database.Page)
         .filter(database.Page.catalog_id == catalog_id)
@@ -147,6 +156,7 @@ async def embed_catalog_page(
     filename: str | None = None,
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
+    """Embed a single catalog page by its page number."""
     page = (
         db_session.query(database.Page)
         .filter(database.Page.catalog_id == catalog_id)

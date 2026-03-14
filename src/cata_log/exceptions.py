@@ -17,27 +17,23 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 
-class PageNotFound(Exception):
-    pass
-
-
 class NetworkError(Exception):
-    pass
+    """An error with the network."""
 
 
 class ProviderBrokenWarning(Warning):
-    pass
+    """An error indicating that the provider class may be broken."""
 
 
 class ProviderMisconfiguredWarning(Warning):
-    pass
+    """An error indicating that the provider is misconfigured."""
 
 
 class ProviderMisconfiguredOrBrokenWarning(
     ProviderBrokenWarning, ProviderMisconfiguredWarning
 ):
-    pass
+    """An error indicating that the provider class may be broken or misconfigured."""
 
 
-class PagesExhausted(Exception):
-    pass
+class PagesExhausted(Exception):  # noqa: N818  # not actually an error
+    """The pages of a catalog were exhausted."""

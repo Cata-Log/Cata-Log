@@ -27,6 +27,8 @@ from .regions import Germany
 
 
 class Lidl(Provider):
+    """Provider class for Lidl catalog."""
+
     name = "lidl"
     description = "Lidl Angebote"
     url = "https://www.lidl.de/c/online-prospekte/s10005610"
@@ -75,6 +77,8 @@ class Lidl(Provider):
 
 
 class LidlPreview(Lidl):
+    """Provider class for Lidl preview catalog for next week."""
+
     name = "lidl-preview"
     description = Lidl.description + " nächste Woche"
 
@@ -92,6 +96,8 @@ class LidlPreview(Lidl):
 
 
 class LidlPreview2(Lidl):
+    """Provider class for Lidl preview catalog for second-next week."""
+
     name = "lidl-preview2"
     description = Lidl.description + " übernächste Woche"
 

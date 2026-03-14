@@ -27,15 +27,21 @@ router = APIRouter(prefix="/config", tags=["config"])
 
 
 class Config(BaseModel):
+    """Config data model."""
+
     name: str
     value: str
 
 
 class ConfigUpdate(BaseModel):
+    """Config update data model."""
+
     value: str
 
 
 class NewConfig(BaseModel):
+    """Config creation data model."""
+
     name: str
     value: str
 
@@ -44,11 +50,13 @@ class NewConfig(BaseModel):
 async def list_config(
     db_session: orm.Session = database.depends_db_session,
 ) -> list[database.Config]:
+    """List all configurations."""
     return db_session.query(database.Config).all()
 
 
 @router.get("/defaults", response_model=list[Config])
 async def list_config_defaults() -> list[DefaultConfig]:
+    """List all configuration defaults."""
     return list(DefaultConfig)
 
 
@@ -56,6 +64,7 @@ async def list_config_defaults() -> list[DefaultConfig]:
 async def get_config(
     key: str, db_session: orm.Session = database.depends_db_session
 ) -> database.Config:
+    """Get a single configuration."""
     config = (
         db_session.query(database.Config).filter(database.Config.name == key).first()
     )
@@ -70,6 +79,7 @@ async def get_config(
 async def post_config(
     new_config: NewConfig, db_session: orm.Session = database.depends_db_session
 ) -> database.Config:
+    """Set a new configuration."""
     if (
         db_session.query(database.Config)
         .filter(database.Config.name == new_config.name)
@@ -91,6 +101,7 @@ async def put_config(
     config_update: ConfigUpdate,
     db_session: orm.Session = database.depends_db_session,
 ) -> database.Config:
+    """Update a single configuration."""
     config = (
         db_session.query(database.Config).filter(database.Config.name == key).first()
     )
@@ -108,6 +119,7 @@ async def patch_config(
     config_update: ConfigUpdate,
     db_session: orm.Session = database.depends_db_session,
 ) -> database.Config:
+    """Update a single configuration."""
     config = (
         db_session.query(database.Config).filter(database.Config.name == key).first()
     )
@@ -125,6 +137,7 @@ async def patch_config(
 async def delete_config(
     key: str, db_session: orm.Session = database.depends_db_session
 ) -> None:
+    """Delete a single configuration."""
     config = (
         db_session.query(database.Config)
         .filter(database.Config.name == key)

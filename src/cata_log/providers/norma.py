@@ -27,6 +27,8 @@ from .regions import Germany
 
 
 class Norma(Provider):
+    """Provider class for Norma catalog."""
+
     name = "norma"
     description = "Norma Angebote"
     region = Germany
@@ -66,6 +68,8 @@ class Norma(Provider):
 
 
 class NormaPreview(Norma):
+    """Provider class for Norma preview catalog for next week."""
+
     name = "norma-preview"
     description = Norma.description + " nächste Woche"
 
@@ -75,6 +79,8 @@ class NormaPreview(Norma):
 
 
 class NormaPreview2(Norma):
+    """Provider class for Norma preview catalog for second-next week."""
+
     name = "norma-preview2"
     description = Norma.description + " übernächste Woche"
 
