@@ -25,7 +25,7 @@ from celery.schedules import crontab
 
 from cata_log import constants, database
 from cata_log.constants import BROKER_URL, DATABASE_URL
-from cata_log.providers import catalog_registry
+from cata_log.providers import Provider
 
 app = Celery()
 
@@ -53,7 +53,7 @@ def fetch_provider(provider_id: int) -> None:
         .one_or_none()
     )
     if provider:
-        catalog_class = catalog_registry.get(provider.class_id)
+        catalog_class = Provider.registry.get(provider.class_id)
         if catalog_class:
             try:
                 provider_fetcher = catalog_class(**provider.config)

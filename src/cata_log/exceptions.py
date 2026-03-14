@@ -17,13 +17,27 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 
-class NotFoundError(Exception):
+class PageNotFound(Exception):
     pass
 
 
-class ConnectionError(Exception):
+class NetworkError(Exception):
     pass
 
 
-class InvalidURLError(Exception):
+class ProviderBrokenWarning(Warning):
+    pass
+
+
+class ProviderMisconfiguredWarning(Warning):
+    pass
+
+
+class ProviderMisconfiguredOrBrokenWarning(
+    ProviderBrokenWarning, ProviderMisconfiguredWarning
+):
+    pass
+
+
+class PagesExhausted(Exception):
     pass

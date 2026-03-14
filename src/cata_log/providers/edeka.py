@@ -19,24 +19,20 @@
 from calendar import Day
 from datetime import datetime, time, timedelta
 from types import MappingProxyType
-from typing import Any, override
+from typing import override
 
-import httpx
-
-from cata_log import exceptions
-
-from .base import BaseProvider
+from .base import Provider
 from .regions import Germany
-from .registry import catalog_registry
 
 
-@catalog_registry.register
-class EdekaBasis(BaseProvider):
-    name = "edeka-basis"
+class EdekaBasissortiment(Provider):
+    name = "edeka-basissortiment"
     description = "Edeka Basis Angebote"
+    url = "https://www.edeka-wochenangebote.de/"
     configuration = MappingProxyType(
         {
-            "region": "Name der Edeka Region",
+            "region": "Name der Region",
+            "edeka_region": "Name der Edeka Region",
         }
     )
     region = Germany
@@ -44,25 +40,14 @@ class EdekaBasis(BaseProvider):
     url_format = "https://blaetterkatalog.edeka.de/{region}/EDEKA_CENTER_GRUND_SORTIMENT_{edeka_region}/blaetterkatalog/normal/bk_{page_number}.jpg"
 
     @override
-    def __init__(self, region: str, edeka_region: str, **kwargs: Any) -> None:
-        super().__init__(**kwargs, region=region, edeka_region=edeka_region)
-
-    @override
     def get_catalog_data(self) -> None:
         pass
 
     @override
     def get_page(self, page_number: int) -> bytes:
-        response = httpx.get(
+        response = self._client.get(
             self.url_format.format(**self._config, page_number=page_number),
-            follow_redirects=True,
         )
-        try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as error:
-            if error.response.status_code == httpx.codes.NOT_FOUND:
-                raise exceptions.NotFoundError from error
-            raise exceptions.InvalidURLError from error
         return response.content
 
     @override
@@ -79,11 +64,9 @@ class EdekaBasis(BaseProvider):
         return self.get_valid_since() + timedelta(days=7)
 
 
-@catalog_registry.register
-class EdekaMarkt(EdekaBasis):
+class EdekaMarkt(EdekaBasissortiment):
     name = "edeka-markt"
     description = "Edeka Markt Angebote"
-    region = Germany
     configuration = MappingProxyType(
         {
             "region": "Name der Edeka Region",
@@ -91,7 +74,3 @@ class EdekaMarkt(EdekaBasis):
         }
     )
     url_format = "https://blaetterkatalog.edeka.de/{region}/{edeka_markt}/blaetterkatalog/normal/bk_{page_number}.jpg"
-
-    @override
-    def __init__(self, region: str, edeka_markt: str, **kwargs: Any) -> None:
-        super().__init__(**kwargs, region=region, edeka_markt=edeka_markt)

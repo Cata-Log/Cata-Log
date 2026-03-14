@@ -20,30 +20,27 @@ from calendar import Day
 from datetime import datetime, time, timedelta
 from typing import override
 
-import httpx
-
-from cata_log.exceptions import NotFoundError
+from cata_log.exceptions import PagesExhausted
 from cata_log.utils import dates, page_numbers
 
-from .base import BaseProvider
+from .base import Provider
 from .regions import Germany
-from .registry import catalog_registry
 
 
-@catalog_registry.register
-class Netto(BaseProvider):
+class Netto(Provider):
     name = "netto"
     description = "Netto Angebote"
     region = Germany
+    url = "https://www.netto-online.de/ueber-netto/Online-Prospekte.chtm"
 
     overview_url_format = (
         "https://wochenprospekt.netto-online.de/hz{week_number}_pobd/spreads.json"
     )
-    url = "https://wochenprospekt.netto-online.de"
+    base_url = "https://wochenprospekt.netto-online.de"
 
     @override
     def get_catalog_data(self) -> None:
-        self.catalog_data = httpx.get(
+        self.catalog_data = self._client.get(
             self.overview_url_format.format(
                 week_number=dates.get_calendar_week_number(self._relevant_datetime),
             )
@@ -58,8 +55,8 @@ class Netto(BaseProvider):
                 "images"
             ]["at800"]
         except IndexError as error:
-            raise NotFoundError from error
-        response = httpx.get(self.url + page_url)
+            raise PagesExhausted from error
+        response = self._client.get(self.base_url + page_url)
         return response.content
 
     @override
@@ -76,7 +73,6 @@ class Netto(BaseProvider):
         return self.get_valid_since() + timedelta(days=7)
 
 
-@catalog_registry.register
 class NettoPreview(Netto):
     name = "netto-preview"
     description = Netto.description + " nächste Woche"

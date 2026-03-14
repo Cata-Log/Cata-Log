@@ -18,36 +18,30 @@
 
 from calendar import Day
 from datetime import datetime, time, timedelta
-from typing import Any, override
+from typing import override
 
-import httpx
-
-from cata_log.exceptions import NotFoundError
+from cata_log.exceptions import PagesExhausted
 from cata_log.utils import page_numbers
 from cata_log.utils.dates import get_calendar_week_number
 
-from .base import BaseProvider
+from .base import Provider
 from .regions import Germany
-from .registry import catalog_registry
 
 
-@catalog_registry.register
-class AldiSued(BaseProvider):
+class AldiSued(Provider):
     name = "aldi-sued"
+    url = "https://www.aldi-sued.de/prospekte"
     region = Germany
     description = "Aldi Süd Katalog"
+
     overview_url_format = (
         "https://prospekt.aldi-sued.de/kw{week_number:02}-{year}-op-mp/spreads.json"
     )
-    url = "https://view.publitas.com"
-
-    @override
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
+    base_url = "https://view.publitas.com"
 
     @override
     def get_catalog_data(self) -> None:
-        self.catalog_data = httpx.get(
+        self.catalog_data = self._client.get(
             self.overview_url_format.format(
                 week_number=get_calendar_week_number(self._relevant_datetime),
                 year=self._relevant_datetime.year % 100,
@@ -63,8 +57,8 @@ class AldiSued(BaseProvider):
                 "images"
             ]["at800"]
         except IndexError as error:
-            raise NotFoundError from error
-        response = httpx.get(self.url + image_url)
+            raise PagesExhausted from error
+        response = self._client.get(self.base_url + image_url)
         return response.content
 
     @override
@@ -81,7 +75,6 @@ class AldiSued(BaseProvider):
         return self.get_valid_since() + timedelta(days=7)
 
 
-@catalog_registry.register
 class AldiSuedPreview(AldiSued):
     name = "aldi-sued-preview"
     description = AldiSued.description + " für nächste Woche"
@@ -94,7 +87,6 @@ class AldiSuedPreview(AldiSued):
         return super().get_relevant_datetime() + timedelta(days=7)
 
 
-@catalog_registry.register
 class AldiSuedPreview2(AldiSued):
     name = "aldi-sued-preview2"
     description = AldiSued.description + " für übernächste Woche"

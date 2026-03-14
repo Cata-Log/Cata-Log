@@ -43,7 +43,7 @@ from sqlalchemy import (
 )
 
 from cata_log.constants import DATABASE_URL
-from cata_log.providers import catalog_registry
+from cata_log.providers import Provider as ProviderType
 
 engine = create_engine(url=DATABASE_URL, echo=True)
 
@@ -134,7 +134,7 @@ def after_provider_insert(
     mapper: orm.Mapper, connection: Connection, target: Provider
 ) -> None:
     db_session = orm.Session(bind=connection)
-    provider_class = catalog_registry.get(target.class_id)
+    provider_class = ProviderType.registry.get(target.class_id)
     if not provider_class:
         logging.getLogger().critical("no provider class")
         return

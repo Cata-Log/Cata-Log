@@ -17,32 +17,74 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import abc
-from collections.abc import Generator, Sequence
+from collections.abc import Generator
 from datetime import datetime
-from types import MappingProxyType
-from typing import Any
+from types import MappingProxyType, TracebackType
+from typing import Any, ClassVar, Self, final
 
+import httpx
 from celery.schedules import crontab
 
-from cata_log.exceptions import NotFoundError
+from cata_log import constants
+from cata_log.exceptions import (
+    NetworkError,
+    PagesExhausted,
+    ProviderBrokenWarning,
+    ProviderMisconfiguredOrBrokenWarning,
+)
 
 from .regions import Region
 
 
-class BaseProvider(abc.ABC):
+class Provider(abc.ABC):
     """Abstract base class for all catalog providers."""
 
+    registry: ClassVar[dict[str, type[Provider]]] = {}
     name: str
+    description: str
+    url: str
     region: type[Region]
     first_page_number: int = 1
-    description: str
     configuration: MappingProxyType[str, str] = MappingProxyType({})
     schedule: crontab = crontab(hour=4)
 
+    @final
     def __init__(self, **kwargs: Any):
+        if any(config_key not in kwargs for config_key in self.configuration):
+            raise TypeError("Configuration keyword-argument missing.")
         self._config = kwargs
         self._relevant_datetime = self.get_relevant_datetime()
+        self._client = httpx.Client(
+            follow_redirects=True,
+            headers={"User-Agent": constants.FAKE_USER_AGENT},
+            event_hooks={
+                "response": [
+                    lambda r, *_, **__: r.raise_for_status(),
+                ]
+            },
+        )
 
+    @final
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        if cls.id() in cls.registry:
+            raise AttributeError(f"The ID of {cls} is not unique.")
+        cls.registry[cls.id()] = cls
+
+    @final
+    def __enter__(self) -> Self:
+        return self
+
+    @final
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        exc_traceback: TracebackType | None,
+    ) -> None:
+        self._client.close()
+
+    @final
     def __str__(self) -> str:
         return f"Catalog {self.id}"
 
@@ -65,35 +107,45 @@ class BaseProvider(abc.ABC):
     def get_catalog_data(self) -> None:
         pass
 
-    def iter_catalog_pages(
-        self, page_range: Sequence[int] | None = None
-    ) -> Generator[tuple[int, bytes]]:
-        self.get_catalog_data()
-        if page_range:
-            for page_number in page_range:
-                yield page_number, self.get_page(page_number)
-        else:
+    @final
+    def iter_catalog_pages(self) -> Generator[tuple[int, bytes]]:
+        try:
+            try:
+                self.get_catalog_data()
+            except httpx.HTTPStatusError as status_error:
+                raise ProviderMisconfiguredOrBrokenWarning from status_error
+
             page_number = self.first_page_number
             while True:
                 try:
                     yield page_number, self.get_page(page_number)
-                except NotFoundError:
+                except PagesExhausted:
                     break
+                except httpx.HTTPStatusError as status_error:
+                    if (
+                        status_error.response.status_code == httpx.codes.NOT_FOUND
+                        and page_number != self.first_page_number
+                    ):
+                        break
+                    raise ProviderMisconfiguredOrBrokenWarning from status_error
                 page_number += 1
+        except httpx.TransportError as transport_error:
+            raise NetworkError from transport_error
+        except Exception as error:
+            raise ProviderBrokenWarning from error
 
+    @final
     @classmethod
     def id(cls) -> str:
         return cls.name + "-" + cls.region.local_name.lower()
 
-    @classmethod
-    def get_storage_path(cls, datetime: datetime, page_number: int) -> str:
-        return f"{cls.id}_{datetime}_{page_number}"
-
+    @final
     @classmethod
     def info(cls) -> dict[str, str | dict[str, str]]:
         return {
             "id": cls.id(),
             "description": cls.description,
+            "url": cls.url,
             "configuration": dict(cls.configuration),
             "region": cls.region.info(),
         }

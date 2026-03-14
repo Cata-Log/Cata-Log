@@ -23,7 +23,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from cata_log import database
-from cata_log.providers import catalog_registry
+from cata_log.providers import Provider as ProviderType
 from cata_log.tasks import fetch_provider
 
 from .catalogs import Catalog
@@ -53,6 +53,7 @@ class ProviderInfo(BaseModel):
     id: str
     configuration: dict[str, str]
     description: str
+    url: str
     region: RegionInfo
 
 
@@ -73,7 +74,7 @@ async def list_available_providers(
         query = query.lower()
     return [
         catalog_class.info()
-        for catalog_class in catalog_registry.values()
+        for catalog_class in ProviderType.registry.values()
         if (not query and not region)
         or (region and (region in catalog_class.region.local_name.lower()))
         or (
@@ -90,7 +91,7 @@ async def list_available_providers(
 async def post_provider(
     new_provider: NewProvider, db_session: Session = database.depends_db_session
 ) -> database.Provider:
-    provider_class = catalog_registry.get(new_provider.class_id)
+    provider_class = ProviderType.registry.get(new_provider.class_id)
     if not provider_class:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

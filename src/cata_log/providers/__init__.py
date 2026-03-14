@@ -17,19 +17,19 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from .aldi import AldiSued, AldiSuedPreview, AldiSuedPreview2
-from .edeka import EdekaBasis, EdekaMarkt
+from .base import Provider
+from .edeka import EdekaBasissortiment, EdekaMarkt
 from .kaufland import KauflandWoche, KauflandWochePreview
 from .lidl import Lidl, LidlPreview, LidlPreview2
 from .netto import Netto, NettoPreview
 from .norma import Norma
-from .registry import catalog_registry
 from .rewe import Rewe
 
 __all__ = [
     "AldiSued",
     "AldiSuedPreview",
     "AldiSuedPreview2",
-    "EdekaBasis",
+    "EdekaBasissortiment",
     "EdekaMarkt",
     "KauflandWoche",
     "KauflandWochePreview",
@@ -39,6 +39,6 @@ __all__ = [
     "Netto",
     "NettoPreview",
     "Norma",
+    "Provider",
     "Rewe",
-    "catalog_registry",
 ]

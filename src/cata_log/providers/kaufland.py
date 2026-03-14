@@ -18,19 +18,15 @@
 
 from datetime import datetime, timedelta
 from types import MappingProxyType
-from typing import Any, override
+from typing import override
 
-import httpx
+from cata_log.exceptions import PagesExhausted
 
-from cata_log.exceptions import NotFoundError
-
-from .base import BaseProvider
+from .base import Provider
 from .regions import Germany
-from .registry import catalog_registry
 
 
-@catalog_registry.register
-class KauflandWoche(BaseProvider):
+class KauflandWoche(Provider):
     name = "kaufland"
     description = "Kaufland Angebote"
     configuration = MappingProxyType(
@@ -38,19 +34,18 @@ class KauflandWoche(BaseProvider):
             "region_id": "ID der Kaufland-Region",
         }
     )
+    url = "https://filiale.kaufland.de/prospekte.html"
     region = Germany
     first_page_number = 0
 
     overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={region_id}&client_locale=kaufland/de-DE"
 
     @override
-    def __init__(self, region_id: str, **kwargs: Any) -> None:
-        super().__init__(**kwargs, region_id=region_id)
-
-    @override
     def get_catalog_data(self) -> None:
-        overview_response = httpx.get(self.overview_url_template.format(**self._config))
-        flyer_json_response = httpx.get(
+        overview_response = self._client.get(
+            self.overview_url_template.format(**self._config)
+        )
+        flyer_json_response = self._client.get(
             overview_response.json()["categories"][0]["subcategories"][-2]["flyers"][0][
                 "flyerJson"
             ]
@@ -62,13 +57,8 @@ class KauflandWoche(BaseProvider):
         try:
             url = self.flyer_json["flyer"]["pages"][page_number]["image"]
         except IndexError as error:
-            raise NotFoundError from error
-        response = httpx.get(url)
-        try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as error:
-            if error.response.status_code == httpx.codes.NOT_FOUND:
-                raise NotFoundError from error
+            raise PagesExhausted from error
+        response = self._client.get(url)
         return response.content
 
     @override
@@ -90,8 +80,10 @@ class KauflandWochePreview(KauflandWoche):
 
     @override
     def get_catalog_data(self) -> None:
-        overview_response = httpx.get(self.overview_url_template.format(**self._config))
-        flyer_json_response = httpx.get(
+        overview_response = self._client.get(
+            self.overview_url_template.format(**self._config)
+        )
+        flyer_json_response = self._client.get(
             overview_response.json()["categories"][0]["subcategories"][-2]["flyers"][1][
                 "flyerJson"
             ]

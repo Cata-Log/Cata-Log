@@ -19,35 +19,28 @@
 from calendar import Day
 from datetime import datetime, time, timedelta
 from types import MappingProxyType
-from typing import Any, override
+from typing import override
 
-import httpx
-
-from cata_log.exceptions import NotFoundError
+from cata_log.exceptions import PagesExhausted
 from cata_log.utils import dates, page_numbers
 
-from .base import BaseProvider
+from .base import Provider
 from .regions import Germany
-from .registry import catalog_registry
 
 
-@catalog_registry.register
-class Rewe(BaseProvider):
+class Rewe(Provider):
     name = "rewe"
     description = "Rewe Katalog"
+    url = "https://www.rewe.de/angebote/"
     region = Germany
     configuration = MappingProxyType({"markt_id": "ID des Rewe Markts"})
 
     overview_url_format = "https://view.publitas.com/rewe-markt/rewe_{year}_wk{week_number:02}_{markt_id}/spreads.json"
-    url = "https://view.publitas.com"
-
-    @override
-    def __init__(self, markt_id: str, **kwargs: Any) -> None:
-        super().__init__(**kwargs, markt_id=markt_id)
+    base_url = "https://view.publitas.com"
 
     @override
     def get_catalog_data(self) -> None:
-        self.catalog_data = httpx.get(
+        self.catalog_data = self._client.get(
             self.overview_url_format.format(
                 week_number=dates.get_calendar_week_number(self._relevant_datetime),
                 year=self._relevant_datetime.year,
@@ -64,8 +57,8 @@ class Rewe(BaseProvider):
                 "images"
             ]["at800"]
         except IndexError as error:
-            raise NotFoundError from error
-        response = httpx.get(self.url + image_url)
+            raise PagesExhausted from error
+        response = self._client.get(self.base_url + image_url)
         return response.content
 
     @override

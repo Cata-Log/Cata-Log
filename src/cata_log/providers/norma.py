@@ -20,21 +20,17 @@ from calendar import Day
 from datetime import datetime, time, timedelta
 from typing import override
 
-import httpx
-
-from cata_log import exceptions
 from cata_log.utils.dates import get_calendar_week_number
 
-from .base import BaseProvider
+from .base import Provider
 from .regions import Germany
-from .registry import catalog_registry
 
 
-@catalog_registry.register
-class Norma(BaseProvider):
+class Norma(Provider):
     name = "norma"
     description = "Norma Angebote"
     region = Germany
+    url = "https://www.norma-online.de/de/angebote/onlineprospekt/"
 
     catalog_url_format = "https://www.norma-online.de/de/angebote/online-prospekt/{year}-{week_number:02}_FG/files/page/{page_number}.jpg"
 
@@ -44,7 +40,7 @@ class Norma(BaseProvider):
 
     @override
     def get_page(self, page_number: int) -> bytes:
-        response = httpx.get(
+        response = self._client.get(
             url=self.catalog_url_format.format(
                 year=self._relevant_datetime.year,
                 week_number=get_calendar_week_number(
@@ -52,14 +48,7 @@ class Norma(BaseProvider):
                 ),
                 page_number=page_number,
             ),
-            follow_redirects=True,
         )
-        try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as error:
-            if error.response.status_code == httpx.codes.NOT_FOUND:
-                raise exceptions.NotFoundError from error
-            raise exceptions.InvalidURLError from error
         return response.content
 
     @override
@@ -76,7 +65,6 @@ class Norma(BaseProvider):
         return self.get_valid_since() + timedelta(days=7)
 
 
-@catalog_registry.register
 class NormaPreview(Norma):
     name = "norma-preview"
     description = Norma.description + " nächste Woche"
@@ -86,7 +74,6 @@ class NormaPreview(Norma):
         return super().get_relevant_datetime() + timedelta(days=7)
 
 
-@catalog_registry.register
 class NormaPreview2(Norma):
     name = "norma-preview2"
     description = Norma.description + " übernächste Woche"
