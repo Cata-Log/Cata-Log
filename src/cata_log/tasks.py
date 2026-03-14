@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -39,6 +40,8 @@ app.conf.update(
     enable_utc=True,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender: Celery, **kwargs: Any) -> None:
@@ -47,6 +50,7 @@ def setup_periodic_tasks(sender: Celery, **kwargs: Any) -> None:
 
 @app.task
 def fetch_provider(provider_id: int) -> None:
+    logger.info("Fetching provider catalog ...", extra={"provider_id": provider_id})
     db_session = next(database.get_db_session())
     provider = (
         db_session.query(database.Provider)
@@ -59,6 +63,13 @@ def fetch_provider(provider_id: int) -> None:
             try:
                 provider_fetcher = catalog_class(**provider.config)
             except TypeError:
+                logger.exception(
+                    "Provider misconfigured!",
+                    extra={
+                        "provider_id": provider_id,
+                        "provider_config": provider.config,
+                    },
+                )
                 return
             new_catalog = database.Catalog(
                 provider_id=provider_id,
@@ -69,7 +80,23 @@ def fetch_provider(provider_id: int) -> None:
             db_session.flush()
             for page_number, page_bytes in provider_fetcher.iter_catalog_pages():
                 page_storage_path = constants.STORAGE_PATH / str(uuid.uuid4())
+                logger.debug(
+                    "Saving page data to storage ...",
+                    extra={
+                        "provider_id": provider_id,
+                        "page_nr": page_number,
+                        "storage_path": str(page_storage_path),
+                    },
+                )
                 page_storage_path.write_bytes(page_bytes)
+                logger.debug(
+                    "Success saving page data to storage.",
+                    extra={
+                        "provider_id": provider_id,
+                        "page_nr": page_number,
+                        "storage_path": str(page_storage_path),
+                    },
+                )
                 new_page = database.Page(
                     catalog_id=new_catalog.id,
                     number=page_number,
@@ -78,6 +105,16 @@ def fetch_provider(provider_id: int) -> None:
                 db_session.add(new_page)
                 db_session.flush()
             db_session.commit()
+            return
+        logger.error(
+            "Failed to find provider class!",
+            extra={"provider_id": provider_id, "class_id": provider.class_id},
+        )
+        return
+    logger.error(
+        "Failed to find provider from database!", extra={"provider_id": provider_id}
+    )
+    return
 
 
 @app.task
@@ -89,11 +126,34 @@ def cleanup_catalogs() -> None:
     except ValueError:
         expiration_days = int(constants.DefaultConfig.expiration_days)
     expiration_date = datetime.now(tz=UTC) - timedelta(days=expiration_days)
+    logger.info(
+        "Deleting outdated catalogs ...", extra={"expiration_deadline": expiration_date}
+    )
     for catalog in (
         db_session.query(database.Catalog)
         .filter(database.Catalog.created_at < expiration_date)
         .all()
     ):
+        logger.debug(
+            "Deleting outdated catalog ...",
+            extra={
+                "catalog_id": catalog.id,
+                "creation_date": catalog.created_at,
+                "expiration_deadline": expiration_date,
+            },
+        )
         db_session.delete(catalog)
         db_session.flush()
+        logger.debug(
+            "Success deleting outdated catalog.",
+            extra={
+                "catalog_id": catalog.id,
+                "creation_date": catalog.created_at,
+                "expiration_deadline": expiration_date,
+            },
+        )
     db_session.commit()
+    logger.info(
+        "Success deleting outdated catalogs.",
+        extra={"expiration_deadline": expiration_date},
+    )

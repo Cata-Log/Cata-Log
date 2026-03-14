@@ -24,12 +24,16 @@ from pathlib import Path
 STORAGE_PATH = Path("/mnt/storage/").resolve()
 DATABASE_URL = "sqlite:////mnt/db/cata-log.sqlite3"
 BROKER_URL = "amqp://guest:guest@localhost:5672//"
+LOG_DIRECTORY_PATH = Path("/var/log/cata-log/").resolve()
 
 
 class DefaultConfig(enum.StrEnum):
     expiration_days = "28"
     fake_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
     log_level = "INFO"
+    log_format = "{asctime} {levelname} - {name}.{funcName}: {message}"
+    log_file_backup_count = "10"
+    log_file_maxsize = "2097152"  # 2 MB
 
 
 class CatalogSchedules(enum.Enum):

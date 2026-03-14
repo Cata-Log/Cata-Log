@@ -17,6 +17,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import abc
+import logging
 from collections.abc import Generator
 from datetime import datetime
 from types import MappingProxyType, TracebackType
@@ -63,6 +64,7 @@ class Provider(abc.ABC):
                 ]
             },
         )
+        self._logger = logging.getLogger(self.__class__.__name__)
 
     @final
     def __init_subclass__(cls) -> None:
@@ -110,28 +112,41 @@ class Provider(abc.ABC):
     @final
     def iter_catalog_pages(self) -> Generator[tuple[int, bytes]]:
         try:
+            self._logger.debug("Getting catalog data ...")
             try:
                 self.get_catalog_data()
             except httpx.HTTPStatusError as status_error:
+                self._logger.exception("Getting catalog data failed!")
                 raise ProviderMisconfiguredOrBrokenWarning from status_error
+            self._logger.debug("Success getting catalog data.")
 
             page_number = self.first_page_number
             while True:
+                self._logger.debug("Getting page %s ...", page_number)
                 try:
                     yield page_number, self.get_page(page_number)
                 except PagesExhausted:
+                    self._logger.debug("Page %s was the last page.", page_number - 1)
                     break
                 except httpx.HTTPStatusError as status_error:
                     if (
                         status_error.response.status_code == httpx.codes.NOT_FOUND
                         and page_number != self.first_page_number
                     ):
+                        self._logger.debug(
+                            "Page %s appear to be the last page.",
+                            page_number - 1,
+                            exc_info=True,
+                        )
                         break
+                    self._logger.exception("Failed getting page %s.", page_number)
                     raise ProviderMisconfiguredOrBrokenWarning from status_error
                 page_number += 1
         except httpx.TransportError as transport_error:
+            self._logger.exception("Failed getting catalog pages.")
             raise NetworkError from transport_error
         except Exception as error:
+            self._logger.exception("Failed getting catalog pages.")
             raise ProviderBrokenWarning from error
 
     @final
