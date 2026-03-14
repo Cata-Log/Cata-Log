@@ -32,13 +32,6 @@ from .registry import catalog_registry
 
 
 @catalog_registry.register
-class AldiNord(BaseProvider):
-    name = "aldi-nord"
-    region = Germany
-    description = "Aldi Nord Katalog"
-
-
-@catalog_registry.register
 class AldiSued(BaseProvider):
     name = "aldi-sued"
     region = Germany
@@ -53,7 +46,7 @@ class AldiSued(BaseProvider):
         super().__init__(**kwargs)
 
     @override
-    def get_catalog_data(self, *args: Any) -> None:
+    def get_catalog_data(self) -> None:
         self.catalog_data = httpx.get(
             self.overview_url_format.format(
                 week_number=get_calendar_week_number(self._relevant_datetime),
@@ -91,7 +84,7 @@ class AldiSued(BaseProvider):
 @catalog_registry.register
 class AldiSuedPreview(AldiSued):
     name = "aldi-sued-preview"
-    description = "Aldi Süd Katalog für nächste Woche"
+    description = AldiSued.description + " für nächste Woche"
     overview_url_format = (
         "https://prospekt.aldi-sued.de/kw{week_number:02}-{year}-op/spreads.json"
     )
@@ -104,7 +97,7 @@ class AldiSuedPreview(AldiSued):
 @catalog_registry.register
 class AldiSuedPreview2(AldiSued):
     name = "aldi-sued-preview2"
-    description = "Aldi Süd Katalog für übernächste Woche"
+    description = AldiSued.description + " für übernächste Woche"
     overview_url_format = (
         "https://prospekt.aldi-sued.de/kw{week_number:02}-{year}-vop/spreads.json"
     )

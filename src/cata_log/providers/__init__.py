@@ -16,9 +16,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from .aldi import AldiNord, AldiSued, AldiSuedPreview, AldiSuedPreview2
+from .aldi import AldiSued, AldiSuedPreview, AldiSuedPreview2
 from .edeka import EdekaBasis, EdekaMarkt
-from .kaufland import Kaufland
+from .kaufland import KauflandWoche, KauflandWochePreview
 from .lidl import Lidl, LidlPreview, LidlPreview2
 from .netto import Netto, NettoPreview
 from .norma import Norma
@@ -26,13 +26,13 @@ from .registry import catalog_registry
 from .rewe import Rewe
 
 __all__ = [
-    "AldiNord",
     "AldiSued",
     "AldiSuedPreview",
     "AldiSuedPreview2",
     "EdekaBasis",
     "EdekaMarkt",
-    "Kaufland",
+    "KauflandWoche",
+    "KauflandWochePreview",
     "Lidl",
     "LidlPreview",
     "LidlPreview2",

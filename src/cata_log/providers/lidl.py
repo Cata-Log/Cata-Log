@@ -16,12 +16,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from calendar import Day
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
 from types import MappingProxyType
 from typing import Any, override
 
 import httpx
+
+from cata_log.exceptions import NotFoundError
 
 from .base import BaseProvider
 from .regions import Germany
@@ -38,46 +39,49 @@ class Lidl(BaseProvider):
             "region_id": "ID der Lidl Region",
         }
     )
+    first_page_number = 0
 
-    overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?client_locale=lidl/de-DE&region_id={region_id}"
-    flyer_json_url_template = "https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=aktionsprospekt-{week_start_date}-{week_end_date}-21f2e9&region_id={region_id}"
+    overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={region_id}&client_locale=lidl/de-DE"
 
     @override
     def __init__(self, region_id: str, **kwargs: Any) -> None:
-        super().__init__(
-            **kwargs,
-            region_id=region_id,
-        )
+        super().__init__(**kwargs, region_id=region_id)
 
     @override
     def get_catalog_data(self) -> None:
-        pass
+        overview_response = httpx.get(self.overview_url_template.format(**self._config))
+        flyer_json_response = httpx.get(
+            overview_response.json()["categories"][0]["subcategories"][0]["flyers"][0][
+                "flyerJson"
+            ]
+        )
+        self.flyer_json = flyer_json_response.json()
 
     @override
     def get_page(self, page_number: int) -> bytes:
-        response = httpx.get(
-            self.flyer_json_url_template.format(
-                week_start_date=self.get_valid_since().strftime("%d-%m-%Y"),
-                week_end_date=(self.get_valid_until() - timedelta(days=1)).strftime(
-                    "%d-%m-%Y"
-                ),
-                **self._config,
-            )
-        )
-        return response.json()
+        try:
+            url = self.flyer_json["flyer"]["pages"][page_number]["image"]
+        except IndexError as error:
+            raise NotFoundError from error
+        response = httpx.get(url)
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as error:
+            if error.response.status_code == httpx.codes.NOT_FOUND:
+                raise NotFoundError from error
+        return response.content
 
     @override
     def get_valid_since(self) -> datetime:
-        return datetime.combine(
-            self._relevant_datetime
-            - timedelta(days=self._relevant_datetime.weekday() - Day.MONDAY),
-            time.min,
-            self._relevant_datetime.tzinfo,
-        )
+        return datetime.strptime(
+            self.flyer_json["flyer"]["offerStartDate"], "%Y-%m-%d"
+        ).astimezone(tz=self.region.timezone)
 
     @override
     def get_valid_until(self) -> datetime:
-        return self.get_valid_since() + timedelta(days=7)
+        return datetime.strptime(
+            self.flyer_json["flyer"]["offerEndDate"], "%Y-%m-%d"
+        ).astimezone(tz=self.region.timezone) + timedelta(days=1)
 
 
 @catalog_registry.register
@@ -86,8 +90,14 @@ class LidlPreview(Lidl):
     description = Lidl.description + " nächste Woche"
 
     @override
-    def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() + timedelta(days=7)
+    def get_catalog_data(self) -> None:
+        overview_response = httpx.get(self.overview_url_template.format(**self._config))
+        flyer_json_response = httpx.get(
+            overview_response.json()["categories"][0]["subcategories"][0]["flyers"][1][
+                "flyerJson"
+            ]
+        )
+        self.flyer_json = flyer_json_response.json()
 
 
 @catalog_registry.register
@@ -96,5 +106,11 @@ class LidlPreview2(Lidl):
     description = Lidl.description + " übernächste Woche"
 
     @override
-    def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() + timedelta(days=14)
+    def get_catalog_data(self) -> None:
+        overview_response = httpx.get(self.overview_url_template.format(**self._config))
+        flyer_json_response = httpx.get(
+            overview_response.json()["categories"][0]["subcategories"][0]["flyers"][2][
+                "flyerJson"
+            ]
+        )
+        self.flyer_json = flyer_json_response.json()

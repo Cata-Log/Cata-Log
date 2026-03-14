@@ -37,7 +37,7 @@ class Netto(BaseProvider):
     region = Germany
 
     overview_url_format = (
-        "https://wochenprospekt.netto-online.de/hz{week_number}_kisa/spreads.json"
+        "https://wochenprospekt.netto-online.de/hz{week_number}_pobd/spreads.json"
     )
     url = "https://wochenprospekt.netto-online.de"
 
