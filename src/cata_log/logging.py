@@ -25,18 +25,10 @@ logging.config.dictConfig(
                 "class": "logging.handlers.RotatingFileHandler",
                 "filename": str(LOG_DIRECTORY_PATH / "cata-log.log"),
                 "maxBytes": int(
-                    getattr(
-                        logging,
-                        get_config(DefaultConfig.log_file_maxsize.name),
-                        DefaultConfig.log_file_maxsize.value,
-                    )
+                    get_config(DefaultConfig.log_file_maxsize.name),
                 ),
                 "backupCount": int(
-                    getattr(
-                        logging,
-                        get_config(DefaultConfig.log_file_backup_count.name),
-                        DefaultConfig.log_file_backup_count.value,
-                    )
+                    get_config(DefaultConfig.log_file_backup_count.name)
                 ),
                 "formatter": "default",
             },
