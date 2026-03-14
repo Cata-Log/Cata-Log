@@ -44,18 +44,15 @@ def LocalSession(engine):
     return orm.sessionmaker(bind=engine)
 
 
+@pytest.fixture(autouse=True)
+def patch_DBSession(monkeypatch, LocalSession):
+    monkeypatch.setattr("cata_log.database.DBSession", LocalSession)
+
+
 @pytest.fixture
 def db_session(LocalSession):
     with LocalSession() as db_session:
         yield db_session
-
-
-@pytest.fixture
-def mock_get_db_session(db_session):
-    def mock_get_db_session():
-        yield db_session
-
-    return mock_get_db_session
 
 
 @pytest.fixture
@@ -74,8 +71,8 @@ def fake_fs():
 
 
 @pytest.fixture
-def fake_config(faker, db_session):
-    fake_config = database.Config(key="test_conf", value=faker.word())
+def fake_config(db_session):
+    fake_config = database.Config(name="test_conf", value="test_val")
     db_session.add(fake_config)
     db_session.commit()
     db_session.refresh(fake_config)
