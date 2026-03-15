@@ -22,6 +22,7 @@ from sqlalchemy import orm
 
 from cata_log import database
 from cata_log.constants import DefaultConfig
+from cata_log.utils.shortcuts import get_config as get_config_util
 
 router = APIRouter(prefix="/config", tags=["config"])
 
@@ -60,19 +61,15 @@ async def list_config_defaults() -> list[DefaultConfig]:
     return list(DefaultConfig)
 
 
-@router.get("/{key}", response_model=Config)
-async def get_config(
-    key: str, db_session: orm.Session = database.depends_db_session
-) -> database.Config:
+@router.get("/{name}", response_model=Config)
+async def get_config(name: str) -> str:
     """Get a single configuration."""
-    config = (
-        db_session.query(database.Config).filter(database.Config.name == key).first()
-    )
-    if not config:
+    try:
+        return get_config_util(name)
+    except AttributeError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Config not found"
-        )
-    return config
+        ) from None
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=Config)
@@ -95,15 +92,15 @@ async def post_config(
     return config
 
 
-@router.put("/{key}", response_model=Config)
+@router.put("/{name}", response_model=Config)
 async def put_config(
-    key: str,
+    name: str,
     config_update: ConfigUpdate,
     db_session: orm.Session = database.depends_db_session,
 ) -> database.Config:
     """Update a single configuration."""
     config = (
-        db_session.query(database.Config).filter(database.Config.name == key).first()
+        db_session.query(database.Config).filter(database.Config.name == name).first()
     )
     if not config:
         raise HTTPException(status_code=404, detail="Config not found")
@@ -113,15 +110,15 @@ async def put_config(
     return config
 
 
-@router.patch("/{key}", response_model=Config)
+@router.patch("/{name}", response_model=Config)
 async def patch_config(
-    key: str,
+    name: str,
     config_update: ConfigUpdate,
     db_session: orm.Session = database.depends_db_session,
 ) -> database.Config:
     """Update a single configuration."""
     config = (
-        db_session.query(database.Config).filter(database.Config.name == key).first()
+        db_session.query(database.Config).filter(database.Config.name == name).first()
     )
     if not config:
         raise HTTPException(
@@ -133,14 +130,14 @@ async def patch_config(
     return config
 
 
-@router.delete("/{key}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_config(
-    key: str, db_session: orm.Session = database.depends_db_session
+    name: str, db_session: orm.Session = database.depends_db_session
 ) -> None:
     """Delete a single configuration."""
     config = (
         db_session.query(database.Config)
-        .filter(database.Config.name == key)
+        .filter(database.Config.name == name)
         .one_or_none()
     )
     if not config:
