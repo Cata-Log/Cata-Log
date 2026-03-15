@@ -21,6 +21,9 @@ from fastapi.staticfiles import StaticFiles
 
 from cata_log import api, web
 from cata_log.constants import STORAGE_PATH
+from cata_log.logging_config import setup_logging
+
+setup_logging()
 
 app = FastAPI()
 
