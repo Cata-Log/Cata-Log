@@ -28,6 +28,7 @@ from typing import Any, ClassVar, Self, final
 import httpx
 from celery.schedules import crontab
 
+from cata_log.constants import STORAGE_PATH
 from cata_log.exceptions import (
     NetworkError,
     PagesExhausted,
@@ -35,7 +36,6 @@ from cata_log.exceptions import (
     ProviderMisconfiguredOrBrokenWarning,
 )
 from cata_log.utils.shortcuts import get_config
-from src.cata_log.constants import STORAGE_PATH
 
 from .regions import Region
 

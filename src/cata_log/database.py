@@ -43,8 +43,8 @@ from sqlalchemy import (
 )
 
 from cata_log.constants import DATABASE_URL
+from cata_log.exceptions import ProviderMisconfiguredWarning
 from cata_log.providers import Provider as ProviderType
-from src.cata_log.exceptions import ProviderMisconfiguredWarning
 
 logger = logging.getLogger(__name__)
 
