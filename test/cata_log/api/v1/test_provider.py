@@ -114,12 +114,7 @@ def test_post_provider__success(LocalSession, client):
     data = response.json()
     assert data["class_id"] == "rewe-deutschland"
     assert data["config"] == {"markt_id": "1234"}
-    assert (
-        LocalSession()
-        .query(database.Provider)
-        .filter(database.Provider.id == data["id"])
-        .one_or_none()
-    )
+    assert LocalSession().get(database.Provider, data["id"])
 
 
 def test_post_provider__missing_config(LocalSession, client):

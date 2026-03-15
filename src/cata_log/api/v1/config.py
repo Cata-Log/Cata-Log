@@ -100,7 +100,9 @@ async def put_config(
 ) -> database.Config:
     """Update a single configuration."""
     config = (
-        db_session.query(database.Config).filter(database.Config.name == name).first()
+        db_session.query(database.Config)
+        .filter(database.Config.name == name)
+        .one_or_none()
     )
     if not config:
         raise HTTPException(status_code=404, detail="Config not found")
@@ -118,7 +120,9 @@ async def patch_config(
 ) -> database.Config:
     """Update a single configuration."""
     config = (
-        db_session.query(database.Config).filter(database.Config.name == name).first()
+        db_session.query(database.Config)
+        .filter(database.Config.name == name)
+        .one_or_none()
     )
     if not config:
         raise HTTPException(

@@ -116,6 +116,7 @@ parametrize-values-type = "list"
   "N806",  # class names must be allowed as part of mock names
   "TRY003",# error messages can be put directly
   "ARG005",# lambdas may have unused args
+  "D",     # no docstrings in tests
 ]
 
 [lint.extend-per-file-ignores]

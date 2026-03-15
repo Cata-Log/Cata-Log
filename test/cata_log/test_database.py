@@ -52,11 +52,7 @@ def test_Provider_insertion(LocalSession):
         assert provider.class_id == AldiSued.id()
         assert provider.config == {}
         assert provider.task_id
-        periodic_task = (
-            db_session.query(PeriodicTask)
-            .filter(PeriodicTask.id == provider.task_id)
-            .one_or_none()
-        )
+        periodic_task = db_session.get(PeriodicTask, provider.task_id)
         assert periodic_task
         assert periodic_task.task == "cata_log.tasks.fetch_catalog"
         assert periodic_task.args == f"[{provider.id}]"

@@ -44,6 +44,9 @@ from sqlalchemy import (
 
 from cata_log.constants import DATABASE_URL
 from cata_log.providers import Provider as ProviderType
+from src.cata_log.exceptions import ProviderMisconfiguredWarning
+
+logger = logging.getLogger(__name__)
 
 engine = create_engine(url=DATABASE_URL, echo=True)
 
@@ -99,6 +102,44 @@ class Provider(ModelBase, TimestampMixin):
     )
     __tablename__ = "providers"
     __table_args__ = (UniqueConstraint("class_id", "config"),)
+
+    def get_provider_class(self) -> type[ProviderType]:
+        """Get the class for this provider.
+
+        Returns:
+            The provider class.
+        """
+        provider_class = Provider.registry.get(self.class_id)
+        if not provider_class:
+            logger.error(
+                "Provider class not found!",
+                extra={
+                    "provider_id": self.id,
+                    "provider_class_id": self.class_id,
+                },
+            )
+            raise ProviderMisconfiguredWarning
+        return provider_class
+
+    def get_provider_instance(self) -> ProviderType:
+        """Get a class instance for this provider.
+
+        Returns:
+            The provider instance.
+        """
+        provider_class = self.get_provider_class()
+        try:
+            provider_instance = provider_class(**self.config)
+        except TypeError as error:
+            logger.exception(
+                "Provider misconfigured!",
+                extra={
+                    "provider_id": self.id,
+                    "provider_config": self.config,
+                },
+            )
+            raise ProviderMisconfiguredWarning from error
+        return provider_instance
 
 
 class Catalog(ModelBase, TimestampMixin):

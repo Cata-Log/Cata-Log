@@ -127,11 +127,7 @@ async def get_provider(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> database.Provider:
     """Get a single provider."""
-    provider = (
-        db_session.query(database.Provider)
-        .filter(database.Provider.id == provider_id)
-        .first()
-    )
+    provider = db_session.get(database.Provider, provider_id)
     if not provider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
@@ -144,11 +140,7 @@ async def delete_provider(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> None:
     """Delete a single provider. This also deletes all its catalogs and their pages."""
-    provider = (
-        db_session.query(database.Provider)
-        .filter(database.Provider.id == provider_id)
-        .first()
-    )
+    provider = db_session.get(database.Provider, provider_id)
     if not provider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
@@ -218,11 +210,7 @@ async def post_provider_update(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> dict[str, str]:
     """Trigger an update of a providers catalogs."""
-    if (
-        not db_session.query(database.Provider)
-        .filter(database.Provider.id == provider_id)
-        .one_or_none()
-    ):
+    if not db_session.get(database.Provider, provider_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
         )

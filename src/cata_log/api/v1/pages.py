@@ -57,7 +57,7 @@ async def get_page(
     page_id: int, db_session: Session = database.depends_db_session
 ) -> database.Page:
     """Get a single page."""
-    page = db_session.query(database.Page).filter(database.Page.id == page_id).first()
+    page = db_session.get(database.Page, page_id)
     if not page:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
@@ -72,11 +72,7 @@ async def download_page(
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
     """Download a single page."""
-    page = (
-        db_session.query(database.Page)
-        .filter(database.Page.id == page_id)
-        .one_or_none()
-    )
+    page = db_session.get(database.Page, page_id)
     if not page:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
@@ -97,11 +93,7 @@ async def embed_page(
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
     """Embed a single page."""
-    page = (
-        db_session.query(database.Page)
-        .filter(database.Page.id == page_id)
-        .one_or_none()
-    )
+    page = db_session.get(database.Page, page_id)
     if not page:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"

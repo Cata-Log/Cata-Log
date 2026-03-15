@@ -92,11 +92,7 @@ async def get_catalog(
     catalog_id: int, db_session: Session = database.depends_db_session
 ) -> database.Catalog:
     """Get a single catalog."""
-    catalog = (
-        db_session.query(database.Catalog)
-        .filter(database.Catalog.id == catalog_id)
-        .first()
-    )
+    catalog = db_session.get(database.Catalog, catalog_id)
     if not catalog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"

@@ -18,8 +18,10 @@
 
 import abc
 import logging
+import uuid
 from collections.abc import Generator
 from datetime import datetime
+from pathlib import Path
 from types import MappingProxyType, TracebackType
 from typing import Any, ClassVar, Self, final
 
@@ -33,6 +35,7 @@ from cata_log.exceptions import (
     ProviderMisconfiguredOrBrokenWarning,
 )
 from cata_log.utils.shortcuts import get_config
+from src.cata_log.constants import STORAGE_PATH
 
 from .regions import Region
 
@@ -51,6 +54,8 @@ class Provider(abc.ABC):
     """The region this catalog is issued in"""
     first_page_number: int = 1
     """The number of the first page in the providers api"""
+    page_file_extension: str = ".jpg"
+    """The file extension of page files from the providers api"""
     configuration: MappingProxyType[str, str] = MappingProxyType({})
     """The configuration parameters with helptexts for this provider"""
     schedule: crontab = crontab(hour=4)
@@ -220,3 +225,13 @@ class Provider(abc.ABC):
             "configuration": dict(cls.configuration),
             "region": cls.region.info(),
         }
+
+    @classmethod
+    def get_new_storage_path(cls) -> Path:
+        """Get a new unique storage path for page data.
+
+        Returns:
+            The storage path.
+        """
+        filename = str(uuid.uuid4()) + cls.page_file_extension
+        return STORAGE_PATH / filename
