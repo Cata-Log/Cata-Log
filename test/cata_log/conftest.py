@@ -59,13 +59,14 @@ def db_session(LocalSession):
 def fake_fs():
     """A mock Linux filesystem for realistic testing.
 
-    Contains a directory at the STORAGE_PATH setting.
+    Contains directories at the STORAGE_PATH and LOG_DIRECTORY_PATH.
     """
     with Patcher() as patcher:
         if not patcher.fs:
             raise OSError("Generator could not create a fakefs!")
 
         patcher.fs.create_dir(constants.STORAGE_PATH)
+        patcher.fs.create_dir(constants.LOG_DIRECTORY_PATH)
         patcher.fs.add_real_directory(os.path.dirname(constants.__file__))
         yield patcher.fs
 
