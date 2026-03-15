@@ -17,10 +17,11 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import os
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 from sqlalchemy.orm import Session
 
 from cata_log import database
@@ -34,6 +35,13 @@ class Page(BaseModel):
     id: int
     number: int
     catalog_id: int
+    storage_path: str
+
+    @computed_field
+    @property
+    def static_filename(self) -> str:
+        """Compute the static filename from the storage path."""
+        return Path(self.storage_path).name
 
 
 @router.get("", response_model=list[Page])
