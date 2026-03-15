@@ -22,7 +22,6 @@ from sqlalchemy import orm
 
 from cata_log import database
 from cata_log.constants import DefaultConfig
-from cata_log.utils.shortcuts import get_config as get_config_util
 
 router = APIRouter(prefix="/config", tags=["config"])
 
@@ -62,14 +61,21 @@ async def list_config_defaults() -> list[DefaultConfig]:
 
 
 @router.get("/{name}", response_model=Config)
-async def get_config(name: str) -> str:
+async def get_config(
+    name: str, db_session: orm.Session = database.depends_db_session
+) -> database.Config:
     """Get a single configuration."""
     try:
-        return get_config_util(name)
+        config = db_session.query(database.Config).filter(
+            database.Config.name == name
+        ).one_or_none() or database.Config(
+            name=name, value=getattr(DefaultConfig, name)
+        )
     except AttributeError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Config not found"
         ) from None
+    return config
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=Config)
