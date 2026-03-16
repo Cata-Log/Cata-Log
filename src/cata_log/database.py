@@ -109,7 +109,7 @@ class Provider(ModelBase, TimestampMixin):
         Returns:
             The provider class.
         """
-        provider_class = Provider.registry.get(self.class_id)
+        provider_class = ProviderType.registry.get(self.class_id)
         if not provider_class:
             logger.error(
                 "Provider class not found!",
