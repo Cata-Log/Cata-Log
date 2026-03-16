@@ -154,8 +154,8 @@ autodoc_inherit_docstrings = True
 # https://www.sphinx-doc.org/en/master/usage/extensions/apidoc.html#configuration
 #
 apidoc_modules = [
-    {"path": "../../src/", "destination": "apidoc-rst/config"},
-    {"path": "../../test", "destination": "apidoc-rst/test"},
+    {"path": "../src/", "destination": "apidoc-rst/src"},
+    {"path": "../test", "destination": "apidoc-rst/test"},
 ]
 
 apidoc_exclude_patterns = [

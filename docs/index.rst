@@ -1,16 +1,30 @@
-.. Cata-Log documentation master file, created by
-   sphinx-quickstart on Mon Mar  2 18:08:46 2026.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+..
+   SPDX-License-Identifier: CC-BY-SA 4.0
 
-Cata-Log documentation
+   Copyright (C) 2026 David Aderbauer & The Cata-Log Contributors
+   Licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+
+Cata-Log Documentation
 ======================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
+Welcome to the documentation of Cata-Log, the central self-hostable hub for all flyers and catalogs.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+   quickstart
+   faq
+   installation
+   configuration
+   troubleshooting
+   how-to-add-provider
+   how-to-add-region
+   changelog
+   contact
+   contributing
+   code_of_conduct
+   development
+   todo
+   modules
+   license
