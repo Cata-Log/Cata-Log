@@ -62,12 +62,21 @@ class Provider(abc.ABC):
     """The crontab schedule for fetching this provider"""
 
     @final
-    def __init__(self, **kwargs: Any):
+    def __init__(self, **kwargs: Any) -> None:
         """Constructor for a provider instance.
 
         Stores all kwargs into a the :attr:`_config` member.
         """
+        self._logger = logging.getLogger(self.__class__.__name__)
         if any(config_key not in kwargs for config_key in self.configuration):
+            self._logger.error(
+                "Provider class missing keyword arguments!",
+                extra={
+                    "provider_class": self.__class__.__name__,
+                    "keyword_arguments": kwargs,
+                    "provider_configuration": self.configuration,
+                },
+            )
             raise TypeError("Configuration keyword-argument missing.")
         self._config = kwargs
         self._relevant_datetime = self.get_relevant_datetime()
@@ -80,7 +89,19 @@ class Provider(abc.ABC):
                 ]
             },
         )
-        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger.debug("Getting catalog data ...")
+        try:
+            self.get_catalog_data()
+        except httpx.HTTPStatusError as status_error:
+            self._logger.exception("Getting catalog data failed!")
+            raise ProviderMisconfiguredOrBrokenWarning from status_error
+        except httpx.TransportError as transport_error:
+            self._logger.exception("Failed getting catalog pages.")
+            raise NetworkError from transport_error
+        except Exception as error:
+            self._logger.exception("Failed getting catalog pages.")
+            raise ProviderBrokenWarning from error
+        self._logger.debug("Success getting catalog data.")
 
     @final
     def __init_subclass__(cls) -> None:
@@ -164,14 +185,6 @@ class Provider(abc.ABC):
             A generator of the pages data as bytes.
         """
         try:
-            self._logger.debug("Getting catalog data ...")
-            try:
-                self.get_catalog_data()
-            except httpx.HTTPStatusError as status_error:
-                self._logger.exception("Getting catalog data failed!")
-                raise ProviderMisconfiguredOrBrokenWarning from status_error
-            self._logger.debug("Success getting catalog data.")
-
             page_number = self.first_page_number
             while True:
                 self._logger.debug("Getting page %s ...", page_number)
