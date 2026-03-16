@@ -25,11 +25,12 @@ from pydantic import BaseModel, computed_field
 from sqlalchemy.orm import Session
 
 from cata_log import database
+from cata_log.api.mixins import TimestampMixin
 
 router = APIRouter(prefix="/pages", tags=["pages"])
 
 
-class Page(BaseModel):
+class Page(TimestampMixin, BaseModel):
     """Page data model."""
 
     id: int
@@ -49,7 +50,11 @@ async def list_pages(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Page]:
     """List all pages."""
-    return db_session.query(database.Page).all()
+    return (
+        db_session.query(database.Page)
+        .order_by(database.Page.catalog_id, database.Page.number)
+        .all()
+    )
 
 
 @router.get("/{page_id}", response_model=Page)

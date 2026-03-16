@@ -21,16 +21,21 @@ from pydantic import BaseModel
 from sqlalchemy import orm
 
 from cata_log import database
+from cata_log.api.mixins import TimestampMixin
 from cata_log.constants import DefaultConfig
 
 router = APIRouter(prefix="/config", tags=["config"])
 
 
-class Config(BaseModel):
-    """Config data model."""
+class ConfigDefault(BaseModel):
+    """Config default data model."""
 
     name: str
     value: str
+
+
+class Config(TimestampMixin, ConfigDefault):
+    """Config data model."""
 
 
 class ConfigUpdate(BaseModel):
@@ -54,7 +59,7 @@ async def list_config(
     return db_session.query(database.Config).all()
 
 
-@router.get("/defaults", response_model=list[Config])
+@router.get("/defaults", response_model=list[ConfigDefault])
 async def list_config_defaults() -> list[DefaultConfig]:
     """List all configuration defaults."""
     return list(DefaultConfig)

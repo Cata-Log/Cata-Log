@@ -58,8 +58,3 @@ repos:
     hooks:
       - id: gitlab-ci-verify
         args: [--severity, warning]
-  - repo: https://github.com/JelleZijlstra/autotyping
-    rev: 24.9.0
-    hooks:
-      - id: autotyping
-        args: [--safe, src/]

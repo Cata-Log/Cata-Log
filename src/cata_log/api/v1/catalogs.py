@@ -25,13 +25,14 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from cata_log import database
+from cata_log.api.mixins import TimestampMixin
 
 from .pages import Page
 
 router = APIRouter(prefix="/catalogs", tags=["catalogs"])
 
 
-class Catalog(BaseModel):
+class Catalog(TimestampMixin, BaseModel):
     """Catalog data model."""
 
     id: int
@@ -57,6 +58,7 @@ async def list_previews_catalogs(
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
+        .order_by(-database.Catalog.created_at)
         .all()
     )
 
@@ -71,6 +73,7 @@ async def list_current_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
+        .order_by(-database.Catalog.created_at)
         .all()
     )
 
@@ -83,6 +86,7 @@ async def list_outdated_catalogs(
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
+        .order_by(-database.Catalog.created_at)
         .all()
     )
 

@@ -23,6 +23,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from cata_log import database
+from cata_log.api.mixins import TimestampMixin
 from cata_log.providers import Provider as ProviderType
 from cata_log.tasks import fetch_provider
 
@@ -31,7 +32,7 @@ from .catalogs import Catalog
 router = APIRouter(prefix="/providers", tags=["providers"])
 
 
-class Provider(BaseModel):
+class Provider(TimestampMixin, BaseModel):
     """Provider data model."""
 
     id: int
@@ -70,7 +71,9 @@ async def list_providers(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Provider]:
     """List all providers."""
-    return db_session.query(database.Provider).all()
+    return (
+        db_session.query(database.Provider).order_by(-database.Provider.class_id).all()
+    )
 
 
 @router.get("/available", response_model=list[ProviderInfo])
@@ -157,6 +160,7 @@ async def list_provider_catalogs(
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
+        .order_by(-database.Catalog.created_at)
         .all()
     )
 
@@ -171,6 +175,7 @@ async def list_provider_current_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since <= datetime.now(tz=UTC))
         .filter(database.Catalog.valid_until > datetime.now(tz=UTC))
+        .order_by(-database.Catalog.created_at)
         .all()
     )
 
@@ -184,6 +189,7 @@ async def list_provider_preview_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
+        .order_by(-database.Catalog.created_at)
         .all()
     )
 
@@ -197,6 +203,7 @@ async def list_provider_outdated_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
+        .order_by(-database.Catalog.created_at)
         .all()
     )
 

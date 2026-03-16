@@ -67,8 +67,11 @@ def test_post_config(faker, LocalSession, client):
     response = client.post("/api/v1/config", json=config_json)
 
     assert response.status_code == 201
-    assert response.json() == config_json
     assert len(db_session.query(database.Config).all()) == 1
+    assert all(
+        config_json_value in response.json().values()
+        for config_json_value in config_json.values()
+    )
     config = (
         db_session.query(database.Config)
         .filter(database.Config.name == config_json["name"])
