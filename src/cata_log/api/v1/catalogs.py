@@ -32,7 +32,7 @@ from .pages import Page
 router = APIRouter(prefix="/catalogs", tags=["catalogs"])
 
 
-class Catalog(TimestampMixin, BaseModel):
+class Catalog(BaseModel, TimestampMixin):
     """Catalog data model."""
 
     id: int

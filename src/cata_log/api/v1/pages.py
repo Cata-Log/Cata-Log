@@ -30,7 +30,7 @@ from cata_log.api.mixins import TimestampMixin
 router = APIRouter(prefix="/pages", tags=["pages"])
 
 
-class Page(TimestampMixin, BaseModel):
+class Page(BaseModel, TimestampMixin):
     """Page data model."""
 
     id: int

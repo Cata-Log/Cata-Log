@@ -34,7 +34,7 @@ class ConfigDefault(BaseModel):
     value: str
 
 
-class Config(TimestampMixin, ConfigDefault):
+class Config(ConfigDefault, TimestampMixin):
     """Config data model."""
 
 

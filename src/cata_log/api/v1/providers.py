@@ -32,7 +32,7 @@ from .catalogs import Catalog
 router = APIRouter(prefix="/providers", tags=["providers"])
 
 
-class Provider(TimestampMixin, BaseModel):
+class Provider(BaseModel, TimestampMixin):
     """Provider data model."""
 
     id: int
