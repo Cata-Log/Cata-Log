@@ -21,6 +21,7 @@ from types import MappingProxyType
 from typing import override
 
 from cata_log.exceptions import PagesExhausted
+from cata_log.utils.page_numbers import PageNumber
 
 from .base import Provider
 from .regions import Germany
@@ -55,9 +56,9 @@ class KauflandWoche(Provider):
         self.flyer_json = flyer_json_response.json()
 
     @override
-    def get_page(self, page_number: int) -> bytes:
+    def get_page(self, page_number: PageNumber) -> bytes:
         try:
-            url = self.flyer_json["flyer"]["pages"][page_number]["image"]
+            url = self.flyer_json["flyer"]["pages"][int(page_number)]["image"]
         except IndexError as error:
             raise PagesExhausted from error
         response = self._client.get(url)

@@ -21,6 +21,8 @@ from datetime import datetime, time, timedelta
 from types import MappingProxyType
 from typing import override
 
+from cata_log.utils.page_numbers import PageNumber
+
 from .base import Provider
 from .regions import Germany
 
@@ -46,7 +48,7 @@ class EdekaBasissortiment(Provider):
         pass
 
     @override
-    def get_page(self, page_number: int) -> bytes:
+    def get_page(self, page_number: PageNumber) -> bytes:
         response = self._client.get(
             self.url_format.format(**self._config, page_number=page_number),
         )

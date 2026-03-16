@@ -36,6 +36,7 @@ class Rewe(Provider):
     url = "https://www.rewe.de/angebote/"
     region = Germany
     configuration = MappingProxyType({"markt_id": "ID des Rewe Markts"})
+    first_page_number = 0
 
     overview_url_format = "https://view.publitas.com/rewe-markt/rewe_{year}_wk{week_number:02}_{markt_id}/spreads.json"
     base_url = "https://view.publitas.com"
@@ -51,13 +52,12 @@ class Rewe(Provider):
         ).json()
 
     @override
-    def get_page(self, page_number: int) -> bytes:
+    def get_page(self, page_number: page_numbers.PageNumber) -> bytes:
+        double_page_number = page_number.as_double_page_number()
         try:
-            image_url = self.catalog_data[
-                page_numbers.page_number_2_double_page_number(page_number)
-            ]["pages"][page_numbers.page_number_2_double_page_index(page_number)][
-                "images"
-            ]["at800"]
+            image_url = self.catalog_data[double_page_number.number]["pages"][
+                double_page_number.side
+            ]["images"]["at800"]
         except IndexError as error:
             raise PagesExhausted from error
         response = self._client.get(self.base_url + image_url)

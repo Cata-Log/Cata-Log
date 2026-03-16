@@ -21,6 +21,7 @@ from datetime import datetime, time, timedelta
 from typing import override
 
 from cata_log.utils.dates import get_calendar_week_number
+from cata_log.utils.page_numbers import PageNumber
 
 from .base import Provider
 from .regions import Germany
@@ -41,7 +42,7 @@ class Norma(Provider):
         pass
 
     @override
-    def get_page(self, page_number: int) -> bytes:
+    def get_page(self, page_number: PageNumber) -> bytes:
         response = self._client.get(
             url=self.catalog_url_format.format(
                 year=self._relevant_datetime.year,

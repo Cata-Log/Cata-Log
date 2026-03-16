@@ -17,6 +17,9 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 
+from collections.abc import Generator
+
+
 class PageNumber:
     """Pagenumber logic class."""
 
@@ -38,6 +41,42 @@ class PageNumber:
         """
         return f"Page {self._number}"
 
+    def __add__(self, other: object) -> PageNumber:
+        """Add another object to this instance.
+        Implemented for int, DoublePageNumber and PageNumber.
+
+        Returns:
+            The sum of this instance and the other object.
+
+        Raises:
+            TypeError: If the other object is of incompatible type.
+        """
+        if isinstance(other, int):
+            return PageNumber(self._number + other, self._offset)
+        if isinstance(other, PageNumber) and self._offset == other._offset:
+            return PageNumber(self._number + other._number, self._offset)
+        if isinstance(other, DoublePageNumber):
+            return self + other.as_page_number()
+        raise TypeError("Cannot subtract this object from this pagenumber.")
+
+    def __sub__(self, other: object) -> PageNumber:
+        """Subtract another object from this instance.
+        Implemented for int, DoublePageNumber and PageNumber.
+
+        Returns:
+            The difference of this instance and the other object.
+
+        Raises:
+            TypeError: If the other object is of incompatible type.
+        """
+        if isinstance(other, int):
+            return PageNumber(self._number - other, self._offset)
+        if isinstance(other, PageNumber) and self._offset == other._offset:
+            return PageNumber(self._number - other._number, self._offset)
+        if isinstance(other, DoublePageNumber):
+            return self - other.as_page_number()
+        raise TypeError("Cannot subtract this object from this pagenumber.")
+
     def __hash__(self) -> int:
         """Hash of the pagenumber.
 
@@ -53,6 +92,14 @@ class PageNumber:
             The non-normalized original pagenumber.
         """
         return self._number + self._offset
+
+    def __str__(self) -> str:
+        """Convert the pagenumber as a string.
+
+        Returns:
+            The pagenumber as a numeric string.
+        """
+        return str(int(self))
 
     def __eq__(self, other: object) -> bool:
         """Comparison of the pagenumber, double-pagenumber and int.
@@ -140,6 +187,30 @@ class DoublePageNumber:
         """
         return hash((self._number, self._index))
 
+    def __add__(self, other: object) -> DoublePageNumber:
+        """Add another object to this instance.
+        Implemented for int, DoublePageNumber and PageNumber.
+
+        Returns:
+            The sum of this instance and the other object.
+
+        Raises:
+            TypeError: If the other object is of incompatible type.
+        """
+        return (self.as_page_number() + other).as_double_page_number()
+
+    def __sub__(self, other: object) -> DoublePageNumber:
+        """Subtract another object from this instance.
+        Implemented for int, DoublePageNumber and PageNumber.
+
+        Returns:
+            The difference between this instance and the other object.
+
+        Raises:
+            TypeError: If the other object is of incompatible type.
+        """
+        return (self.as_page_number() - other).as_double_page_number()
+
     def __int__(self) -> int:
         """The double-pagenumber.
 
@@ -207,18 +278,50 @@ class DoublePageNumber:
             self._offset,
         )
 
+    @property
+    def number(self) -> int:
+        """Number of the double page.
 
-def page_number_2_double_page_number(
-    page_number: int, first_page_number: int = 0
-) -> int:
-    return (page_number - first_page_number + 1) // 2
+        Returns:
+            The number of this double page.
+        """
+        return self._number
+
+    @property
+    def side(self) -> int:
+        """Index of the double page side.
+
+        Returns:
+            The index of this page.
+        """
+        return self._index
 
 
-def page_number_2_double_page_index(
-    page_number: int, first_page_number: int = 0
-) -> int:
-    return (
-        (page_number - first_page_number + 1) % 2
-        if page_number != first_page_number
-        else 0
-    )
+def page_numbering(start_number: int = 0) -> Generator[PageNumber]:
+    """Generator for a page numbering.
+
+    Args:
+        start_number: The first page number.
+
+    Yields:
+        The consecutive page numbers starting with the first page number.
+    """
+    page_number = PageNumber(start_number, start_number=start_number)
+    while True:
+        yield page_number
+        page_number = page_number.next()
+
+
+def double_page_numbering(start_number: int = 0) -> Generator[DoublePageNumber]:
+    """Generator for double page numbering.
+
+    Args:
+        start_number: The first page number.
+
+    Yields:
+        The consecutive double page numbers starting with the first double page.
+    """
+    double_page_number = DoublePageNumber(0, 0, start_number=start_number)
+    while True:
+        yield double_page_number
+        double_page_number = double_page_number.next()

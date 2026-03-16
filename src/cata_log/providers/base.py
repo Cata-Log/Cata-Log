@@ -35,6 +35,7 @@ from cata_log.exceptions import (
     ProviderBrokenWarning,
     ProviderMisconfiguredOrBrokenWarning,
 )
+from cata_log.utils.page_numbers import PageNumber, page_numbering
 from cata_log.utils.shortcuts import get_config
 
 from .regions import Region
@@ -158,7 +159,7 @@ class Provider(abc.ABC):
         """Get the datetime until which this providers catalog is valid."""
 
     @abc.abstractmethod
-    def get_page(self, page_number: int) -> bytes:
+    def get_page(self, page_number: PageNumber) -> bytes:
         """Get one page from the provider.
 
         Args:
@@ -184,12 +185,11 @@ class Provider(abc.ABC):
         Returns:
             A generator of the pages data as bytes.
         """
-        try:
-            page_number = self.first_page_number
-            while True:
+        for page_number in page_numbering(self.first_page_number):
+            try:
                 self._logger.debug("Getting page %s ...", page_number)
                 try:
-                    yield page_number, self.get_page(page_number)
+                    yield page_number.normalized, self.get_page(page_number)
                 except PagesExhausted:
                     self._logger.debug("Page %s was the last page.", page_number - 1)
                     break
@@ -206,13 +206,12 @@ class Provider(abc.ABC):
                         break
                     self._logger.exception("Failed getting page %s.", page_number)
                     raise ProviderMisconfiguredOrBrokenWarning from status_error
-                page_number += 1
-        except httpx.TransportError as transport_error:
-            self._logger.exception("Failed getting catalog pages.")
-            raise NetworkError from transport_error
-        except Exception as error:
-            self._logger.exception("Failed getting catalog pages.")
-            raise ProviderBrokenWarning from error
+            except httpx.TransportError as transport_error:
+                self._logger.exception("Failed getting catalog pages.")
+                raise NetworkError from transport_error
+            except Exception as error:
+                self._logger.exception("Failed getting catalog pages.")
+                raise ProviderBrokenWarning from error
 
     @final
     @classmethod
