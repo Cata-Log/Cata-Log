@@ -117,7 +117,8 @@ RUN apk add --no-cache ${BUILD_PYTHON_APK_DEPENDENCIES} && \
     rm -rf /tmp/* && \
     rm -f requirements.txt
 
-COPY src/ ./
+
+COPY pyproject.toml src/ ./
 
 # must match port used by fastapi
 EXPOSE 8000

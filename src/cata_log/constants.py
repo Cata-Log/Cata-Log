@@ -25,6 +25,18 @@ DATABASE_URL = "sqlite:////mnt/db/cata-log.sqlite3"
 BROKER_URL = "amqp://guest:guest@localhost:5672//"
 LOG_DIRECTORY_PATH = Path("/var/log/cata-log/").resolve()
 
+FAST_API_TITLE = "Cata-Log"
+FAST_API_DESCRIPTION = "The Central Hub For Grocery Store Catalogs"
+FAST_API_SUMMARY = "API overview for Cata-Log"
+FAST_API_LICENSE_INFO = {
+    "name": "AGPL version 3 or later",
+    "url": "https://www.gnu.org/licenses/agpl-3.0",
+}
+FAST_API_CONTACT = {
+    "name": "Github Repo",
+    "url": "https://github.com/Dacid99/cata-log.git",
+}
+
 
 class DefaultConfig(enum.StrEnum):
     """Enum listing all configuration defaults."""

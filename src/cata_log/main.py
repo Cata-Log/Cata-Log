@@ -16,18 +16,33 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from fastapi import FastAPI
+from fastapi import FastAPI, status
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from cata_log import api, web
-from cata_log.constants import STORAGE_PATH
+from cata_log import __version__, api, constants, web
 from cata_log.logging_config import setup_logging
 
 setup_logging()
 
-app = FastAPI()
+app = FastAPI(
+    title=constants.FAST_API_TITLE,
+    description=constants.FAST_API_DESCRIPTION,
+    summary=constants.FAST_API_SUMMARY,
+    version=__version__.code,
+    license_info=constants.FAST_API_LICENSE_INFO,
+    contact=constants.FAST_API_CONTACT,
+    docs_url="/docs/swagger",
+    redoc_url="/docs/redoc",
+)
+app.add_route(
+    "/docs",
+    lambda _: RedirectResponse("/docs/swagger", status_code=status.HTTP_302_FOUND),
+)
 
-app.mount("/static/pages", StaticFiles(directory=STORAGE_PATH), name="static_pages")
+app.mount(
+    "/static/pages", StaticFiles(directory=constants.STORAGE_PATH), name="static_pages"
+)
 
 app.include_router(api.router)
 app.include_router(web.router)
