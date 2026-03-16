@@ -23,6 +23,6 @@ sort=Cover
 directory = test/reports/cov
 show_contexts=True
 skip_empty=True
-title=Eonvelope Coverage Report
+title=Cata-Log Coverage Report
 [xml]
 output=test/reports/cov/coverage.xml
