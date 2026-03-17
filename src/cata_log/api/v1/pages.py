@@ -45,7 +45,7 @@ class Page(BaseModel, TimestampMixin):
         return Path(self.storage_path).name
 
 
-@router.get("", response_model=list[Page])
+@router.get("", response_model=list[Page], operation_id="list-pages")
 async def list_pages(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Page]:
@@ -57,7 +57,7 @@ async def list_pages(
     )
 
 
-@router.get("/{page_id}", response_model=Page)
+@router.get("/{page_id}", response_model=Page, operation_id="get-page")
 async def get_page(
     page_id: int, db_session: Session = database.depends_db_session
 ) -> database.Page:
@@ -70,7 +70,7 @@ async def get_page(
     return page
 
 
-@router.get("/{page_id}/download")
+@router.get("/{page_id}/download", operation_id="download-page")
 async def download_page(
     page_id: int,
     filename: str | None = None,
@@ -91,7 +91,7 @@ async def download_page(
     )
 
 
-@router.get("/{page_id}/embed")
+@router.get("/{page_id}/embed", operation_id="embed-page")
 async def embed_page(
     page_id: int,
     filename: str | None = None,

@@ -51,7 +51,7 @@ class NewConfig(BaseModel):
     value: str
 
 
-@router.get("", response_model=list[Config])
+@router.get("", response_model=list[Config], operation_id="list-configs")
 async def list_config(
     db_session: orm.Session = database.depends_db_session,
 ) -> list[database.Config]:
@@ -59,13 +59,15 @@ async def list_config(
     return db_session.query(database.Config).all()
 
 
-@router.get("/defaults", response_model=list[ConfigDefault])
+@router.get(
+    "/defaults", response_model=list[ConfigDefault], operation_id="list-default-configs"
+)
 async def list_config_defaults() -> list[DefaultConfig]:
     """List all configuration defaults."""
     return list(DefaultConfig)
 
 
-@router.get("/{name}", response_model=Config)
+@router.get("/{name}", response_model=Config, operation_id="get-config")
 async def get_config(
     name: str, db_session: orm.Session = database.depends_db_session
 ) -> database.Config:
@@ -83,7 +85,12 @@ async def get_config(
     return config
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, response_model=Config)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=Config,
+    operation_id="set-config",
+)
 async def post_config(
     new_config: NewConfig, db_session: orm.Session = database.depends_db_session
 ) -> database.Config:
@@ -103,27 +110,7 @@ async def post_config(
     return config
 
 
-@router.put("/{name}", response_model=Config)
-async def put_config(
-    name: str,
-    config_update: ConfigUpdate,
-    db_session: orm.Session = database.depends_db_session,
-) -> database.Config:
-    """Update a single configuration."""
-    config = (
-        db_session.query(database.Config)
-        .filter(database.Config.name == name)
-        .one_or_none()
-    )
-    if not config:
-        raise HTTPException(status_code=404, detail="Config not found")
-    config.value = config_update.value
-    db_session.commit()
-    db_session.refresh(config)
-    return config
-
-
-@router.patch("/{name}", response_model=Config)
+@router.patch("/{name}", response_model=Config, operation_id="update-config")
 async def patch_config(
     name: str,
     config_update: ConfigUpdate,
@@ -145,7 +132,9 @@ async def patch_config(
     return config
 
 
-@router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{name}", status_code=status.HTTP_204_NO_CONTENT, operation_id="delete-config"
+)
 async def delete_config(
     name: str, db_session: orm.Session = database.depends_db_session
 ) -> None:

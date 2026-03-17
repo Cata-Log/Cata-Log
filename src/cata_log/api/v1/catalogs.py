@@ -42,7 +42,7 @@ class Catalog(BaseModel, TimestampMixin):
     pages: list[Page]
 
 
-@router.get("", response_model=list[Catalog])
+@router.get("", response_model=list[Catalog], operation_id="list-catalogs")
 async def list_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
@@ -50,7 +50,9 @@ async def list_catalogs(
     return db_session.query(database.Catalog).all()
 
 
-@router.get("/previews", response_model=list[Catalog])
+@router.get(
+    "/previews", response_model=list[Catalog], operation_id="list-preview-catalogs"
+)
 async def list_previews_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
@@ -63,7 +65,9 @@ async def list_previews_catalogs(
     )
 
 
-@router.get("/current", response_model=list[Catalog])
+@router.get(
+    "/current", response_model=list[Catalog], operation_id="list-current-catalogs"
+)
 async def list_current_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
@@ -78,7 +82,9 @@ async def list_current_catalogs(
     )
 
 
-@router.get("/outdated", response_model=list[Catalog])
+@router.get(
+    "/outdated", response_model=list[Catalog], operation_id="list-outdated-catalogs"
+)
 async def list_outdated_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
@@ -91,7 +97,7 @@ async def list_outdated_catalogs(
     )
 
 
-@router.get("/{catalog_id}", response_model=Catalog)
+@router.get("/{catalog_id}", response_model=Catalog, operation_id="get-catalog")
 async def get_catalog(
     catalog_id: int, db_session: Session = database.depends_db_session
 ) -> database.Catalog:
@@ -104,7 +110,11 @@ async def get_catalog(
     return catalog
 
 
-@router.get("/{catalog_id}/pages/{page_number}", response_model=Page)
+@router.get(
+    "/{catalog_id}/pages/{page_number}",
+    response_model=Page,
+    operation_id="get-catalog-page",
+)
 async def get_catalog_page(
     catalog_id: int, page_number: int, db_session: Session = database.depends_db_session
 ) -> database.Catalog:
@@ -122,7 +132,9 @@ async def get_catalog_page(
     return page
 
 
-@router.get("/{catalog_id}/pages/{page_number}/download")
+@router.get(
+    "/{catalog_id}/pages/{page_number}/download", operation_id="download-catalog-page"
+)
 async def download_catalog_page(
     catalog_id: int,
     page_number: int,
@@ -149,7 +161,9 @@ async def download_catalog_page(
     )
 
 
-@router.get("/{catalog_id}/pages/{page_number}/embed")
+@router.get(
+    "/{catalog_id}/pages/{page_number}/embed", operation_id="embed-catalog-page"
+)
 async def embed_catalog_page(
     catalog_id: int,
     page_number: int,
