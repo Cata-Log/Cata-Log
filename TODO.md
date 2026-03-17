@@ -10,3 +10,4 @@
 - safe lookup of configs that never raises
 - install package in dockercontainer
 - plugin structure
+- [client libs](https://fastapi.tiangolo.com/advanced/generate-clients/?h=tags#sdk-generators-from-fastapi-sponsors)

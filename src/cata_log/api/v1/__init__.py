@@ -20,7 +20,7 @@ from fastapi import APIRouter
 
 from . import catalogs, config, pages, providers
 
-router = APIRouter(prefix="/v1")
+router = APIRouter(prefix="/v1", tags=["v1"])
 
 router.include_router(pages.router)
 router.include_router(config.router)
