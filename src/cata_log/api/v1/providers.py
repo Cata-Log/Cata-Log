@@ -41,6 +41,12 @@ class Provider(BaseModel, TimestampMixin):
     catalogs: list[Catalog]
 
 
+class ProviderUpdate(BaseModel):
+    """Provider update data model."""
+
+    config: dict[str, str]
+
+
 class NewProvider(BaseModel):
     """Provider creation data model."""
 
@@ -129,6 +135,37 @@ async def post_provider(
         )
     provider = database.Provider(**new_provider.model_dump())
     db_session.add(provider)
+    db_session.commit()
+    db_session.refresh(provider)
+    return provider
+
+
+@router.patch(
+    "/{provider_id}",
+    response_model=Provider,
+    operation_id="update-provider",
+)
+async def patch_provider(
+    provider_id: int,
+    provider_update: ProviderUpdate,
+    db_session: Session = database.depends_db_session,
+) -> database.Provider:
+    """Set up a new provider."""
+    provider = db_session.get(database.Provider, provider_id)
+    if not provider:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
+        )
+    provider_class = ProviderType.registry[provider.class_id]
+    if any(
+        not provider_update.config.get(config)
+        for config in provider_class.configuration
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The given provider configuration is incomplete",
+        )
+    provider.config = provider_update.config
     db_session.commit()
     db_session.refresh(provider)
     return provider

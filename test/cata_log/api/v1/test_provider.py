@@ -104,6 +104,29 @@ def test_delete_provider__not_found(client):
     assert response.json() == {"detail": "Provider not found"}
 
 
+def test_patch_provider__success(LocalSession, fake_provider, client):
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"config": {"markt_id": "marktqwertz"}},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["class_id"] == "rewe-deutschland"
+    assert data["config"] == {"markt_id": "marktqwertz"}
+    provider = LocalSession().get(database.Provider, fake_provider.id)
+    assert provider.config == data["config"]
+
+
+def test_patch_provider__missing_config(fake_provider, client):
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"config": {}},
+    )
+
+    assert response.status_code == 400
+
+
 def test_post_provider__success(LocalSession, client):
     response = client.post(
         url="/api/v1/providers",
