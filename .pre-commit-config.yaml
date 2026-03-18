@@ -35,6 +35,13 @@ repos:
     hooks:
       - id: hadolint-docker
         args: [--config, tools/.hadolint.yaml]
+  - repo: https://github.com/djlint/djLint
+    rev: v1.36.4
+    hooks:
+      - id: djlint-reformat-jinja
+        args: [--configuration, tools/djlintrc]
+      - id: djlint-jinja
+        args: [--configuration, tools/djlintrc]
   - repo: https://github.com/renovatebot/pre-commit-hooks
     rev: 43.47.0
     hooks:

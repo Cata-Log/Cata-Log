@@ -66,5 +66,20 @@ Before every commit the code is formatted, checked and linted by pre-commit.
     "Python": {
       "format_on_save": "on",
     },
+    "HTML": {
+      "format_on_save": "on",
+      "formatter": {
+        "external": {
+          "command": "djlint",
+          "arguments": [
+            "-",
+            "--reformat",
+            "--configuration",
+            "tools/djlintrc",
+            "{buffer_path}",
+          ],
+        },
+      },
+    },
   }
 ```
