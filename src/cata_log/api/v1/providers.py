@@ -278,7 +278,7 @@ async def list_provider_outdated_catalogs(
     "/{provider_id}/update",
     status_code=status.HTTP_200_OK,
     response_class=responses.JSONResponse,
-    operation_id="update-provider",
+    operation_id="request-provider-update",
 )
 async def post_provider_update(
     provider_id: int, db_session: Session = database.depends_db_session
