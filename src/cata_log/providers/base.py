@@ -59,7 +59,7 @@ class Provider(abc.ABC):
     """The file extension of page files from the providers api"""
     configuration: MappingProxyType[str, str] = MappingProxyType({})
     """The configuration parameters with helptexts for this provider"""
-    schedule: crontab = crontab(hour=4)
+    schedule: crontab = crontab(minute=0, hour=4)
     """The crontab schedule for fetching this provider"""
 
     @final
