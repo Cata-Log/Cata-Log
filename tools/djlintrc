@@ -1,0 +1,13 @@
+{
+    "use_gitignore": true,
+    "extend_exclude": "test,docs,tools,docker",
+    "ignore_case": false,
+    "ignore": "H006,H014",
+    "max_blank_lines": 3,
+    "max_line_length": 100,
+    "profile": "jinja",
+    "extension": "html.jinja",
+    "blank_line_before_tag": "load,include,block",
+    "blank_line_after_tag": "extends,load,include,endblock",
+    "close_void_tags": true
+}

@@ -1,0 +1,12 @@
+<form id="provider-form">
+    <label for="class_id">ID of Provider</label>
+    <select name="class_id" >
+        {% for available_provider in available_providers %}
+        <option value="{{ available_provider.id }}">{{ available_provider.id }}</option>
+        {% endfor %}
+    </select>
+    <label for="config">Configuration</label>
+    <input name="config" type="text"/>
+    <div id="form-error"></div>
+    <button type="submit">Save</button>
+</form>

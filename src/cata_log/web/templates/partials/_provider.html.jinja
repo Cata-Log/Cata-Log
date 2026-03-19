@@ -1,0 +1,16 @@
+<article id="provider-{{ provider.id }}">
+    <header>Provider {{ provider.id }}</header>
+    <div>{{ provider.class_id }}</div>
+
+    {% if provider.config %}
+    <div>Configuration
+    <ul>
+        {% for config_key, config_helptext in provider.config.items() %}
+            <li>
+                <strong>{{ config_key }}</strong>: {{ config_helptext }}
+            </li>
+        {% endfor %}
+    </ul>
+    </div>
+    {% endif %}
+</article>

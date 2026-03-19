@@ -1,0 +1,41 @@
+{% extends "base.html.jinja" %}
+
+{% block page_title %}
+    Providers
+{% endblock page_title %}
+
+{% block content_title %}
+    Providers
+{% endblock content_title %}
+
+{% block main_content %}
+    <div style="display:flex">
+        <div style="flex:1">
+            <h4>Your Providers</h4>
+            <div style="height: 75vh; overflow-y: auto;">
+                {% for provider in providers %}
+                    {% include "partials/_provider.html.jinja" %}
+                {% endfor %}
+            </div>
+            <div>
+                <h4>Add A Provider</h4>
+
+                {% include "partials/_provider_form.html.jinja" %}
+
+            </div>
+        </div>
+        <div style="flex:1">
+            <h4>Available Providers</h4>
+            <div style="height: 100vh; overflow-y: auto;">
+                {% for provider_info in available_providers %}
+                        {% include "partials/_provider_info.html.jinja" %}
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+{% endblock main_content %}
+
+{% block scripts %}
+    <script src="/static/js/provider-form.js"></script>
+{% endblock scripts %}

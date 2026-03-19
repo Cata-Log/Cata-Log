@@ -1,0 +1,21 @@
+<article>
+<header>
+    <a href="{{ provider_info.url }}">{{ provider_info.id }}</a>
+</header>
+<body>
+<div>{{ provider_info.description }}</div>
+<div>{{ provider_info.region.local_name }}</div>
+
+    {% if provider_info.configuration %}
+    <div>Configuration
+    <ul>
+        {% for config_key, config_value in provider_info.configuration.items() %}
+            <li>
+                <strong>{{ config_key }}</strong>: {{ config_value }}
+            </li>
+        {% endfor %}
+    </ul>
+    </div>
+    {% endif %}
+</body>
+</article>

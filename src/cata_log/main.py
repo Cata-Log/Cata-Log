@@ -46,6 +46,8 @@ app.add_route(
 app.mount(
     "/static/pages", StaticFiles(directory=constants.STORAGE_PATH), name="static_pages"
 )
-
+app.mount(
+    "/static/js", StaticFiles(directory="/opt/cata_log/web/static/js"), name="static-js"
+)
 app.include_router(api.router)
 app.include_router(web.router)

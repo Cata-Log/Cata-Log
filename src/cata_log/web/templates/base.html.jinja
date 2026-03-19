@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.green.min.css"
+        >
+        <title>Cata-Log
+
+            {% block page_title %}{% endblock page_title %}
+
+        </title>
+    </head>
+    <body>
+        <header>
+            <h2>
+
+                {% block content_title %}{% endblock content_title %}
+
+            </h2>
+            <a href="/docs">API Documentation</a>
+            <hr>
+        </header>
+        <main>
+
+            {% block main_content %}
+            {% endblock main_content %}
+
+        </main>
+        <footer>
+            <hr>
+            <span>&copy; 2026 David Aderbauer &amp; The Cata-Log Contributors</span>
+        </footer>
+
+        {% block scripts %}
+        {% endblock scripts %}
+    </body>
+</html>

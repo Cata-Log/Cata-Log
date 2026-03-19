@@ -1,0 +1,41 @@
+{% extends "base.html.jinja" %}
+
+{% block page_title %}
+    Configuration
+{% endblock page_title %}
+
+{% block content_title %}
+    Configuration
+{% endblock content_title %}
+
+{% block main_content %}
+    <div style="display:flex">
+        <div style="flex:1">
+            <h4>Your Configuration</h4>
+            <div style="height: 75vh; overflow-y: auto;">
+                {% for config in configs %}
+                    {% include "partials/_config.html.jinja" %}
+                {% endfor %}
+            </div>
+            <div>
+                <h4>Set A Configuration</h4>
+
+                {% include "partials/_config_form.html.jinja" %}
+
+            </div>
+        </div>
+        <div style="flex:1">
+            <h4>Default Configuration</h4>
+            <div style="height: 100vh; overflow-y: auto;">
+                {% for default_config in default_configs %}
+                        {% include "partials/_default_config.html.jinja" %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+{% endblock main_content %}
+
+{% block scripts %}
+    <script src="/static/js/config-form.js"></script>
+{% endblock scripts %}

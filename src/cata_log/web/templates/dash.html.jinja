@@ -1,0 +1,20 @@
+{% extends "base.html.jinja" %}
+
+{% block page_title %}
+    Dashboard
+{% endblock page_title %}
+
+{% block content_title %}
+    Dashboard
+{% endblock content_title %}
+
+{% block main_content %}
+<div style="display: flex;">
+    <a style="flex:1;" href="/providers">
+        <h2>Providers</h2>
+    </a>
+    <a style="flex:1;" href="/config">
+        <h2>Configuration</h2>
+    </a>
+</div>
+{% endblock main_content%}

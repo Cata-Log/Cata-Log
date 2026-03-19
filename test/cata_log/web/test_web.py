@@ -16,14 +16,18 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+import os
 
-router = APIRouter(prefix="")
-
-__all__ = ["router"]
+import pytest
 
 
-@router.get("/", response_class=HTMLResponse)
-def get_webui():
-    """Get the web interface."""
+def test_providers(full_database, client):
+    response = client.get("/providers")
+
+    assert response.status_code == 200
+
+
+def test_configs(full_database, client):
+    response = client.get("/config")
+
+    assert response.status_code == 200
