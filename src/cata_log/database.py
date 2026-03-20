@@ -21,6 +21,7 @@ import logging
 import os
 from collections.abc import Generator
 from datetime import datetime
+from io import BytesIO
 
 from celery_sqlalchemy_v2_scheduler.models import (
     CrontabSchedule,
@@ -28,6 +29,7 @@ from celery_sqlalchemy_v2_scheduler.models import (
     PeriodicTask,
 )
 from fastapi import Depends
+from PIL import Image
 from sqlalchemy import (
     JSON,
     Column,
@@ -156,6 +158,24 @@ class Catalog(ModelBase, TimestampMixin):
         back_populates="catalog", cascade="all, delete-orphan"
     )
     __tablename__ = "catalogs"
+
+    def as_pdf(self) -> bytes:
+        """Compress the catalog to a pdf file.
+
+        Returns:
+            A BytesIO of the pdf file.
+        """
+        pdf_bytes_io = BytesIO()
+        page_images = [Image.open(page.storage_path) for page in self.pages]
+        page_images[0].save(
+            pdf_bytes_io,
+            format="PDF",
+            resolution=100.0,
+            save_all=True,
+            append_images=page_images[1:],
+        )
+        pdf_bytes_io.seek(0)
+        return pdf_bytes_io.read()
 
 
 class Page(ModelBase, TimestampMixin):

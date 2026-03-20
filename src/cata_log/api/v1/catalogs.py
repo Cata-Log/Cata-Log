@@ -20,7 +20,7 @@ import os
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -108,6 +108,25 @@ async def get_catalog(
             status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
         )
     return catalog
+
+
+@router.get("/{catalog_id}/download", operation_id="download-catalog")
+async def download_catalog(
+    catalog_id: int,
+    filename: str | None = None,
+    db_session: Session = database.depends_db_session,
+) -> Response:
+    """Download a catalog as pdf."""
+    catalog = db_session.get(database.Catalog, catalog_id)
+    if not catalog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+    filename = filename or f"catalog-{catalog.id}.pdf"
+    headers = {
+        "Content-Disposition": f"attachment; filename={filename}",
+    }
+    return Response(catalog.as_pdf(), headers=headers, media_type="application/pdf")
 
 
 @router.get(

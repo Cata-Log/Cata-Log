@@ -16,6 +16,7 @@ dependencies = [
     "fake-useragent>=2.2.0",
     "fastapi[standard-no-fastapi-cloud-cli]>=0.135.1",
     "flower>=2.0.1",
+    "pillow>=12.1.1",
     "python-json-logger>=4.0.0",
     "sqlalchemy>=2.0.48",
 ]
