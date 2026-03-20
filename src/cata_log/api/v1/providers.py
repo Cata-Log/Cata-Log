@@ -133,6 +133,16 @@ async def post_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The given provider configuration is incomplete",
         )
+    if db_session.query(
+        db_session.query(database.Provider)
+        .filter(database.Provider.class_id == new_provider.class_id)
+        .filter(database.Provider.config == new_provider.config)
+        .exists()
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The given provider configuration already exists",
+        )
     provider = database.Provider(**new_provider.model_dump())
     db_session.add(provider)
     db_session.commit()
@@ -150,7 +160,7 @@ async def patch_provider(
     provider_update: ProviderUpdate,
     db_session: Session = database.depends_db_session,
 ) -> database.Provider:
-    """Set up a new provider."""
+    """Update a provider."""
     provider = db_session.get(database.Provider, provider_id)
     if not provider:
         raise HTTPException(
@@ -164,6 +174,16 @@ async def patch_provider(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The given provider configuration is incomplete",
+        )
+    if db_session.query(
+        db_session.query(database.Provider)
+        .filter(database.Provider.class_id == provider.class_id)
+        .filter(database.Provider.config == provider_update.config)
+        .exists()
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The given provider configuration already exists",
         )
     provider.config = provider_update.config
     db_session.commit()

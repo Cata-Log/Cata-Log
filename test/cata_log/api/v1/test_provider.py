@@ -94,7 +94,8 @@ def test_delete_provider(LocalSession, fake_provider, client):
     response = client.delete(f"/api/v1/providers/{fake_provider.id}")
 
     assert response.status_code == 204
-    assert not LocalSession().query(database.Provider).all()
+    with LocalSession() as db_session:
+        assert not db_session.query(database.Provider).all()
 
 
 def test_delete_provider__not_found(client):
@@ -114,7 +115,8 @@ def test_patch_provider__success(LocalSession, fake_provider, client):
     data = response.json()
     assert data["class_id"] == "rewe-deutschland"
     assert data["config"] == {"markt_id": "marktqwertz"}
-    provider = LocalSession().get(database.Provider, fake_provider.id)
+    with LocalSession() as db_session:
+        provider = db_session.get(database.Provider, fake_provider.id)
     assert provider.config == data["config"]
 
 
@@ -122,6 +124,20 @@ def test_patch_provider__missing_config(fake_provider, client):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={"config": {}},
+    )
+
+    assert response.status_code == 400
+
+
+def test_patch_provider__duplicate(LocalSession, fake_provider, client):
+    provider = database.Provider(class_id=fake_provider.class_id, config={})
+    with LocalSession() as db_session:
+        db_session.add(provider)
+        db_session.flush()
+
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"config": provider.config},
     )
 
     assert response.status_code == 400
@@ -137,7 +153,8 @@ def test_post_provider__success(LocalSession, client):
     data = response.json()
     assert data["class_id"] == "rewe-deutschland"
     assert data["config"] == {"markt_id": "1234"}
-    assert LocalSession().get(database.Provider, data["id"])
+    with LocalSession() as db_session:
+        assert db_session.get(database.Provider, data["id"])
 
 
 def test_post_provider__missing_config(LocalSession, client):
@@ -147,7 +164,8 @@ def test_post_provider__missing_config(LocalSession, client):
     )
 
     assert response.status_code == 400
-    assert not LocalSession().query(database.Provider).all()
+    with LocalSession() as db_session:
+        assert not db_session.query(database.Provider).all()
 
 
 def test_post_provider__bad_class_id(LocalSession, client):
@@ -157,7 +175,19 @@ def test_post_provider__bad_class_id(LocalSession, client):
     )
 
     assert response.status_code == 400
-    assert not LocalSession().query(database.Provider).all()
+    with LocalSession() as db_session:
+        assert not db_session.query(database.Provider).all()
+
+
+def test_post_provider__duplicate(LocalSession, fake_provider, client):
+    response = client.post(
+        url="/api/v1/providers",
+        json={"class_id": fake_provider.class_id, "config": fake_provider.config},
+    )
+
+    assert response.status_code == 400
+    with LocalSession() as db_session:
+        assert len(db_session.query(database.Provider).all()) == 1
 
 
 def test_update_provider__not_found(client):
