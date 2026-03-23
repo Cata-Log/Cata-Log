@@ -133,11 +133,12 @@ async def post_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The given provider configuration is incomplete",
         )
-    if db_session.query(
+    if (
         db_session.query(database.Provider)
         .filter(database.Provider.class_id == new_provider.class_id)
         .filter(database.Provider.config == new_provider.config)
-        .exists()
+        .first()
+        is not None
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -175,11 +176,14 @@ async def patch_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The given provider configuration is incomplete",
         )
-    if db_session.query(
-        db_session.query(database.Provider)
-        .filter(database.Provider.class_id == provider.class_id)
-        .filter(database.Provider.config == provider_update.config)
-        .exists()
+    if (
+        db_session.query(
+            db_session.query(database.Provider)
+            .filter(database.Provider.class_id == provider.class_id)
+            .filter(database.Provider.config == provider_update.config)
+            .first()
+        )
+        is not None
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
