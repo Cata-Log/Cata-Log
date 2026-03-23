@@ -25,6 +25,7 @@ from celery.schedules import crontab
 
 from cata_log import constants, database
 from cata_log.constants import BROKER_URL, DATABASE_URL
+from cata_log.exceptions import NetworkError
 from cata_log.utils.shortcuts import get_config
 
 app = Celery()
@@ -33,9 +34,11 @@ app.conf.update(
     beat_scheduler="celery_sqlalchemy_v2_scheduler.schedulers.DatabaseScheduler",
     beat_dburi=DATABASE_URL,
     broker_url=BROKER_URL,
-    result_backend="db+" + DATABASE_URL,
-    result_engine_options={"echo": True},
+    result_backend=None,
     enable_utc=True,
+    task_annotations={"*": {"autoretry_for": (NetworkError,), "max_retries": 3}},
+    task_ignore_result=True,
+    task_acks_late=False,
 )
 
 logger = logging.getLogger(__name__)
