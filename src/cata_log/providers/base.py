@@ -199,7 +199,7 @@ class Provider(abc.ABC):
                         and page_number != self.first_page_number
                     ):
                         self._logger.debug(
-                            "Page %s appear to be the last page.",
+                            "Page %s appears to be the last page.",
                             page_number - 1,
                             exc_info=True,
                         )

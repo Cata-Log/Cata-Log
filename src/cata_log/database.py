@@ -20,7 +20,7 @@ import contextlib
 import logging
 import os
 from collections.abc import Generator
-from datetime import datetime
+from datetime import UTC, datetime
 from io import BytesIO
 
 from celery_sqlalchemy_v2_scheduler.models import (
@@ -45,7 +45,11 @@ from sqlalchemy import (
 )
 
 from cata_log.constants import DATABASE_URL
-from cata_log.exceptions import ProviderMisconfiguredWarning
+from cata_log.exceptions import (
+    NetworkError,
+    ProviderBrokenWarning,
+    ProviderMisconfiguredWarning,
+)
 from cata_log.providers import Provider as ProviderType
 
 logger = logging.getLogger(__name__)
@@ -102,6 +106,8 @@ class Provider(ModelBase, TimestampMixin):
     catalogs: orm.Mapped[list[Catalog]] = orm.relationship(
         back_populates="provider", cascade="all, delete-orphan"
     )
+    is_broken: orm.Mapped[bool] = orm.mapped_column()
+    is_misconfigured: orm.Mapped[bool] = orm.mapped_column()
     __tablename__ = "providers"
     __table_args__ = (UniqueConstraint("class_id", "config"),)
 
@@ -142,6 +148,61 @@ class Provider(ModelBase, TimestampMixin):
             )
             raise ProviderMisconfiguredWarning from error
         return provider_instance
+
+    def fetch_catalog(self) -> None:
+        """Fetch this provider's catalog and save it to storage and db."""
+        with DBSession() as db_session:
+            with self.get_provider_instance() as provider_fetcher:
+                new_catalog = Catalog(
+                    provider_id=self.id,
+                    valid_since=provider_fetcher.get_valid_since().astimezone(UTC),
+                    valid_until=provider_fetcher.get_valid_until().astimezone(UTC),
+                )
+                db_session.add(new_catalog)
+                db_session.flush()
+                for (
+                    page_number,
+                    page_bytes,
+                ) in self.handle_fetcher_errors(provider_fetcher.iter_catalog_pages()):
+                    page_storage_path = provider_fetcher.get_new_storage_path()
+                    logger.debug(
+                        "Saving page data to storage ...",
+                        extra={
+                            "provider_id": self.id,
+                            "page_nr": page_number,
+                            "storage_path": page_storage_path,
+                        },
+                    )
+                    page_storage_path.write_bytes(page_bytes)
+                    logger.debug(
+                        "Success saving page data to storage.",
+                        extra={
+                            "provider_id": self.id,
+                            "page_nr": page_number,
+                            "storage_path": page_storage_path,
+                        },
+                    )
+                    new_page = Page(
+                        catalog_id=new_catalog.id,
+                        number=page_number,
+                        storage_path=str(page_storage_path),
+                    )
+                    db_session.add(new_page)
+            db_session.commit()
+
+    def handle_fetcher_errors(self, fetcher_function: Generator) -> Generator:
+        """Handle the errors raised by a fetcher function."""
+        while True:
+            try:
+                yield from fetcher_function
+            except StopIteration:
+                break
+            except NetworkError:
+                raise
+            except ProviderBrokenWarning:
+                self.is_broken = True
+            except ProviderMisconfiguredWarning:
+                self.is_misconfigured = True
 
 
 class Catalog(ModelBase, TimestampMixin):

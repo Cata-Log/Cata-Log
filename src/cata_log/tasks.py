@@ -61,46 +61,11 @@ def fetch_provider(provider_id: int) -> None:
     db_session = next(database.get_db_session())
     provider = db_session.get(database.Provider, provider_id)
     if provider:
-        with provider.get_provider_instance() as provider_fetcher:
-            new_catalog = database.Catalog(
-                provider_id=provider_id,
-                valid_since=provider_fetcher.get_valid_since().astimezone(UTC),
-                valid_until=provider_fetcher.get_valid_until().astimezone(UTC),
-            )
-            db_session.add(new_catalog)
-            db_session.flush()
-            for page_number, page_bytes in provider_fetcher.iter_catalog_pages():
-                page_storage_path = provider_fetcher.get_new_storage_path()
-                logger.debug(
-                    "Saving page data to storage ...",
-                    extra={
-                        "provider_id": provider_id,
-                        "page_nr": page_number,
-                        "storage_path": page_storage_path,
-                    },
-                )
-                page_storage_path.write_bytes(page_bytes)
-                logger.debug(
-                    "Success saving page data to storage.",
-                    extra={
-                        "provider_id": provider_id,
-                        "page_nr": page_number,
-                        "storage_path": page_storage_path,
-                    },
-                )
-                new_page = database.Page(
-                    catalog_id=new_catalog.id,
-                    number=page_number,
-                    storage_path=str(page_storage_path),
-                )
-                db_session.add(new_page)
-                db_session.flush()
-        db_session.commit()
-        return
-    logger.error(
-        "Failed to find provider from database!", extra={"provider_id": provider_id}
-    )
-    return
+        provider.fetch_catalog()
+    else:
+        logger.error(
+            "Failed to find provider from database!", extra={"provider_id": provider_id}
+        )
 
 
 @app.task

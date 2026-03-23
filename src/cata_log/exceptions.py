@@ -29,11 +29,15 @@ class ProviderMisconfiguredWarning(Warning):
     """An error indicating that the provider is misconfigured."""
 
 
-class ProviderMisconfiguredOrBrokenWarning(
-    ProviderBrokenWarning, ProviderMisconfiguredWarning
-):
+class ProviderMisconfiguredOrBrokenWarning(ProviderMisconfiguredWarning):
     """An error indicating that the provider class may be broken or misconfigured."""
 
 
 class PagesExhausted(Exception):  # noqa: N818  # not actually an error
     """The pages of a catalog were exhausted."""
+
+
+class CatalogNotAvailableError(Exception):
+    """The catalog is currently not available.
+    This does not mean that the provider is permanently broken.
+    """
