@@ -20,6 +20,9 @@ from calendar import Day
 from datetime import datetime, time, timedelta
 from typing import override
 
+import httpx
+
+from cata_log.exceptions import CatalogNotAvailableError
 from cata_log.utils.dates import get_calendar_week_number
 from cata_log.utils.page_numbers import PageNumber
 
@@ -86,5 +89,47 @@ class NormaPreview2(Norma):
     description = Norma.description + " übernächste Woche"
 
     @override
+    def get_page(self, page_number: PageNumber) -> bytes:
+        try:
+            page_data = super().get_page(page_number)
+        except httpx.HTTPStatusError as status_error:
+            if status_error.response.status_code == httpx.codes.NOT_FOUND:
+                raise CatalogNotAvailableError from status_error
+            raise
+        return page_data
+
+    @override
     def get_relevant_datetime(self) -> datetime:
         return super().get_relevant_datetime() + timedelta(days=14)
+
+
+class NormaRetrospect(Norma):
+    """Provider class for Norma retrospect catalog for last week."""
+
+    name = "norma-retrospect"
+    description = Norma.description + " letzte Woche"
+
+    @override
+    def get_relevant_datetime(self) -> datetime:
+        return super().get_relevant_datetime() - timedelta(days=7)
+
+
+class NormaRetrospect2(Norma):
+    """Provider class for Norma retrospect catalog for second-last week."""
+
+    name = "norma-retrospect2"
+    description = Norma.description + " vorletzte Woche"
+
+    @override
+    def get_page(self, page_number: PageNumber) -> bytes:
+        try:
+            page_data = super().get_page(page_number)
+        except httpx.HTTPStatusError as status_error:
+            if status_error.response.status_code == httpx.codes.NOT_FOUND:
+                raise CatalogNotAvailableError from status_error
+            raise
+        return page_data
+
+    @override
+    def get_relevant_datetime(self) -> datetime:
+        return super().get_relevant_datetime() - timedelta(days=14)
