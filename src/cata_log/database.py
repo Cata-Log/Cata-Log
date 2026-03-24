@@ -149,10 +149,11 @@ class Provider(ModelBase, TimestampMixin):
             raise ProviderMisconfiguredWarning from error
         return provider_instance
 
-    def fetch_catalog(self) -> None:
+    def fetch_catalog(self, db_session: orm.Session) -> None:
         """Fetch this provider's catalog and save it to storage and db."""
-        with DBSession() as db_session:
+        try:
             with self.get_provider_instance() as provider_fetcher:
+                provider_fetcher.get_catalog_data()
                 new_catalog = Catalog(
                     provider_id=self.id,
                     valid_since=provider_fetcher.get_valid_since().astimezone(UTC),
@@ -189,21 +190,16 @@ class Provider(ModelBase, TimestampMixin):
                     )
                     db_session.add(new_page)
                     db_session.flush()
-            db_session.commit()
-
-    def handle_fetcher_errors(self, fetcher_function: Generator) -> Generator:
-        """Handle the errors raised by a fetcher function."""
-        while True:
-            try:
-                yield from fetcher_function
-            except StopIteration:
-                break
-            except NetworkError:
-                raise
-            except ProviderBrokenWarning:
-                self.is_broken = True
-            except ProviderMisconfiguredWarning:
-                self.is_misconfigured = True
+        except NetworkError:
+            raise
+        except ProviderBrokenWarning:
+            self.is_broken = True
+        except ProviderMisconfiguredWarning:
+            self.is_misconfigured = True
+        else:
+            self.is_misconfigured = False
+            self.is_broken = False
+        db_session.commit()
 
 
 class Catalog(ModelBase, TimestampMixin):

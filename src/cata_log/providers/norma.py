@@ -41,11 +41,11 @@ class Norma(Provider):
     catalog_url_format = "https://www.norma-online.de/de/angebote/online-prospekt/{year}-{week_number:02}_FG/files/page/{page_number}.jpg"
 
     @override
-    def get_catalog_data(self) -> None:
+    def _get_catalog_data(self) -> None:
         pass
 
     @override
-    def get_page(self, page_number: PageNumber) -> bytes:
+    def _get_page(self, page_number: PageNumber) -> bytes:
         response = self._client.get(
             url=self.catalog_url_format.format(
                 year=self._relevant_datetime.year,
@@ -58,7 +58,7 @@ class Norma(Provider):
         return response.content
 
     @override
-    def get_valid_since(self) -> datetime:
+    def _get_valid_since(self) -> datetime:
         return datetime.combine(
             self._relevant_datetime
             - timedelta(days=self._relevant_datetime.weekday() - Day.MONDAY),
@@ -67,8 +67,8 @@ class Norma(Provider):
         )
 
     @override
-    def get_valid_until(self) -> datetime:
-        return self.get_valid_since() + timedelta(days=7)
+    def _get_valid_until(self) -> datetime:
+        return self._get_valid_since() + timedelta(days=7)
 
 
 class NormaPreview(Norma):
@@ -89,9 +89,9 @@ class NormaPreview2(Norma):
     description = Norma.description + " übernächste Woche"
 
     @override
-    def get_page(self, page_number: PageNumber) -> bytes:
+    def _get_page(self, page_number: PageNumber) -> bytes:
         try:
-            page_data = super().get_page(page_number)
+            page_data = super()._get_page(page_number)
         except httpx.HTTPStatusError as status_error:
             if status_error.response.status_code == httpx.codes.NOT_FOUND:
                 raise CatalogNotAvailableError from status_error
@@ -121,9 +121,9 @@ class NormaRetrospect2(Norma):
     description = Norma.description + " vorletzte Woche"
 
     @override
-    def get_page(self, page_number: PageNumber) -> bytes:
+    def _get_page(self, page_number: PageNumber) -> bytes:
         try:
-            page_data = super().get_page(page_number)
+            page_data = super()._get_page(page_number)
         except httpx.HTTPStatusError as status_error:
             if status_error.response.status_code == httpx.codes.NOT_FOUND:
                 raise CatalogNotAvailableError from status_error

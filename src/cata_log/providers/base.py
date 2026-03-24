@@ -90,19 +90,6 @@ class Provider(abc.ABC):
                 ]
             },
         )
-        self._logger.debug("Getting catalog data ...")
-        try:
-            self.get_catalog_data()
-        except httpx.HTTPStatusError as status_error:
-            self._logger.exception("Getting catalog data failed!")
-            raise ProviderMisconfiguredOrBrokenWarning from status_error
-        except httpx.TransportError as transport_error:
-            self._logger.exception("Failed getting catalog pages.")
-            raise NetworkError from transport_error
-        except Exception as error:
-            self._logger.exception("Failed getting catalog pages.")
-            raise ProviderBrokenWarning from error
-        self._logger.debug("Success getting catalog data.")
 
     @final
     def __init_subclass__(cls) -> None:
@@ -151,15 +138,33 @@ class Provider(abc.ABC):
         return datetime.now(tz=self.region.timezone)
 
     @abc.abstractmethod
-    def get_valid_since(self) -> datetime:
+    def _get_valid_since(self) -> datetime:
         """Get the datetime since which this providers catalog is valid."""
 
-    @abc.abstractmethod
-    def get_valid_until(self) -> datetime:
-        """Get the datetime until which this providers catalog is valid."""
+    @final
+    def get_valid_since(self) -> datetime:
+        """_get_valid_since wrapped in error handling."""
+        try:
+            result = self._get_valid_since()
+        except Exception as error:
+            raise ProviderBrokenWarning from error
+        return result
 
     @abc.abstractmethod
-    def get_page(self, page_number: PageNumber) -> bytes:
+    def _get_valid_until(self) -> datetime:
+        """Get the datetime until which this providers catalog is valid."""
+
+    @final
+    def get_valid_until(self) -> datetime:
+        """_get_valid_until wrapped in error handling."""
+        try:
+            result = self._get_valid_until()
+        except Exception as error:
+            raise ProviderBrokenWarning from error
+        return result
+
+    @abc.abstractmethod
+    def _get_page(self, page_number: PageNumber) -> bytes:
         """Get one page from the provider.
 
         Args:
@@ -169,49 +174,70 @@ class Provider(abc.ABC):
             The downloaded page in bytes.
         """
 
+    @final
+    def get_page(self, page_number: PageNumber) -> bytes:
+        """_get_page wrapped in error handling."""
+        self._logger.debug("Getting page %s ...", page_number)
+        try:
+            result = self._get_page(page_number)
+        except httpx.HTTPStatusError as status_error:
+            if (
+                status_error.response.status_code == httpx.codes.NOT_FOUND
+                and page_number != self.first_page_number
+            ):
+                self._logger.debug(
+                    "Page %s appears to be the last page.",
+                    page_number - 1,
+                    exc_info=True,
+                )
+                raise PagesExhausted from status_error
+            self._logger.exception("Failed getting page %s.", page_number)
+            raise ProviderMisconfiguredOrBrokenWarning from status_error
+        except httpx.TransportError as transport_error:
+            self._logger.exception("Failed getting catalog pages.")
+            raise NetworkError from transport_error
+        except Exception as error:
+            self._logger.exception("Failed getting catalog pages.")
+            raise ProviderBrokenWarning from error
+        self._logger.debug("Success getting page %s.", page_number)
+        return result
+
     @abc.abstractmethod
-    def get_catalog_data(self) -> None:
+    def _get_catalog_data(self) -> None:
         """Get and store the data for this providers catalog.
         Can be passed if no data beside the pagenumber is required to fetch pages from the provider.
         """
 
     @final
+    def get_catalog_data(self) -> None:
+        """_get_catalog_data wrapped in error handling."""
+        self._logger.debug("Getting catalog data ...")
+        try:
+            self._get_catalog_data()
+        except httpx.HTTPStatusError as status_error:
+            self._logger.exception("Failed getting catalog data.")
+            raise ProviderMisconfiguredOrBrokenWarning from status_error
+        except httpx.TransportError as transport_error:
+            self._logger.exception("Failed getting catalog data.")
+            raise NetworkError from transport_error
+        except Exception as error:
+            self._logger.exception("Failed getting catalog data.")
+            raise ProviderBrokenWarning from error
+        self._logger.debug("Success getting catalog data.")
+
+    @final
     def iter_catalog_pages(self) -> Generator[tuple[int, bytes]]:
         """Iterate over pages of this providers catalog.
-
-        Args:
-            page_range: An optional range of pagenumbers to fetch. Omit this to fetch all.
 
         Returns:
             A generator of the pages data as bytes.
         """
         for page_number in page_numbering(self.first_page_number):
             try:
-                self._logger.debug("Getting page %s ...", page_number)
-                try:
-                    yield page_number.normalized, self.get_page(page_number)
-                except PagesExhausted:
-                    self._logger.debug("Page %s was the last page.", page_number - 1)
-                    break
-                except httpx.HTTPStatusError as status_error:
-                    if (
-                        status_error.response.status_code == httpx.codes.NOT_FOUND
-                        and page_number != self.first_page_number
-                    ):
-                        self._logger.debug(
-                            "Page %s appears to be the last page.",
-                            page_number - 1,
-                            exc_info=True,
-                        )
-                        break
-                    self._logger.exception("Failed getting page %s.", page_number)
-                    raise ProviderMisconfiguredOrBrokenWarning from status_error
-            except httpx.TransportError as transport_error:
-                self._logger.exception("Failed getting catalog pages.")
-                raise NetworkError from transport_error
-            except Exception as error:
-                self._logger.exception("Failed getting catalog pages.")
-                raise ProviderBrokenWarning from error
+                yield page_number.normalized, self._get_page(page_number)
+            except PagesExhausted:
+                self._logger.debug("Page %s was the last page.", page_number - 1)
+                break
 
     @final
     @classmethod

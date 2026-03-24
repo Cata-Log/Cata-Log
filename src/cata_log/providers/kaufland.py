@@ -44,7 +44,7 @@ class KauflandWoche(Provider):
     overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={region_id}&client_locale=kaufland/de-DE"
 
     @override
-    def get_catalog_data(self) -> None:
+    def _get_catalog_data(self) -> None:
         overview_response = self._client.get(
             self.overview_url_template.format(**self._config)
         )
@@ -56,7 +56,7 @@ class KauflandWoche(Provider):
         self.flyer_json = flyer_json_response.json()
 
     @override
-    def get_page(self, page_number: PageNumber) -> bytes:
+    def _get_page(self, page_number: PageNumber) -> bytes:
         try:
             url = self.flyer_json["flyer"]["pages"][int(page_number)]["image"]
         except IndexError as error:
@@ -65,13 +65,13 @@ class KauflandWoche(Provider):
         return response.content
 
     @override
-    def get_valid_since(self) -> datetime:
+    def _get_valid_since(self) -> datetime:
         return datetime.strptime(
             self.flyer_json["flyer"]["offerStartDate"], "%Y-%m-%d"
         ).astimezone(tz=self.region.timezone)
 
     @override
-    def get_valid_until(self) -> datetime:
+    def _get_valid_until(self) -> datetime:
         return datetime.strptime(
             self.flyer_json["flyer"]["offerEndDate"], "%Y-%m-%d"
         ).astimezone(tz=self.region.timezone) + timedelta(days=1)
@@ -84,7 +84,7 @@ class KauflandWochePreview(KauflandWoche):
     description = KauflandWoche.description + " im nächsten Katalog"
 
     @override
-    def get_catalog_data(self) -> None:
+    def _get_catalog_data(self) -> None:
         overview_response = self._client.get(
             self.overview_url_template.format(**self._config)
         )

@@ -57,54 +57,56 @@ def fetch_provider(provider_id: int) -> None:
         provider_id: The database id of the provider to fetch.
     """
     logger.info("Fetching provider catalog ...", extra={"provider_id": provider_id})
-    db_session = next(database.get_db_session())
-    provider = db_session.get(database.Provider, provider_id)
-    if provider:
-        provider.fetch_catalog()
-    else:
-        logger.error(
-            "Failed to find provider from database!", extra={"provider_id": provider_id}
-        )
+    with database.DBSession() as db_session:
+        provider = db_session.get(database.Provider, provider_id)
+        if provider:
+            provider.fetch_catalog(db_session)
+        else:
+            logger.error(
+                "Failed to find provider from database!",
+                extra={"provider_id": provider_id},
+            )
 
 
 @app.task
 def cleanup_catalogs() -> None:
     """Task to cleanup outdated catalogs."""
-    db_session = next(database.get_db_session())
-    expiration_days_string = get_config("expiration_days")
-    try:
-        expiration_days = int(expiration_days_string)
-    except ValueError:
-        expiration_days = int(constants.DefaultConfig.expiration_days)
-    expiration_date = datetime.now(tz=UTC) - timedelta(days=expiration_days)
-    logger.info(
-        "Deleting outdated catalogs ...", extra={"expiration_deadline": expiration_date}
-    )
-    for catalog in (
-        db_session.query(database.Catalog)
-        .filter(database.Catalog.created_at < expiration_date)
-        .all()
-    ):
-        logger.debug(
-            "Deleting outdated catalog ...",
-            extra={
-                "catalog_id": catalog.id,
-                "creation_date": catalog.created_at,
-                "expiration_deadline": expiration_date,
-            },
+    with database.DBSession() as db_session:
+        expiration_days_string = get_config("expiration_days")
+        try:
+            expiration_days = int(expiration_days_string)
+        except ValueError:
+            expiration_days = int(constants.DefaultConfig.expiration_days)
+        expiration_date = datetime.now(tz=UTC) - timedelta(days=expiration_days)
+        logger.info(
+            "Deleting outdated catalogs ...",
+            extra={"expiration_deadline": expiration_date},
         )
-        db_session.delete(catalog)
-        db_session.flush()
-        logger.debug(
-            "Success deleting outdated catalog.",
-            extra={
-                "catalog_id": catalog.id,
-                "creation_date": catalog.created_at,
-                "expiration_deadline": expiration_date,
-            },
+        for catalog in (
+            db_session.query(database.Catalog)
+            .filter(database.Catalog.created_at < expiration_date)
+            .all()
+        ):
+            logger.debug(
+                "Deleting outdated catalog ...",
+                extra={
+                    "catalog_id": catalog.id,
+                    "creation_date": catalog.created_at,
+                    "expiration_deadline": expiration_date,
+                },
+            )
+            db_session.delete(catalog)
+            db_session.flush()
+            logger.debug(
+                "Success deleting outdated catalog.",
+                extra={
+                    "catalog_id": catalog.id,
+                    "creation_date": catalog.created_at,
+                    "expiration_deadline": expiration_date,
+                },
+            )
+        db_session.commit()
+        logger.info(
+            "Success deleting outdated catalogs.",
+            extra={"expiration_deadline": expiration_date},
         )
-    db_session.commit()
-    logger.info(
-        "Success deleting outdated catalogs.",
-        extra={"expiration_deadline": expiration_date},
-    )

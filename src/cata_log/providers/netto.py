@@ -42,7 +42,7 @@ class Netto(Provider):
     base_url = "https://wochenprospekt.netto-online.de"
 
     @override
-    def get_catalog_data(self) -> None:
+    def _get_catalog_data(self) -> None:
         self.catalog_data = self._client.get(
             self.overview_url_format.format(
                 week_number=dates.get_calendar_week_number(self._relevant_datetime),
@@ -50,7 +50,7 @@ class Netto(Provider):
         ).json()
 
     @override
-    def get_page(self, page_number: page_numbers.PageNumber) -> bytes:
+    def _get_page(self, page_number: page_numbers.PageNumber) -> bytes:
         double_page_number = page_number.as_double_page_number()
         try:
             page_url = self.catalog_data[double_page_number.number]["pages"][
@@ -62,7 +62,7 @@ class Netto(Provider):
         return response.content
 
     @override
-    def get_valid_since(self) -> datetime:
+    def _get_valid_since(self) -> datetime:
         return datetime.combine(
             self._relevant_datetime
             - timedelta(days=self._relevant_datetime.weekday() - Day.MONDAY),
@@ -71,8 +71,8 @@ class Netto(Provider):
         )
 
     @override
-    def get_valid_until(self) -> datetime:
-        return self.get_valid_since() + timedelta(days=7)
+    def _get_valid_until(self) -> datetime:
+        return self._get_valid_since() + timedelta(days=7)
 
 
 class NettoPreview(Netto):

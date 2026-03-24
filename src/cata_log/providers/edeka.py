@@ -44,18 +44,18 @@ class EdekaBasissortiment(Provider):
     url_format = "https://blaetterkatalog.edeka.de/{region}/EDEKA_CENTER_GRUND_SORTIMENT_{edeka_region}/blaetterkatalog/normal/bk_{page_number}.jpg"
 
     @override
-    def get_catalog_data(self) -> None:
+    def _get_catalog_data(self) -> None:
         pass
 
     @override
-    def get_page(self, page_number: PageNumber) -> bytes:
+    def _get_page(self, page_number: PageNumber) -> bytes:
         response = self._client.get(
             self.url_format.format(**self._config, page_number=page_number),
         )
         return response.content
 
     @override
-    def get_valid_since(self) -> datetime:
+    def _get_valid_since(self) -> datetime:
         return datetime.combine(
             self._relevant_datetime
             - timedelta(days=self._relevant_datetime.weekday() - Day.MONDAY),
@@ -64,8 +64,8 @@ class EdekaBasissortiment(Provider):
         )
 
     @override
-    def get_valid_until(self) -> datetime:
-        return self.get_valid_since() + timedelta(days=7)
+    def _get_valid_until(self) -> datetime:
+        return self._get_valid_since() + timedelta(days=7)
 
 
 class EdekaMarkt(EdekaBasissortiment):
