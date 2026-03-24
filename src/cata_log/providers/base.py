@@ -234,7 +234,7 @@ class Provider(abc.ABC):
         """
         for page_number in page_numbering(self.first_page_number):
             try:
-                yield page_number.normalized, self._get_page(page_number)
+                yield page_number.normalized, self.get_page(page_number)
             except PagesExhausted:
                 self._logger.debug("Page %s was the last page.", page_number - 1)
                 break
