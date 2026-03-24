@@ -78,35 +78,4 @@ def cleanup_catalogs() -> None:
         except ValueError:
             expiration_days = int(constants.DefaultConfig.expiration_days)
         expiration_date = datetime.now(tz=UTC) - timedelta(days=expiration_days)
-        logger.info(
-            "Deleting outdated catalogs ...",
-            extra={"expiration_deadline": expiration_date},
-        )
-        for catalog in (
-            db_session.query(database.Catalog)
-            .filter(database.Catalog.created_at < expiration_date)
-            .all()
-        ):
-            logger.debug(
-                "Deleting outdated catalog ...",
-                extra={
-                    "catalog_id": catalog.id,
-                    "creation_date": catalog.created_at,
-                    "expiration_deadline": expiration_date,
-                },
-            )
-            db_session.delete(catalog)
-            db_session.flush()
-            logger.debug(
-                "Success deleting outdated catalog.",
-                extra={
-                    "catalog_id": catalog.id,
-                    "creation_date": catalog.created_at,
-                    "expiration_deadline": expiration_date,
-                },
-            )
-        db_session.commit()
-        logger.info(
-            "Success deleting outdated catalogs.",
-            extra={"expiration_deadline": expiration_date},
-        )
+        database.Catalog.cleanup(db_session, expiration_date)

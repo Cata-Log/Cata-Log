@@ -235,6 +235,35 @@ class Catalog(ModelBase, TimestampMixin):
         pdf_bytes_io.seek(0)
         return pdf_bytes_io.read()
 
+    @classmethod
+    def cleanup(cls, db_session: orm.Session, deadline: datetime) -> None:
+        """Cleanup catalogs created before a deadline.
+
+        Args:
+            db_session: A database session.
+            deadline: The deadline for catalog deletion.
+        """
+        logger.info(
+            "Deleting outdated catalogs ...",
+            extra={"expiration_deadline": deadline},
+        )
+        for catalog in db_session.query(cls).filter(cls.created_at < deadline).all():
+            db_session.delete(catalog)
+            db_session.flush()
+            logger.debug(
+                "Deleted outdated catalog.",
+                extra={
+                    "catalog_id": catalog.id,
+                    "creation_date": catalog.created_at,
+                    "expiration_deadline": deadline,
+                },
+            )
+        db_session.commit()
+        logger.info(
+            "Success deleting outdated catalogs.",
+            extra={"expiration_deadline": deadline},
+        )
+
 
 class Page(ModelBase, TimestampMixin):
     """ORM model for a catalog page."""
