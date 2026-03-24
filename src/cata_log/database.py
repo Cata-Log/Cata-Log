@@ -106,8 +106,8 @@ class Provider(ModelBase, TimestampMixin):
     catalogs: orm.Mapped[list[Catalog]] = orm.relationship(
         back_populates="provider", cascade="all, delete-orphan"
     )
-    is_broken: orm.Mapped[bool] = orm.mapped_column()
-    is_misconfigured: orm.Mapped[bool] = orm.mapped_column()
+    is_broken: orm.Mapped[bool] = orm.mapped_column(default=False)
+    is_misconfigured: orm.Mapped[bool] = orm.mapped_column(default=False)
     __tablename__ = "providers"
     __table_args__ = (UniqueConstraint("class_id", "config"),)
 
@@ -188,6 +188,7 @@ class Provider(ModelBase, TimestampMixin):
                         storage_path=str(page_storage_path),
                     )
                     db_session.add(new_page)
+                    db_session.flush()
             db_session.commit()
 
     def handle_fetcher_errors(self, fetcher_function: Generator) -> Generator:
