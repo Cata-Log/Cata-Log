@@ -51,11 +51,10 @@ class Netto(Provider):
 
     @override
     def _get_page(self, page_number: page_numbers.PageNumber) -> bytes:
-        double_page_number = page_number.as_double_page_number()
         try:
-            page_url = self.catalog_data[double_page_number.number]["pages"][
-                double_page_number.side
-            ]["images"]["at800"]
+            page_url = self.catalog_data[int(page_number)]["pages"][0]["images"][
+                "at800"
+            ]
         except IndexError as error:
             raise PagesExhausted from error
         response = self._client.get(self.base_url + page_url)
