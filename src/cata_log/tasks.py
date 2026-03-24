@@ -35,7 +35,6 @@ app.conf.update(
     beat_dburi=DATABASE_URL,
     broker_url=BROKER_URL,
     result_backend=None,
-    enable_utc=True,
     task_annotations={"*": {"autoretry_for": (NetworkError,), "max_retries": 3}},
     task_ignore_result=True,
     task_acks_late=False,
