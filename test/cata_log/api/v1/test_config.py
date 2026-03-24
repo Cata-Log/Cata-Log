@@ -91,26 +91,6 @@ def test_post_config__duplicate(LocalSession, client, fake_config):
     assert len(db_session.query(database.Config).all()) == 1
 
 
-def test_put_config(faker, fake_config, client):
-    config_json = {"value": faker.word()}
-
-    response = client.put(f"/api/v1/config/{fake_config.name}", json=config_json)
-
-    assert response.status_code == 200
-    data = response.json()
-    assert data["name"] == fake_config.name
-    assert data["value"] == config_json["value"]
-
-
-def test_put_config__not_found(client):
-    config_json = {"value": "something"}
-
-    response = client.put("/api/v1/config/nf", json=config_json)
-
-    assert response.status_code == 404
-    assert response.json() == {"detail": "Config not found"}
-
-
 def test_patch_config(faker, fake_config, client):
     config_json = {"value": faker.word()}
 

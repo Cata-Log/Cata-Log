@@ -60,7 +60,7 @@ async def list_previews_catalogs(
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
-        .order_by(-database.Catalog.created_at)
+        .order_by(database.Catalog.created_at.desc())
         .all()
     )
 
@@ -77,7 +77,7 @@ async def list_current_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
-        .order_by(-database.Catalog.created_at)
+        .order_by(database.Catalog.created_at.desc())
         .all()
     )
 
@@ -92,7 +92,7 @@ async def list_outdated_catalogs(
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
-        .order_by(-database.Catalog.created_at)
+        .order_by(database.Catalog.created_at.desc())
         .all()
     )
 

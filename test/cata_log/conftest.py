@@ -20,6 +20,7 @@ import os
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from freezegun import freeze_time
 from pyfakefs.fake_filesystem_unittest import Patcher
 from sqlalchemy import StaticPool, create_engine, orm
 
@@ -68,6 +69,7 @@ def fake_fs():
         patcher.fs.create_dir(constants.STORAGE_PATH)
         patcher.fs.create_dir(constants.LOG_DIRECTORY_PATH)
         patcher.fs.add_real_directory(os.path.dirname(constants.__file__))
+        patcher.fs.add_real_file("pyproject.toml")
         yield patcher.fs
 
 
@@ -93,32 +95,37 @@ def fake_provider(db_session):
 
 @pytest.fixture
 def fake_catalog_current(db_session, fake_provider):
-    now = datetime.now(tz=UTC)
-    fake_catalog = database.Catalog(
-        valid_since=now - timedelta(days=4),
-        valid_until=now + timedelta(days=3),
-        provider_id=fake_provider.id,
-    )
-    db_session.add(fake_catalog)
+    now = datetime.now(tz=UTC) - timedelta(days=1)
+    with freeze_time(now):
+        fake_catalog = database.Catalog(
+            valid_since=now - timedelta(days=3),
+            valid_until=now + timedelta(days=4),
+            provider_id=fake_provider.id,
+        )
+        db_session.add(fake_catalog)
+        db_session.flush()
+        fake_catalog.created_at = now
+        fake_catalog.updated_at = now
+        db_session.flush()
     db_session.commit()
     db_session.refresh(fake_catalog)
     return fake_catalog
 
 
 @pytest.fixture
-def fake_catalog(fake_catalog_current):
-    return fake_catalog_current
-
-
-@pytest.fixture
 def fake_catalog_outdated(db_session, fake_provider):
-    now = datetime.now(tz=UTC)
-    fake_catalog = database.Catalog(
-        valid_since=now - timedelta(days=10),
-        valid_until=now - timedelta(days=3),
-        provider_id=fake_provider.id,
-    )
-    db_session.add(fake_catalog)
+    now = datetime.now(tz=UTC) - timedelta(days=2)
+    with freeze_time(now):
+        fake_catalog = database.Catalog(
+            valid_since=now - timedelta(days=8),
+            valid_until=now - timedelta(days=1),
+            provider_id=fake_provider.id,
+        )
+        db_session.add(fake_catalog)
+        db_session.flush()
+        fake_catalog.created_at = now
+        fake_catalog.updated_at = now
+        db_session.flush()
     db_session.commit()
     db_session.refresh(fake_catalog)
     return fake_catalog
@@ -127,30 +134,45 @@ def fake_catalog_outdated(db_session, fake_provider):
 @pytest.fixture
 def fake_catalog_preview(db_session, fake_provider):
     now = datetime.now(tz=UTC)
-    fake_catalog = database.Catalog(
-        valid_since=now + timedelta(days=2),
-        valid_until=now + timedelta(days=9),
-        provider_id=fake_provider.id,
-    )
-    db_session.add(fake_catalog)
+    with freeze_time(now):
+        fake_catalog = database.Catalog(
+            valid_since=now + timedelta(days=2),
+            valid_until=now + timedelta(days=9),
+            provider_id=fake_provider.id,
+        )
+        db_session.add(fake_catalog)
+        db_session.flush()
+        fake_catalog.created_at = now
+        fake_catalog.updated_at = now
+        db_session.flush()
     db_session.commit()
     db_session.refresh(fake_catalog)
     return fake_catalog
 
 
 @pytest.fixture
+def fake_catalog(fake_catalog_preview):
+    return fake_catalog_preview
+
+
+@pytest.fixture
+def fake_latest_catalog(fake_catalog_preview):
+    return fake_catalog_preview
+
+
+@pytest.fixture
 def fake_page_file(faker, fake_fs):
-    storage_path = constants.STORAGE_PATH / "3.jpg"
+    storage_path = constants.STORAGE_PATH / "0.jpg"
     with storage_path.open("wb") as fake_file:
         fake_file.write(faker.text().encode())
     return storage_path
 
 
 @pytest.fixture
-def fake_page(db_session, fake_catalog_current, fake_page_file):
+def fake_page(db_session, fake_catalog_preview, fake_page_file):
     fake_page = database.Page(
-        number=3,
-        catalog_id=fake_catalog_current.id,
+        number=0,
+        catalog_id=fake_catalog_preview.id,
         storage_path=str(fake_page_file),
     )
     db_session.add(fake_page)
@@ -162,8 +184,8 @@ def fake_page(db_session, fake_catalog_current, fake_page_file):
 @pytest.fixture
 def full_database(
     fake_provider,
-    fake_catalog_current,
     fake_catalog_outdated,
+    fake_catalog_current,
     fake_catalog_preview,
     fake_page,
 ):

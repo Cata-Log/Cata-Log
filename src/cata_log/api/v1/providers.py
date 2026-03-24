@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import os
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, responses, status
@@ -28,6 +29,7 @@ from cata_log.providers import Provider as ProviderType
 from cata_log.tasks import fetch_provider
 
 from .catalogs import Catalog
+from .pages import Page
 
 router = APIRouter(prefix="/providers", tags=["providers"])
 
@@ -38,6 +40,8 @@ class Provider(BaseModel, TimestampMixin):
     id: int
     class_id: str
     config: dict[str, str]
+    is_broken: bool
+    is_misconfigured: bool
     catalogs: list[Catalog]
 
 
@@ -78,7 +82,9 @@ async def list_providers(
 ) -> list[database.Provider]:
     """List all providers."""
     return (
-        db_session.query(database.Provider).order_by(-database.Provider.class_id).all()
+        db_session.query(database.Provider)
+        .order_by(database.Provider.class_id.desc())
+        .all()
     )
 
 
@@ -176,14 +182,11 @@ async def patch_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The given provider configuration is incomplete",
         )
-    if (
-        db_session.query(
-            db_session.query(database.Provider)
-            .filter(database.Provider.class_id == provider.class_id)
-            .filter(database.Provider.config == provider_update.config)
-            .first()
-        )
-        is not None
+    if any(
+        provider.config == provider_update.config
+        for provider in db_session.query(database.Provider)
+        .filter(database.Provider.class_id == provider.class_id)
+        .all()
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -238,8 +241,173 @@ async def list_provider_catalogs(
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
-        .order_by(-database.Catalog.created_at)
+        .order_by(database.Catalog.created_at.desc())
         .all()
+    )
+
+
+@router.get(
+    "/{provider_id}/catalogs/latest",
+    response_model=Catalog,
+    operation_id="get-latest-provider-catalog",
+)
+async def get_latest_provider_catalog(
+    provider_id: int, db_session: Session = database.depends_db_session
+) -> database.Catalog:
+    """Get the latest catalog of a provider."""
+    latest_catalog = (
+        db_session.query(database.Catalog)
+        .filter(database.Catalog.provider_id == provider_id)
+        .order_by(database.Catalog.created_at.desc())
+        .first()
+    )
+    if not latest_catalog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+    return latest_catalog
+
+
+@router.get(
+    "/{provider_id}/catalogs/latest/pages",
+    response_model=list[Page],
+    operation_id="get-latest-provider-catalog-pages",
+)
+async def list_latest_provider_catalog_pages(
+    provider_id: int, db_session: Session = database.depends_db_session
+) -> list[database.Page]:
+    """Get the pages of the latest catalog of a provider."""
+    latest_catalog = (
+        db_session.query(database.Catalog)
+        .filter(database.Catalog.provider_id == provider_id)
+        .order_by(database.Catalog.created_at.desc())
+        .first()
+    )
+    if not latest_catalog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+    return (
+        db_session.query(database.Page)
+        .filter(database.Page.catalog_id == latest_catalog.id)
+        .order_by(database.Page.number)
+        .all()
+    )
+
+
+@router.get(
+    "/{provider_id}/catalogs/latest/pages/{page_number}",
+    response_model=Page,
+    operation_id="get-latest-provider-catalog-page",
+)
+async def get_latest_provider_catalog_page(
+    provider_id: int,
+    page_number: int,
+    db_session: Session = database.depends_db_session,
+) -> database.Page:
+    """Get the pages of the latest catalog of a provider."""
+    latest_catalog = (
+        db_session.query(database.Catalog)
+        .filter(database.Catalog.provider_id == provider_id)
+        .order_by(database.Catalog.created_at.desc())
+        .first()
+    )
+    if not latest_catalog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+    page = (
+        db_session.query(database.Page)
+        .filter(database.Page.catalog_id == latest_catalog.id)
+        .filter(database.Page.number == page_number)
+        .one_or_none()
+    )
+    if not page:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
+        )
+    return page
+
+
+@router.get(
+    "/{provider_id}/catalogs/latest/pages/{page_number}/download",
+    response_model=Page,
+    operation_id="download-latest-provider-catalog-page",
+)
+async def download_latest_provider_catalog_page(
+    provider_id: int,
+    page_number: int,
+    filename: str | None = None,
+    db_session: Session = database.depends_db_session,
+) -> responses.FileResponse:
+    """Download a single page of the latest catalog of a provider."""
+    latest_catalog = (
+        db_session.query(database.Catalog)
+        .filter(database.Catalog.provider_id == provider_id)
+        .order_by(database.Catalog.created_at.desc())
+        .first()
+    )
+    if not latest_catalog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+    page = (
+        db_session.query(database.Page)
+        .filter(database.Page.catalog_id == latest_catalog.id)
+        .filter(database.Page.number == page_number)
+        .one_or_none()
+    )
+    if not page:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
+        )
+    file_path = page.storage_path
+    filename = filename or os.path.basename(file_path)
+    return responses.FileResponse(
+        path=file_path,
+        filename=filename,
+        content_disposition_type="attachment",
+    )
+
+
+@router.get(
+    "/{provider_id}/catalogs/latest/pages/{page_number}/embed",
+    response_model=Page,
+    operation_id="embed-latest-provider-catalog-page",
+)
+async def embed_latest_provider_catalog_page(
+    provider_id: int,
+    page_number: int,
+    filename: str | None = None,
+    db_session: Session = database.depends_db_session,
+) -> responses.FileResponse:
+    """Embed a single page of the latest catalog of a provider."""
+    latest_catalog = (
+        db_session.query(database.Catalog)
+        .filter(database.Catalog.provider_id == provider_id)
+        .order_by(database.Catalog.created_at.desc())
+        .first()
+    )
+    if not latest_catalog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+    page = (
+        db_session.query(database.Page)
+        .filter(database.Page.catalog_id == latest_catalog.id)
+        .filter(database.Page.number == page_number)
+        .one_or_none()
+    )
+    if not page:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
+        )
+    file_path = page.storage_path
+    filename = filename or os.path.basename(file_path)
+    return responses.FileResponse(
+        path=file_path,
+        filename=filename,
+        content_disposition_type="inline",
     )
 
 
@@ -257,7 +425,7 @@ async def list_provider_current_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since <= datetime.now(tz=UTC))
         .filter(database.Catalog.valid_until > datetime.now(tz=UTC))
-        .order_by(-database.Catalog.created_at)
+        .order_by(database.Catalog.created_at.desc())
         .all()
     )
 
@@ -275,7 +443,7 @@ async def list_provider_preview_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
-        .order_by(-database.Catalog.created_at)
+        .order_by(database.Catalog.created_at.desc())
         .all()
     )
 
@@ -293,7 +461,7 @@ async def list_provider_outdated_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
-        .order_by(-database.Catalog.created_at)
+        .order_by(database.Catalog.created_at.desc())
         .all()
     )
 
