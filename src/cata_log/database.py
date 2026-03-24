@@ -163,7 +163,7 @@ class Provider(ModelBase, TimestampMixin):
                 for (
                     page_number,
                     page_bytes,
-                ) in self.handle_fetcher_errors(provider_fetcher.iter_catalog_pages()):
+                ) in provider_fetcher.iter_catalog_pages():
                     page_storage_path = provider_fetcher.get_new_storage_path()
                     logger.debug(
                         "Saving page data to storage ...",
