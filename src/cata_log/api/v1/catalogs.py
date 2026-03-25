@@ -47,7 +47,11 @@ async def list_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
     """List all catalogs."""
-    return db_session.query(database.Catalog).all()
+    return (
+        db_session.query(database.Catalog)
+        .order_by(database.Catalog.created_at.desc())
+        .all()
+    )
 
 
 @router.get(
@@ -127,6 +131,23 @@ async def download_catalog(
         "Content-Disposition": f"attachment; filename={filename}",
     }
     return Response(catalog.as_pdf(), headers=headers, media_type="application/pdf")
+
+
+@router.get(
+    "/{catalog_id}/pages",
+    response_model=list[Page],
+    operation_id="get-catalog-pages-v1",
+)
+async def get_catalog_pages(
+    catalog_id: int, db_session: Session = database.depends_db_session
+) -> list[database.Page]:
+    """Get catalog pages."""
+    return (
+        db_session.query(database.Page)
+        .filter(database.Page.catalog_id == catalog_id)
+        .order_by(database.Page.number)
+        .all()
+    )
 
 
 @router.get(

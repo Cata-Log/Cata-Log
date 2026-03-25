@@ -83,9 +83,7 @@ async def list_providers(
 ) -> list[database.Provider]:
     """List all providers."""
     return (
-        db_session.query(database.Provider)
-        .order_by(database.Provider.class_id.desc())
-        .all()
+        db_session.query(database.Provider).order_by(database.Provider.class_id).all()
     )
 
 

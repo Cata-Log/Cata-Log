@@ -52,7 +52,8 @@ async def list_pages(
     """List all pages."""
     return (
         db_session.query(database.Page)
-        .order_by(database.Page.catalog_id, database.Page.number)
+        .join(database.Catalog, database.Page.catalog_id == database.Catalog.id)
+        .order_by(database.Catalog.created_at.desc(), database.Page.number)
         .all()
     )
 

@@ -83,6 +83,15 @@ def test_get_catalog_page(fake_catalog, fake_page, client):
     assert data["id"] == fake_page.id
 
 
+def test_get_catalog_pages(fake_catalog, fake_page, client):
+    response = client.get(f"/api/v1/catalogs/{fake_catalog.id}/pages")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["id"] == fake_page.id
+
+
 def test_get_catalog_page__catalog_not_found(client):
     response = client.get("/api/v1/catalogs/234/pages/1")
 
