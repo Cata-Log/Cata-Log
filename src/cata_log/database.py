@@ -152,6 +152,9 @@ class Provider(ModelBase, TimestampMixin):
     def fetch_catalog(self, db_session: orm.Session) -> None:
         """Fetch this provider's catalog and save it to storage and db."""
         try:
+            logger.debug(
+                "Fetching catalog of provider ...", extra={"provider_id": self.id}
+            )
             with self.get_provider_instance() as provider_fetcher:
                 new_catalog = Catalog(
                     provider_id=self.id,
@@ -160,24 +163,21 @@ class Provider(ModelBase, TimestampMixin):
                 )
                 db_session.add(new_catalog)
                 db_session.flush()
+                logger.debug(
+                    "Success adding new catalog.",
+                    extra={"provider_id": self.id, "catalog_id": new_catalog.id},
+                )
                 for (
                     page_number,
                     page_bytes,
                 ) in provider_fetcher.iter_catalog_pages():
                     page_storage_path = provider_fetcher.get_new_storage_path()
-                    logger.debug(
-                        "Saving page data to storage ...",
-                        extra={
-                            "provider_id": self.id,
-                            "page_nr": page_number,
-                            "storage_path": page_storage_path,
-                        },
-                    )
                     page_storage_path.write_bytes(page_bytes)
                     logger.debug(
                         "Success saving page data to storage.",
                         extra={
                             "provider_id": self.id,
+                            "catalog_id": new_catalog.id,
                             "page_nr": page_number,
                             "storage_path": page_storage_path,
                         },
@@ -191,10 +191,26 @@ class Provider(ModelBase, TimestampMixin):
         except NetworkError:
             raise
         except ProviderBrokenWarning:
+            logger.exception(
+                "Provider reported as broken!",
+                extra={
+                    "provider_id": self.id,
+                    "provider_class_id": self.class_id,
+                },
+            )
             self.is_broken = True
         except ProviderMisconfiguredWarning:
+            logger.exception(
+                "Provider reported as misconfigured!",
+                extra={
+                    "provider_id": self.id,
+                },
+            )
             self.is_misconfigured = True
         else:
+            logger.debug(
+                "Success fetching catalog of provider.", extra={"provider_id": self.id}
+            )
             self.is_misconfigured = False
             self.is_broken = False
         db_session.commit()
@@ -286,6 +302,10 @@ def before_page_delete(
     if target.storage_path:
         with contextlib.suppress(FileNotFoundError):
             os.remove(target.storage_path)
+    logger.debug(
+        "Success cleaning up page file of a deleted page.",
+        extra={"page_id": target.id, "page_storage_path": target.storage_path},
+    )
 
 
 @event.listens_for(Provider, "after_insert")
@@ -297,7 +317,10 @@ def after_provider_insert(
     """Event setting up a providers task after its insertion."""
     provider_class = ProviderType.registry.get(target.class_id)
     if not provider_class:
-        logging.getLogger().critical("no provider class")
+        logger.error(
+            "No provider class found for newly inserted provider instance!",
+            extra={"provider_id": target.id, "provider_class_id": target.class_id},
+        )
         return
     with orm.Session(bind=connection) as db_session:
         crontab = CrontabSchedule.from_schedule(db_session, provider_class.schedule)
@@ -315,6 +338,10 @@ def after_provider_insert(
             .where(Provider.id == target.id)
             .values(task_id=task.id)
         )
+    logger.debug(
+        "Success adding periodictask to a newly inserted provider.",
+        extra={"provider_id": target.id, "task_id": target.task_id},
+    )
 
 
 @event.listens_for(Provider, "before_delete")
@@ -325,3 +352,7 @@ def before_provider_delete(
 ) -> None:
     """Event cleaning up a providers task before deleting the provider."""
     connection.execute(delete(PeriodicTask).where(PeriodicTask.id == target.task_id))
+    logger.debug(
+        "Success cleaning up periodictask of a deleted provider.",
+        extra={"provider_id": target.id, "task_id": target.task_id},
+    )
