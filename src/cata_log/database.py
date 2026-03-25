@@ -153,7 +153,6 @@ class Provider(ModelBase, TimestampMixin):
         """Fetch this provider's catalog and save it to storage and db."""
         try:
             with self.get_provider_instance() as provider_fetcher:
-                provider_fetcher.get_catalog_data()
                 new_catalog = Catalog(
                     provider_id=self.id,
                     valid_since=provider_fetcher.get_valid_since().astimezone(UTC),

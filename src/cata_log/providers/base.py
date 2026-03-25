@@ -90,6 +90,7 @@ class Provider(abc.ABC):
                 ]
             },
         )
+        self.get_catalog_data()
 
     @final
     def __init_subclass__(cls) -> None:
