@@ -76,7 +76,7 @@ class ProviderInfo(BaseModel):
     region: RegionInfo
 
 
-@router.get("", response_model=list[Provider], operation_id="list-providers")
+@router.get("", response_model=list[Provider], operation_id="list-providers-v1")
 async def list_providers(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Provider]:
@@ -91,7 +91,7 @@ async def list_providers(
 @router.get(
     "/available",
     response_model=list[ProviderInfo],
-    operation_id="list-available-providers",
+    operation_id="list-available-providers-v1",
 )
 async def list_available_providers(
     query: str | None = None, region: str | None = None
@@ -120,7 +120,7 @@ async def list_available_providers(
     "",
     status_code=status.HTTP_201_CREATED,
     response_model=Provider,
-    operation_id="setup-provider",
+    operation_id="setup-provider-v1",
 )
 async def post_provider(
     new_provider: NewProvider, db_session: Session = database.depends_db_session
@@ -160,7 +160,7 @@ async def post_provider(
 @router.patch(
     "/{provider_id}",
     response_model=Provider,
-    operation_id="update-provider",
+    operation_id="update-provider-v1",
 )
 async def patch_provider(
     provider_id: int,
@@ -198,7 +198,7 @@ async def patch_provider(
     return provider
 
 
-@router.get("/{provider_id}", response_model=Provider, operation_id="get-provider")
+@router.get("/{provider_id}", response_model=Provider, operation_id="get-provider-v1")
 async def get_provider(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> database.Provider:
@@ -214,7 +214,7 @@ async def get_provider(
 @router.delete(
     "/{provider_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    operation_id="delete-provider",
+    operation_id="delete-provider-v1",
 )
 async def delete_provider(
     provider_id: int, db_session: Session = database.depends_db_session
@@ -232,7 +232,7 @@ async def delete_provider(
 @router.get(
     "/{provider_id}/catalogs",
     response_model=list[Catalog],
-    operation_id="list-provider-catalogs",
+    operation_id="list-provider-catalogs-v1",
 )
 async def list_provider_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
@@ -249,7 +249,7 @@ async def list_provider_catalogs(
 @router.get(
     "/{provider_id}/catalogs/latest",
     response_model=Catalog,
-    operation_id="get-latest-provider-catalog",
+    operation_id="get-latest-provider-catalog-v1",
 )
 async def get_latest_provider_catalog(
     provider_id: int, db_session: Session = database.depends_db_session
@@ -271,7 +271,7 @@ async def get_latest_provider_catalog(
 @router.get(
     "/{provider_id}/catalogs/latest/pages",
     response_model=list[Page],
-    operation_id="get-latest-provider-catalog-pages",
+    operation_id="get-latest-provider-catalog-pages-v1",
 )
 async def list_latest_provider_catalog_pages(
     provider_id: int, db_session: Session = database.depends_db_session
@@ -298,7 +298,7 @@ async def list_latest_provider_catalog_pages(
 @router.get(
     "/{provider_id}/catalogs/latest/pages/{page_number}",
     response_model=Page,
-    operation_id="get-latest-provider-catalog-page",
+    operation_id="get-latest-provider-catalog-page-v1",
 )
 async def get_latest_provider_catalog_page(
     provider_id: int,
@@ -332,7 +332,7 @@ async def get_latest_provider_catalog_page(
 @router.get(
     "/{provider_id}/catalogs/latest/pages/{page_number}/download",
     response_model=Page,
-    operation_id="download-latest-provider-catalog-page",
+    operation_id="download-latest-provider-catalog-page-v1",
 )
 async def download_latest_provider_catalog_page(
     provider_id: int,
@@ -373,7 +373,7 @@ async def download_latest_provider_catalog_page(
 @router.get(
     "/{provider_id}/catalogs/latest/pages/{page_number}/embed",
     response_model=Page,
-    operation_id="embed-latest-provider-catalog-page",
+    operation_id="embed-latest-provider-catalog-page-v1",
 )
 async def embed_latest_provider_catalog_page(
     provider_id: int,
@@ -414,7 +414,7 @@ async def embed_latest_provider_catalog_page(
 @router.get(
     "/{provider_id}/catalogs/current",
     response_model=list[Catalog],
-    operation_id="list-provider-current-catalogs",
+    operation_id="list-provider-current-catalogs-v1",
 )
 async def list_provider_current_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
@@ -433,7 +433,7 @@ async def list_provider_current_catalogs(
 @router.get(
     "/{provider_id}/catalogs/previews",
     response_model=list[Catalog],
-    operation_id="list-provider-preview-catalogs",
+    operation_id="list-provider-preview-catalogs-v1",
 )
 async def list_provider_preview_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
@@ -451,7 +451,7 @@ async def list_provider_preview_catalogs(
 @router.get(
     "/{provider_id}/catalogs/outdated",
     response_model=list[Catalog],
-    operation_id="list-provider-outdated-catalogs",
+    operation_id="list-provider-outdated-catalogs-v1",
 )
 async def list_provider_outdated_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
@@ -470,7 +470,7 @@ async def list_provider_outdated_catalogs(
     "/{provider_id}/update",
     status_code=status.HTTP_200_OK,
     response_class=responses.JSONResponse,
-    operation_id="request-provider-update",
+    operation_id="request-provider-update-v1",
 )
 async def post_provider_update(
     provider_id: int, db_session: Session = database.depends_db_session

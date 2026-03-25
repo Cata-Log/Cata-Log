@@ -51,7 +51,7 @@ class NewConfig(BaseModel):
     value: str
 
 
-@router.get("", response_model=list[Config], operation_id="list-configs")
+@router.get("", response_model=list[Config], operation_id="list-configs-v1")
 async def list_config(
     db_session: orm.Session = database.depends_db_session,
 ) -> list[database.Config]:
@@ -60,14 +60,16 @@ async def list_config(
 
 
 @router.get(
-    "/defaults", response_model=list[ConfigDefault], operation_id="list-default-configs"
+    "/defaults",
+    response_model=list[ConfigDefault],
+    operation_id="list-default-configs-v1",
 )
 async def list_config_defaults() -> list[DefaultConfig]:
     """List all configuration defaults."""
     return list(DefaultConfig)
 
 
-@router.get("/{name}", response_model=Config, operation_id="get-config")
+@router.get("/{name}", response_model=Config, operation_id="get-config-v1")
 async def get_config(
     name: str, db_session: orm.Session = database.depends_db_session
 ) -> database.Config:
@@ -89,7 +91,7 @@ async def get_config(
     "",
     status_code=status.HTTP_201_CREATED,
     response_model=Config,
-    operation_id="set-config",
+    operation_id="set-config-v1",
 )
 async def post_config(
     new_config: NewConfig, db_session: orm.Session = database.depends_db_session
@@ -110,7 +112,7 @@ async def post_config(
     return config
 
 
-@router.patch("/{name}", response_model=Config, operation_id="update-config")
+@router.patch("/{name}", response_model=Config, operation_id="update-config-v1")
 async def patch_config(
     name: str,
     config_update: ConfigUpdate,
@@ -133,7 +135,7 @@ async def patch_config(
 
 
 @router.delete(
-    "/{name}", status_code=status.HTTP_204_NO_CONTENT, operation_id="delete-config"
+    "/{name}", status_code=status.HTTP_204_NO_CONTENT, operation_id="delete-config-v1"
 )
 async def delete_config(
     name: str, db_session: orm.Session = database.depends_db_session
