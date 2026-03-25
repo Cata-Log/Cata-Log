@@ -46,7 +46,9 @@ logger = logging.getLogger(__name__)
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender: Celery, **kwargs: Any) -> None:  # noqa: ARG001  # extra kwargs required by celery decorator
     """Set up and register the default catalog cleanup task."""
-    sender.add_periodic_task(schedule=crontab(hour=1), sig=cleanup_catalogs.s())
+    sender.add_periodic_task(
+        schedule=crontab(hour=1, minute=0), sig=cleanup_catalogs.s()
+    )
 
 
 @app.task
