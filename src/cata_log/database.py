@@ -46,7 +46,6 @@ from sqlalchemy import (
 
 from cata_log.constants import DATABASE_URL
 from cata_log.exceptions import (
-    NetworkError,
     ProviderBrokenWarning,
     ProviderMisconfiguredWarning,
 )
@@ -155,7 +154,7 @@ class Provider(ModelBase, TimestampMixin):
             logger.debug(
                 "Fetching catalog of provider ...", extra={"provider_id": self.id}
             )
-            with self.get_provider_instance() as provider_fetcher:
+            with db_session.begin(), self.get_provider_instance() as provider_fetcher:
                 new_catalog = Catalog(
                     provider_id=self.id,
                     valid_since=provider_fetcher.get_valid_since().astimezone(UTC),
@@ -188,8 +187,6 @@ class Provider(ModelBase, TimestampMixin):
                         storage_path=str(page_storage_path),
                     )
                     db_session.add(new_page)
-        except NetworkError:
-            raise
         except ProviderBrokenWarning:
             logger.exception(
                 "Provider reported as broken!",
@@ -209,7 +206,8 @@ class Provider(ModelBase, TimestampMixin):
             self.is_misconfigured = True
         else:
             logger.debug(
-                "Success fetching catalog of provider.", extra={"provider_id": self.id}
+                "Success fetching catalog of provider.",
+                extra={"provider_id": self.id},
             )
             self.is_misconfigured = False
             self.is_broken = False
@@ -262,7 +260,8 @@ class Catalog(ModelBase, TimestampMixin):
             extra={"expiration_deadline": deadline},
         )
         for catalog in db_session.query(cls).filter(cls.created_at < deadline).all():
-            db_session.delete(catalog)
+            with db_session.begin():
+                db_session.delete(catalog)
             logger.debug(
                 "Deleted outdated catalog.",
                 extra={
@@ -271,7 +270,6 @@ class Catalog(ModelBase, TimestampMixin):
                     "expiration_deadline": deadline,
                 },
             )
-        db_session.commit()
         logger.info(
             "Success deleting outdated catalogs.",
             extra={"expiration_deadline": deadline},

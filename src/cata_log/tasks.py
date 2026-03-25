@@ -22,6 +22,7 @@ from typing import Any
 
 from celery import Celery
 from celery.schedules import crontab
+from sqlalchemy import select
 
 from cata_log import constants, database
 from cata_log.constants import BROKER_URL, DATABASE_URL
@@ -48,6 +49,9 @@ def setup_periodic_tasks(sender: Celery, **kwargs: Any) -> None:  # noqa: ARG001
     """Set up and register the default catalog cleanup task."""
     sender.add_periodic_task(
         schedule=crontab(hour=1, minute=0), sig=cleanup_catalogs.s()
+    )
+    sender.add_periodic_task(
+        schedule=crontab(hour=0, minute=0, day_of_week=1), sig=cleanup_storage.s()
     )
 
 
@@ -81,3 +85,19 @@ def cleanup_catalogs() -> None:
             expiration_days = int(constants.DefaultConfig.expiration_days)
         expiration_date = datetime.now(tz=UTC) - timedelta(days=expiration_days)
         database.Catalog.cleanup(db_session, expiration_date)
+
+
+@app.task
+def cleanup_storage() -> None:
+    """Task to cleanup unused files from storage."""
+    with database.DBSession() as db_session:
+        used_storage_paths = set(
+            db_session.execute(select(database.Page.storage_path)).scalars().all()
+        )
+    for storage_filepath in constants.STORAGE_PATH.iterdir():
+        if (
+            storage_filepath.is_dir()
+            or str(storage_filepath.resolve()) in used_storage_paths
+        ):
+            continue
+        storage_filepath.unlink(missing_ok=True)
