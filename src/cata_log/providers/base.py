@@ -180,6 +180,8 @@ class Provider(abc.ABC):
         self._logger.debug("Getting page %s ...", page_number)
         try:
             result = self._get_page(page_number)
+        except PagesExhausted:
+            raise
         except httpx.HTTPStatusError as status_error:
             if (
                 status_error.response.status_code == httpx.codes.NOT_FOUND
