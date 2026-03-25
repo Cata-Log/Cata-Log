@@ -306,7 +306,7 @@ def after_provider_insert(
     crontab = CrontabSchedule.from_schedule(db_session, provider_class.schedule)
     task = PeriodicTask(
         name=f"{target.class_id}-{target.config}",
-        task="cata_log.tasks.fetch_catalog",
+        task="cata_log.tasks.fetch_provider",
         args=f"[{target.id}]",
         crontab_id=crontab.id,
         enabled=True,
