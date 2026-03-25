@@ -285,6 +285,16 @@ def test_patch_provider__success(LocalSession, fake_provider, client):
     assert provider.config == data["config"]
 
 
+def test_patch_provider__not_found(client):
+    response = client.patch(
+        "/api/v1/providers/230",
+        json={"config": {"markt_id": "marktqwertz"}},
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Provider not found"}
+
+
 def test_patch_provider__missing_config(fake_provider, client):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",

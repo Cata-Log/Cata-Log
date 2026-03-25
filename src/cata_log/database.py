@@ -299,9 +299,8 @@ def before_page_delete(
     target: Page,
 ) -> None:
     """Event cleaning up a page file before deleting the page."""
-    if target.storage_path:
-        with contextlib.suppress(FileNotFoundError):
-            os.remove(target.storage_path)
+    with contextlib.suppress(FileNotFoundError):
+        os.remove(target.storage_path)
     logger.debug(
         "Success cleaning up page file of a deleted page.",
         extra={"page_id": target.id, "page_storage_path": target.storage_path},

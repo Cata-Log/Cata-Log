@@ -54,7 +54,7 @@ def test_Provider_insertion(LocalSession):
         assert provider.task_id
         periodic_task = db_session.get(PeriodicTask, provider.task_id)
         assert periodic_task
-        assert periodic_task.task == "cata_log.tasks.fetch_catalog"
+        assert periodic_task.task == "cata_log.tasks.fetch_provider"
         assert periodic_task.args == f"[{provider.id}]"
         assert periodic_task.enabled is True
         assert periodic_task.crontab.minute == str(AldiSued.schedule._orig_minute)
