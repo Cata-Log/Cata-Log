@@ -154,7 +154,11 @@ class Provider(ModelBase, TimestampMixin):
             logger.debug(
                 "Fetching catalog of provider ...", extra={"provider_id": self.id}
             )
-            with db_session.begin(), self.get_provider_instance() as provider_fetcher:
+            with (
+                db_session.begin_nested(),
+                self.get_provider_instance() as provider_fetcher,
+            ):
+                db_session.add(self)
                 new_catalog = Catalog(
                     provider_id=self.id,
                     valid_since=provider_fetcher.get_valid_since().astimezone(UTC),
@@ -260,7 +264,7 @@ class Catalog(ModelBase, TimestampMixin):
             extra={"expiration_deadline": deadline},
         )
         for catalog in db_session.query(cls).filter(cls.created_at < deadline).all():
-            with db_session.begin():
+            with db_session.begin_nested():
                 db_session.delete(catalog)
             logger.debug(
                 "Deleted outdated catalog.",
