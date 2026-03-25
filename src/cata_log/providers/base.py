@@ -37,6 +37,7 @@ from cata_log.exceptions import (
     ProviderMisconfiguredOrBrokenWarning,
 )
 from cata_log.utils.page_numbers import PageNumber, page_numbering
+from cata_log.utils.shortcuts import get_config
 
 from .regions import Region
 
@@ -89,6 +90,7 @@ class Provider(abc.ABC):
                     lambda r, *_, **__: r.raise_for_status(),
                 ]
             },
+            timeout=int(get_config("request_timeout")),
         )
         self.get_catalog_data()
 
