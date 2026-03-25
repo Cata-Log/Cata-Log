@@ -189,7 +189,6 @@ class Provider(ModelBase, TimestampMixin):
                         storage_path=str(page_storage_path),
                     )
                     db_session.add(new_page)
-                    db_session.flush()
         except NetworkError:
             raise
         except ProviderBrokenWarning:
@@ -249,7 +248,6 @@ class Catalog(ModelBase, TimestampMixin):
         )
         for catalog in db_session.query(cls).filter(cls.created_at < deadline).all():
             db_session.delete(catalog)
-            db_session.flush()
             logger.debug(
                 "Deleted outdated catalog.",
                 extra={
@@ -298,26 +296,26 @@ def after_provider_insert(
     target: Provider,
 ) -> None:
     """Event setting up a providers task after its insertion."""
-    db_session = orm.Session(bind=connection)
     provider_class = ProviderType.registry.get(target.class_id)
     if not provider_class:
         logging.getLogger().critical("no provider class")
         return
-    crontab = CrontabSchedule.from_schedule(db_session, provider_class.schedule)
-    task = PeriodicTask(
-        name=f"{target.class_id}-{target.config}",
-        task="cata_log.tasks.fetch_provider",
-        args=f"[{target.id}]",
-        crontab_id=crontab.id,
-        enabled=True,
-    )
-    db_session.add(task)
-    db_session.flush()
-    connection.execute(
-        Provider.__table__.update()
-        .where(Provider.id == target.id)
-        .values(task_id=task.id)
-    )
+    with orm.Session(bind=connection) as db_session:
+        crontab = CrontabSchedule.from_schedule(db_session, provider_class.schedule)
+        task = PeriodicTask(
+            name=f"{target.class_id}-{target.config}",
+            task="cata_log.tasks.fetch_provider",
+            args=f"[{target.id}]",
+            crontab_id=crontab.id,
+            enabled=True,
+        )
+        db_session.add(task)
+        db_session.flush()
+        db_session.execute(
+            Provider.__table__.update()
+            .where(Provider.id == target.id)
+            .values(task_id=task.id)
+        )
 
 
 @event.listens_for(Provider, "before_delete")

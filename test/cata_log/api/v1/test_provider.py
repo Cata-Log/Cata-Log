@@ -117,12 +117,12 @@ def test_list_latest_provider_catalog_pages(
     assert data[0]["id"] == fake_latest_catalog.pages[0].id
 
 
-def test_get_latest_provider_catalog_pages__not_found(fake_provider, client):
+def test_get_latest_provider_catalog_pages__no_catalog(fake_provider, client):
     response = client.get(f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages")
 
-    assert response.status_code == 404
+    assert response.status_code == 200
     data = response.json()
-    assert data["detail"] == "Catalog not found"
+    assert len(data) == 0
 
 
 def test_get_latest_provider_catalog_page(
@@ -144,7 +144,7 @@ def test_get_latest_provider_catalog_page__catalog_not_found(fake_provider, clie
 
     assert response.status_code == 404
     data = response.json()
-    assert data["detail"] == "Catalog not found"
+    assert data["detail"] == "Page not found"
 
 
 def test_get_latest_provider_catalog_page__page_not_found(
@@ -186,7 +186,7 @@ def test_download_latest_provider_catalog_page__catalog_not_found(
 
     assert response.status_code == 404
     data = response.json()
-    assert data["detail"] == "Catalog not found"
+    assert data["detail"] == "Page not found"
 
 
 def test_download_latest_provider_catalog_page__page_not_found(
@@ -226,7 +226,7 @@ def test_embed_latest_provider_catalog_page__catalog_not_found(fake_provider, cl
 
     assert response.status_code == 404
     data = response.json()
-    assert data["detail"] == "Catalog not found"
+    assert data["detail"] == "Page not found"
 
 
 def test_embed_latest_provider_catalog_page__page_not_found(

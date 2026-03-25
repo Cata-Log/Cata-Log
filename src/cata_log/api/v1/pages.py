@@ -77,15 +77,18 @@ async def download_page(
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
     """Download a single page."""
-    page = db_session.get(database.Page, page_id)
-    if not page:
+    page_storage_path = (
+        db_session.query(database.Page.storage_path)
+        .filter(database.Page.id == page_id)
+        .scalar()
+    )
+    if not page_storage_path:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
-    file_path = page.storage_path
-    filename = filename or os.path.basename(file_path)
+    filename = filename or os.path.basename(page_storage_path)
     return FileResponse(
-        path=file_path,
+        path=page_storage_path,
         filename=filename,
         content_disposition_type="attachment",
     )
@@ -98,15 +101,18 @@ async def embed_page(
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
     """Embed a single page."""
-    page = db_session.get(database.Page, page_id)
-    if not page:
+    page_storage_path = (
+        db_session.query(database.Page.storage_path)
+        .filter(database.Page.id == page_id)
+        .scalar()
+    )
+    if not page_storage_path:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
-    file_path = page.storage_path
-    filename = filename or os.path.basename(file_path)
+    filename = filename or os.path.basename(page_storage_path)
     return FileResponse(
-        path=file_path,
+        path=page_storage_path,
         filename=filename,
         content_disposition_type="inline",
     )

@@ -27,6 +27,7 @@ from cata_log import database
 from cata_log.api.mixins import TimestampMixin
 from cata_log.providers import Provider as ProviderType
 from cata_log.tasks import fetch_provider
+from cata_log.utils.queries import latest_provider_catalog_id_subquery
 
 from .catalogs import Catalog
 from .pages import Page
@@ -269,6 +270,35 @@ async def get_latest_provider_catalog(
 
 
 @router.get(
+    "/{provider_id}/catalogs/latest/download",
+    operation_id="download-latest-provider-catalog-v1",
+)
+async def download_latest_provider_catalog(
+    provider_id: int,
+    filename: str | None = None,
+    db_session: Session = database.depends_db_session,
+) -> responses.Response:
+    """Download the latest catalog of a provider as pdf."""
+    catalog = (
+        db_session.query(database.Catalog)
+        .filter(database.Catalog.provider_id == provider_id)
+        .order_by(database.Catalog.created_at.desc())
+        .first()
+    )
+    if not catalog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+    filename = filename or f"catalog-{catalog.id}.pdf"
+    headers = {
+        "Content-Disposition": f"attachment; filename={filename}",
+    }
+    return responses.Response(
+        catalog.as_pdf(), headers=headers, media_type="application/pdf"
+    )
+
+
+@router.get(
     "/{provider_id}/catalogs/latest/pages",
     response_model=list[Page],
     operation_id="get-latest-provider-catalog-pages-v1",
@@ -277,19 +307,12 @@ async def list_latest_provider_catalog_pages(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> list[database.Page]:
     """Get the pages of the latest catalog of a provider."""
-    latest_catalog = (
-        db_session.query(database.Catalog)
-        .filter(database.Catalog.provider_id == provider_id)
-        .order_by(database.Catalog.created_at.desc())
-        .first()
-    )
-    if not latest_catalog:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
-        )
+
     return (
         db_session.query(database.Page)
-        .filter(database.Page.catalog_id == latest_catalog.id)
+        .filter(
+            database.Page.catalog_id == latest_provider_catalog_id_subquery(provider_id)
+        )
         .order_by(database.Page.number)
         .all()
     )
@@ -306,19 +329,11 @@ async def get_latest_provider_catalog_page(
     db_session: Session = database.depends_db_session,
 ) -> database.Page:
     """Get the pages of the latest catalog of a provider."""
-    latest_catalog = (
-        db_session.query(database.Catalog)
-        .filter(database.Catalog.provider_id == provider_id)
-        .order_by(database.Catalog.created_at.desc())
-        .first()
-    )
-    if not latest_catalog:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
-        )
     page = (
         db_session.query(database.Page)
-        .filter(database.Page.catalog_id == latest_catalog.id)
+        .filter(
+            database.Page.catalog_id == latest_provider_catalog_id_subquery(provider_id)
+        )
         .filter(database.Page.number == page_number)
         .one_or_none()
     )
@@ -341,30 +356,21 @@ async def download_latest_provider_catalog_page(
     db_session: Session = database.depends_db_session,
 ) -> responses.FileResponse:
     """Download a single page of the latest catalog of a provider."""
-    latest_catalog = (
-        db_session.query(database.Catalog)
-        .filter(database.Catalog.provider_id == provider_id)
-        .order_by(database.Catalog.created_at.desc())
-        .first()
-    )
-    if not latest_catalog:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+    page_storage_path = (
+        db_session.query(database.Page.storage_path)
+        .filter(
+            database.Page.catalog_id == latest_provider_catalog_id_subquery(provider_id)
         )
-    page = (
-        db_session.query(database.Page)
-        .filter(database.Page.catalog_id == latest_catalog.id)
         .filter(database.Page.number == page_number)
-        .one_or_none()
+        .scalar()
     )
-    if not page:
+    if not page_storage_path:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
-    file_path = page.storage_path
-    filename = filename or os.path.basename(file_path)
+    filename = filename or os.path.basename(page_storage_path)
     return responses.FileResponse(
-        path=file_path,
+        path=page_storage_path,
         filename=filename,
         content_disposition_type="attachment",
     )
@@ -382,30 +388,21 @@ async def embed_latest_provider_catalog_page(
     db_session: Session = database.depends_db_session,
 ) -> responses.FileResponse:
     """Embed a single page of the latest catalog of a provider."""
-    latest_catalog = (
-        db_session.query(database.Catalog)
-        .filter(database.Catalog.provider_id == provider_id)
-        .order_by(database.Catalog.created_at.desc())
-        .first()
-    )
-    if not latest_catalog:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+    page_storage_path = (
+        db_session.query(database.Page.storage_path)
+        .filter(
+            database.Page.catalog_id == latest_provider_catalog_id_subquery(provider_id)
         )
-    page = (
-        db_session.query(database.Page)
-        .filter(database.Page.catalog_id == latest_catalog.id)
         .filter(database.Page.number == page_number)
-        .one_or_none()
+        .scalar()
     )
-    if not page:
+    if not page_storage_path:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
-    file_path = page.storage_path
-    filename = filename or os.path.basename(file_path)
+    filename = filename or os.path.basename(page_storage_path)
     return responses.FileResponse(
-        path=file_path,
+        path=page_storage_path,
         filename=filename,
         content_disposition_type="inline",
     )
