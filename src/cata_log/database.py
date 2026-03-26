@@ -16,12 +16,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import contextlib
 import logging
-import os
 from collections.abc import Generator
 from datetime import UTC, datetime
 from io import BytesIO
+from pathlib import Path
+from typing import override
 
 from celery_sqlalchemy_v2_scheduler.models import (
     CrontabSchedule,
@@ -35,6 +35,7 @@ from sqlalchemy import (
     Column,
     Connection,
     DateTime,
+    Dialect,
     ForeignKey,
     UniqueConstraint,
     create_engine,
@@ -43,6 +44,7 @@ from sqlalchemy import (
     func,
     orm,
 )
+from sqlalchemy.types import String, TypeDecorator
 
 from cata_log.constants import DATABASE_URL
 from cata_log.exceptions import (
@@ -80,6 +82,25 @@ class TimestampMixin:
         onupdate=func.current_timestamp(),
         nullable=False,
     )
+
+
+class PathType(TypeDecorator):
+    """Custom type for a database field with path behaviour."""
+
+    impl = String
+    cache_ok = True
+
+    @override
+    def process_bind_param(self, value: Path | None, dialect: Dialect) -> str | None:
+        if value is None:
+            return None
+        return str(value)
+
+    @override
+    def process_result_value(self, value: str | None, dialect: Dialect) -> Path | None:
+        if value is None:
+            return None
+        return Path(value)
 
 
 class Config(ModelBase, TimestampMixin):
@@ -285,7 +306,7 @@ class Page(ModelBase, TimestampMixin):
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     number: orm.Mapped[int] = orm.mapped_column()
-    storage_path: orm.Mapped[str] = orm.mapped_column(unique=True)
+    storage_path: orm.Mapped[Path] = orm.mapped_column(PathType, unique=True)
     catalog: orm.Mapped[Catalog] = orm.relationship(back_populates="pages")
     catalog_id: orm.Mapped[int] = orm.mapped_column(
         ForeignKey(Catalog.__tablename__ + ".id", ondelete="CASCADE"), nullable=False
@@ -301,8 +322,7 @@ def before_page_delete(
     target: Page,
 ) -> None:
     """Event cleaning up a page file before deleting the page."""
-    with contextlib.suppress(FileNotFoundError):
-        os.remove(target.storage_path)
+    target.storage_path.unlink(missing_ok=True)
     logger.debug(
         "Success cleaning up page file of a deleted page.",
         extra={"page_id": target.id, "page_storage_path": target.storage_path},

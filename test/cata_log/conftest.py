@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import os
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 from freezegun import freeze_time
@@ -68,7 +68,7 @@ def fake_fs():
 
         patcher.fs.create_dir(constants.STORAGE_PATH)
         patcher.fs.create_dir(constants.LOG_DIRECTORY_PATH)
-        patcher.fs.add_real_directory(os.path.dirname(constants.__file__))
+        patcher.fs.add_real_directory(Path(constants.__file__).parent)
         patcher.fs.add_real_file("pyproject.toml")
         yield patcher.fs
 

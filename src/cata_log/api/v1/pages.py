@@ -16,12 +16,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import os
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, computed_field, field_serializer
 from sqlalchemy.orm import Session
 
 from cata_log import database
@@ -36,7 +35,24 @@ class Page(BaseModel, TimestampMixin):
     id: int
     number: int
     catalog_id: int
-    storage_path: str
+    storage_path: Path
+
+    @field_serializer("storage_path")
+    def serialize_storage_path(self, storage_path: Path) -> str:
+        """Serialize storage_path.
+
+        Args:
+            storage_path: The Path instance to serialize.
+
+        Returns:
+            The str representation of the storage_path.
+        """
+        return str(storage_path)
+
+    class Config:
+        """Pydantic model configuration metaclass."""
+
+        arbitrary_types_allowed = True
 
     @computed_field
     @property
@@ -87,7 +103,7 @@ async def download_page(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
-    filename = filename or os.path.basename(page_storage_path)
+    filename = filename or page_storage_path.name
     return FileResponse(
         path=page_storage_path,
         filename=filename,
@@ -111,7 +127,7 @@ async def embed_page(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
-    filename = filename or os.path.basename(page_storage_path)
+    filename = filename or page_storage_path.name
     return FileResponse(
         path=page_storage_path,
         filename=filename,

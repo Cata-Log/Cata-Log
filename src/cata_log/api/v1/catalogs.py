@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import os
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, status
@@ -193,7 +192,7 @@ async def download_catalog_page(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
-    filename = filename or os.path.basename(page_storage_path)
+    filename = filename or page_storage_path.name
     return FileResponse(
         path=page_storage_path,
         filename=filename,
@@ -221,7 +220,7 @@ async def embed_catalog_page(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
-    filename = filename or os.path.basename(page_storage_path)
+    filename = filename or page_storage_path.name
     return FileResponse(
         path=page_storage_path,
         filename=filename,

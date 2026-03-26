@@ -136,7 +136,7 @@ def test_Page_insertion(LocalSession, fake_catalog):
     with LocalSession() as db_session:
         page = database.Page(
             number=4,
-            storage_path=str(STORAGE_PATH / "testfile.jpg"),
+            storage_path=STORAGE_PATH / "testfile.jpg",
             catalog_id=fake_catalog.id,
         )
         db_session.add(page)
@@ -145,7 +145,7 @@ def test_Page_insertion(LocalSession, fake_catalog):
 
         assert page.id
         assert page.number == 4
-        assert page.storage_path == str(STORAGE_PATH / "testfile.jpg")
+        assert page.storage_path == STORAGE_PATH / "testfile.jpg"
         assert page.catalog.id == fake_catalog.id
         assert page.catalog.valid_since == fake_catalog.valid_since
         assert len(fake_catalog.pages) == 1

@@ -97,7 +97,7 @@ def cleanup_storage() -> None:
     for storage_filepath in constants.STORAGE_PATH.iterdir():
         if (
             storage_filepath.is_dir()
-            or str(storage_filepath.resolve()) in used_storage_paths
+            or storage_filepath.resolve() in used_storage_paths
         ):
             continue
         storage_filepath.unlink(missing_ok=True)
