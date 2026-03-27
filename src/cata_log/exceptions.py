@@ -29,7 +29,7 @@ class ProviderMisconfiguredWarning(Warning):
     """An error indicating that the provider is misconfigured."""
 
 
-class ProviderMisconfiguredOrBrokenWarning(ProviderMisconfiguredWarning):
+class ProviderMisconfiguredOrBrokenWarning(Warning):
     """An error indicating that the provider class may be broken or misconfigured."""
 
 

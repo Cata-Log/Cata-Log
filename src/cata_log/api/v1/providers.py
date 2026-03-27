@@ -40,8 +40,7 @@ class Provider(BaseModel, TimestampMixin):
     id: int
     class_id: str
     config: dict[str, str]
-    is_broken: bool
-    is_misconfigured: bool
+    status: database.Provider.StatusEnum
     catalogs: list[Catalog]
 
 

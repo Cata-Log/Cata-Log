@@ -19,6 +19,7 @@
 import logging
 from collections.abc import Generator
 from datetime import UTC, datetime
+from enum import StrEnum
 from io import BytesIO
 from pathlib import Path
 from typing import override
@@ -44,11 +45,13 @@ from sqlalchemy import (
     func,
     orm,
 )
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.types import String, TypeDecorator
 
 from cata_log.constants import DATABASE_URL
 from cata_log.exceptions import (
     ProviderBrokenWarning,
+    ProviderMisconfiguredOrBrokenWarning,
     ProviderMisconfiguredWarning,
 )
 from cata_log.providers import Provider as ProviderType
@@ -115,9 +118,17 @@ class Config(ModelBase, TimestampMixin):
 class Provider(ModelBase, TimestampMixin):
     """ORM model for a catalog provider."""
 
+    class StatusEnum(StrEnum):
+        """Enum of states for providers."""
+
+        MISCONFIGURED = "misconfigured"
+        BROKEN = "broken"
+        MISCONFIGURED_OR_BROKEN = "misconfigured-or-broken"
+        HEALTHY = "healthy"
+
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     class_id: orm.Mapped[str] = orm.mapped_column()
-    config = Column(JSON, default={})
+    config = Column(JSON)
     task: orm.Mapped[PeriodicTask] = orm.relationship()
     task_id: orm.Mapped[int] = orm.mapped_column(
         ForeignKey(PeriodicTask.__tablename__ + ".id", ondelete="CASCADE"),
@@ -126,8 +137,11 @@ class Provider(ModelBase, TimestampMixin):
     catalogs: orm.Mapped[list[Catalog]] = orm.relationship(
         back_populates="provider", cascade="all, delete-orphan"
     )
-    is_broken: orm.Mapped[bool] = orm.mapped_column(default=False)
-    is_misconfigured: orm.Mapped[bool] = orm.mapped_column(default=False)
+    status: orm.Mapped[StatusEnum] = orm.mapped_column(
+        SQLEnum(StatusEnum, name="provider_status_enum"),
+        default=StatusEnum.HEALTHY,
+        server_default=StatusEnum.HEALTHY.value,
+    )
     __tablename__ = "providers"
     __table_args__ = (UniqueConstraint("class_id", "config"),)
 
@@ -214,29 +228,70 @@ class Provider(ModelBase, TimestampMixin):
                     db_session.add(new_page)
         except ProviderBrokenWarning:
             logger.exception(
-                "Provider reported as broken!",
+                "Provider is broken!",
                 extra={
                     "provider_id": self.id,
                     "provider_class_id": self.class_id,
                 },
             )
-            self.is_broken = True
+            self.status = Provider.StatusEnum.BROKEN
         except ProviderMisconfiguredWarning:
             logger.exception(
-                "Provider reported as misconfigured!",
+                "Provider is misconfigured!",
                 extra={
                     "provider_id": self.id,
                 },
             )
-            self.is_misconfigured = True
+            self.status = Provider.StatusEnum.MISCONFIGURED
+        except ProviderMisconfiguredOrBrokenWarning:
+            logger.exception(
+                "Provider is either misconfigured or broken!",
+                extra={
+                    "provider_id": self.id,
+                    "provider_class_id": self.class_id,
+                },
+            )
+            self.status = Provider.StatusEnum.MISCONFIGURED_OR_BROKEN
         else:
             logger.debug(
                 "Success fetching catalog of provider.",
                 extra={"provider_id": self.id},
             )
-            self.is_misconfigured = False
-            self.is_broken = False
+            self.status = Provider.StatusEnum.HEALTHY
         db_session.commit()
+
+    @property
+    def is_healthy(self) -> bool:
+        """Shortcut property to check this providers health.
+
+        Returns:
+            Whether this provider is healthy.
+        """
+        return self.status == Provider.StatusEnum.HEALTHY
+
+    @property
+    def is_misconfigured(self) -> bool:
+        """Shortcut property to check this providers health.
+
+        Returns:
+            Whether this provider is or may be misconfigured.
+        """
+        return self.status in [
+            Provider.StatusEnum.MISCONFIGURED,
+            Provider.StatusEnum.MISCONFIGURED_OR_BROKEN,
+        ]
+
+    @property
+    def is_broken(self) -> bool:
+        """Shortcut property to check this providers health.
+
+        Returns:
+            Whether this provider is or may be broken.
+        """
+        return self.status in [
+            Provider.StatusEnum.BROKEN,
+            Provider.StatusEnum.MISCONFIGURED_OR_BROKEN,
+        ]
 
 
 class Catalog(ModelBase, TimestampMixin):

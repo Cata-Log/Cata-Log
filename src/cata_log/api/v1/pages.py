@@ -20,7 +20,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, computed_field, field_serializer
+from pydantic import BaseModel, ConfigDict, computed_field, field_serializer
 from sqlalchemy.orm import Session
 
 from cata_log import database
@@ -37,6 +37,9 @@ class Page(BaseModel, TimestampMixin):
     catalog_id: int
     storage_path: Path
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    """Pydantic model configuration."""
+
     @field_serializer("storage_path")
     def serialize_storage_path(self, storage_path: Path) -> str:
         """Serialize storage_path.
@@ -48,11 +51,6 @@ class Page(BaseModel, TimestampMixin):
             The str representation of the storage_path.
         """
         return str(storage_path)
-
-    class Config:
-        """Pydantic model configuration metaclass."""
-
-        arbitrary_types_allowed = True
 
     @computed_field
     @property
