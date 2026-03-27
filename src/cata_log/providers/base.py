@@ -35,6 +35,7 @@ from cata_log.exceptions import (
     PagesExhausted,
     ProviderBrokenWarning,
     ProviderMisconfiguredOrBrokenWarning,
+    ProviderMisconfiguredWarning,
 )
 from cata_log.utils.page_numbers import PageNumber, page_numbering
 from cata_log.utils.shortcuts import get_config
@@ -79,7 +80,7 @@ class Provider(abc.ABC):
                     "provider_configuration": self.configuration,
                 },
             )
-            raise TypeError("Configuration keyword-argument missing.")
+            raise ProviderMisconfiguredWarning
         self._config = kwargs
         self._relevant_datetime = self.get_relevant_datetime()
         self._client = httpx.Client(

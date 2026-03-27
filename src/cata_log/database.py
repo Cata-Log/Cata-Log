@@ -169,19 +169,7 @@ class Provider(ModelBase, TimestampMixin):
         Returns:
             The provider instance.
         """
-        provider_class = self.get_provider_class()
-        try:
-            provider_instance = provider_class(**self.config)
-        except TypeError as error:
-            logger.exception(
-                "Provider misconfigured!",
-                extra={
-                    "provider_id": self.id,
-                    "provider_config": self.config,
-                },
-            )
-            raise ProviderMisconfiguredWarning from error
-        return provider_instance
+        return self.get_provider_class()(**self.config)
 
     def fetch_catalog(self, db_session: orm.Session) -> None:
         """Fetch this provider's catalog and save it to storage and db."""
