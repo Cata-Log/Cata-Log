@@ -50,6 +50,7 @@ from sqlalchemy.types import String, TypeDecorator
 
 from cata_log.constants import DATABASE_URL
 from cata_log.exceptions import (
+    CatalogNotAvailableError,
     ProviderBrokenWarning,
     ProviderMisconfiguredOrBrokenWarning,
     ProviderMisconfiguredWarning,
@@ -124,6 +125,7 @@ class Provider(ModelBase, TimestampMixin):
         MISCONFIGURED = "misconfigured"
         BROKEN = "broken"
         MISCONFIGURED_OR_BROKEN = "misconfigured-or-broken"
+        UNAVAILABLE = "unavailable"
         HEALTHY = "healthy"
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
@@ -214,6 +216,14 @@ class Provider(ModelBase, TimestampMixin):
                         storage_path=str(page_storage_path),
                     )
                     db_session.add(new_page)
+        except CatalogNotAvailableError:
+            logger.info(
+                "Provider catalog is not available.",
+                extra={
+                    "provider_id": self.id,
+                },
+            )
+            self.status = Provider.StatusEnum.UNAVAILABLE
         except ProviderBrokenWarning:
             logger.exception(
                 "Provider is broken!",
@@ -255,7 +265,10 @@ class Provider(ModelBase, TimestampMixin):
         Returns:
             Whether this provider is healthy.
         """
-        return self.status == Provider.StatusEnum.HEALTHY
+        return self.status in [
+            Provider.StatusEnum.HEALTHY,
+            Provider.StatusEnum.UNAVAILABLE,
+        ]
 
     @property
     def is_misconfigured(self) -> bool:

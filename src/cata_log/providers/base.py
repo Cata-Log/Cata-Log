@@ -31,6 +31,7 @@ from fake_useragent import UserAgent
 
 from cata_log.constants import STORAGE_PATH
 from cata_log.exceptions import (
+    CatalogNotAvailableError,
     NetworkError,
     PagesExhausted,
     ProviderBrokenWarning,
@@ -184,7 +185,13 @@ class Provider(abc.ABC):
         self._logger.debug("Getting page %s ...", page_number)
         try:
             result = self._get_page(page_number)
-        except PagesExhausted:
+        except PagesExhausted as pages_exhausted:
+            if page_number == self.first_page_number:
+                raise ProviderMisconfiguredOrBrokenWarning from pages_exhausted.__cause__
+            raise
+        except CatalogNotAvailableError as catalog_unavailable_error:
+            if page_number != self.first_page_number:
+                raise ProviderMisconfiguredOrBrokenWarning from catalog_unavailable_error.__cause__
             raise
         except httpx.HTTPStatusError as status_error:
             if (
@@ -220,6 +227,9 @@ class Provider(abc.ABC):
         self._logger.debug("Getting catalog data ...")
         try:
             self._get_catalog_data()
+        except CatalogNotAvailableError:
+            self._logger.exception("Failed getting catalog data.")
+            raise
         except httpx.HTTPStatusError as status_error:
             self._logger.exception("Failed getting catalog data.")
             raise ProviderMisconfiguredOrBrokenWarning from status_error
