@@ -48,6 +48,16 @@ class DefaultConfig(enum.StrEnum):
     log_file_maxsize = "2097152"  # 2 MB
 
 
+class StatusEnum(enum.StrEnum):
+    """Enum of states for providers."""
+
+    MISCONFIGURED = "misconfigured"
+    BROKEN = "broken"
+    MISCONFIGURED_OR_BROKEN = "misconfigured-or-broken"
+    UNAVAILABLE = "unavailable"
+    HEALTHY = "healthy"
+
+
 class CatalogSchedules(enum.Enum):
     """Enum of all catalog schedule types."""
 

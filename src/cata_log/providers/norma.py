@@ -22,7 +22,7 @@ from typing import override
 
 import httpx
 
-from cata_log.exceptions import CatalogNotAvailableError
+from cata_log.exceptions import CatalogUnavailableWarning
 from cata_log.utils.dates import get_calendar_week_number
 from cata_log.utils.page_numbers import PageNumber
 
@@ -94,7 +94,7 @@ class NormaPreview2(Norma):
             page_data = super()._get_page(page_number)
         except httpx.HTTPStatusError as status_error:
             if status_error.response.status_code == httpx.codes.NOT_FOUND:
-                raise CatalogNotAvailableError from status_error
+                raise CatalogUnavailableWarning from status_error
             raise
         return page_data
 
@@ -126,7 +126,7 @@ class NormaRetrospect2(Norma):
             page_data = super()._get_page(page_number)
         except httpx.HTTPStatusError as status_error:
             if status_error.response.status_code == httpx.codes.NOT_FOUND:
-                raise CatalogNotAvailableError from status_error
+                raise CatalogUnavailableWarning from status_error
             raise
         return page_data
 

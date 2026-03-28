@@ -16,28 +16,44 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+from constants import StatusEnum
+
+
+class ProviderWarning(Warning):
+    """A warning about a provider."""
+
+    provider_status: StatusEnum
+
 
 class NetworkError(Exception):
     """An error with the network."""
 
 
-class ProviderBrokenWarning(Warning):
+class ProviderBrokenWarning(ProviderWarning):
     """An error indicating that the provider class may be broken."""
 
+    provider_status = StatusEnum.BROKEN
 
-class ProviderMisconfiguredWarning(Warning):
+
+class ProviderMisconfiguredWarning(ProviderWarning):
     """An error indicating that the provider is misconfigured."""
 
+    provider_status = StatusEnum.MISCONFIGURED
 
-class ProviderMisconfiguredOrBrokenWarning(Warning):
+
+class ProviderMisconfiguredOrBrokenWarning(ProviderWarning):
     """An error indicating that the provider class may be broken or misconfigured."""
+
+    provider_status = StatusEnum.MISCONFIGURED_OR_BROKEN
+
+
+class CatalogUnavailableWarning(ProviderWarning):
+    """The catalog is currently not available.
+    This does not mean that the provider is permanently broken.
+    """
+
+    provider_status = StatusEnum.UNAVAILABLE
 
 
 class PagesExhausted(Exception):  # noqa: N818  # not actually an error
     """The pages of a catalog were exhausted."""
-
-
-class CatalogNotAvailableError(Exception):
-    """The catalog is currently not available.
-    This does not mean that the provider is permanently broken.
-    """

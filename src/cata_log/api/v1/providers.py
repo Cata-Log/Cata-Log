@@ -22,7 +22,7 @@ from fastapi import APIRouter, HTTPException, responses, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from cata_log import database
+from cata_log import constants, database
 from cata_log.api.mixins import TimestampMixin
 from cata_log.providers import Provider as ProviderType
 from cata_log.tasks import fetch_provider
@@ -40,7 +40,7 @@ class Provider(BaseModel, TimestampMixin):
     id: int
     class_id: str
     config: dict[str, str]
-    status: database.Provider.StatusEnum
+    status: constants.StatusEnum
     catalogs: list[Catalog]
 
 

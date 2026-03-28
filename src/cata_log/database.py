@@ -19,7 +19,6 @@
 import logging
 from collections.abc import Generator
 from datetime import UTC, datetime
-from enum import StrEnum
 from io import BytesIO
 from pathlib import Path
 from typing import override
@@ -48,12 +47,10 @@ from sqlalchemy import (
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.types import String, TypeDecorator
 
-from cata_log.constants import DATABASE_URL
+from cata_log.constants import DATABASE_URL, StatusEnum
 from cata_log.exceptions import (
-    CatalogNotAvailableError,
-    ProviderBrokenWarning,
-    ProviderMisconfiguredOrBrokenWarning,
     ProviderMisconfiguredWarning,
+    ProviderWarning,
 )
 from cata_log.providers import Provider as ProviderType
 
@@ -118,15 +115,6 @@ class Config(ModelBase, TimestampMixin):
 
 class Provider(ModelBase, TimestampMixin):
     """ORM model for a catalog provider."""
-
-    class StatusEnum(StrEnum):
-        """Enum of states for providers."""
-
-        MISCONFIGURED = "misconfigured"
-        BROKEN = "broken"
-        MISCONFIGURED_OR_BROKEN = "misconfigured-or-broken"
-        UNAVAILABLE = "unavailable"
-        HEALTHY = "healthy"
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     class_id: orm.Mapped[str] = orm.mapped_column()
@@ -216,46 +204,22 @@ class Provider(ModelBase, TimestampMixin):
                         storage_path=str(page_storage_path),
                     )
                     db_session.add(new_page)
-        except CatalogNotAvailableError:
-            logger.info(
-                "Provider catalog is not available.",
-                extra={
-                    "provider_id": self.id,
-                },
-            )
-            self.status = Provider.StatusEnum.UNAVAILABLE
-        except ProviderBrokenWarning:
+        except ProviderWarning as provider_warning:
             logger.exception(
-                "Provider is broken!",
+                "Provider catalog is %s!",
+                provider_warning.provider_status.value,
                 extra={
                     "provider_id": self.id,
                     "provider_class_id": self.class_id,
                 },
             )
-            self.status = Provider.StatusEnum.BROKEN
-        except ProviderMisconfiguredWarning:
-            logger.exception(
-                "Provider is misconfigured!",
-                extra={
-                    "provider_id": self.id,
-                },
-            )
-            self.status = Provider.StatusEnum.MISCONFIGURED
-        except ProviderMisconfiguredOrBrokenWarning:
-            logger.exception(
-                "Provider is either misconfigured or broken!",
-                extra={
-                    "provider_id": self.id,
-                    "provider_class_id": self.class_id,
-                },
-            )
-            self.status = Provider.StatusEnum.MISCONFIGURED_OR_BROKEN
+            self.status = provider_warning.provider_status
         else:
             logger.debug(
                 "Success fetching catalog of provider.",
                 extra={"provider_id": self.id},
             )
-            self.status = Provider.StatusEnum.HEALTHY
+            self.status = StatusEnum.HEALTHY
         db_session.commit()
 
     @property
@@ -266,8 +230,8 @@ class Provider(ModelBase, TimestampMixin):
             Whether this provider is healthy.
         """
         return self.status in [
-            Provider.StatusEnum.HEALTHY,
-            Provider.StatusEnum.UNAVAILABLE,
+            StatusEnum.HEALTHY,
+            StatusEnum.UNAVAILABLE,
         ]
 
     @property
@@ -278,8 +242,8 @@ class Provider(ModelBase, TimestampMixin):
             Whether this provider is or may be misconfigured.
         """
         return self.status in [
-            Provider.StatusEnum.MISCONFIGURED,
-            Provider.StatusEnum.MISCONFIGURED_OR_BROKEN,
+            StatusEnum.MISCONFIGURED,
+            StatusEnum.MISCONFIGURED_OR_BROKEN,
         ]
 
     @property
@@ -290,8 +254,8 @@ class Provider(ModelBase, TimestampMixin):
             Whether this provider is or may be broken.
         """
         return self.status in [
-            Provider.StatusEnum.BROKEN,
-            Provider.StatusEnum.MISCONFIGURED_OR_BROKEN,
+            StatusEnum.BROKEN,
+            StatusEnum.MISCONFIGURED_OR_BROKEN,
         ]
 
 
