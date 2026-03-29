@@ -462,18 +462,18 @@ async def list_provider_outdated_catalogs(
 @router.post(
     "/{provider_id}/update",
     status_code=status.HTTP_200_OK,
-    response_class=responses.JSONResponse,
+    response_model=Provider,
     operation_id="request-provider-update-v1",
 )
 async def post_provider_update(
     provider_id: int, db_session: Session = database.depends_db_session
-) -> dict[str, str]:
+) -> database.Provider:
     """Trigger an update of a providers catalogs."""
-    if not db_session.get(database.Provider, provider_id):
+    provider = db_session.get(database.Provider, provider_id)
+    if not provider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
         )
-    celery_task = fetch_provider.apply_async(
-        args=[provider_id], retry_policy={"max_retries": 3}
-    )
-    return {"detail": "Update for provider scheduled", "task_uuid": celery_task.id}
+    fetch_provider.delay(provider_id).get()
+    db_session.refresh(provider)
+    return provider
