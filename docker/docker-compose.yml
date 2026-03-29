@@ -9,6 +9,8 @@ services:
     ports:
       - 4848:8000
     environment:
+      - USERNAME=admin
+      - PASSWORD=SafE_pAs5w0rd #gitleaks:allow
     restart: unless-stopped
     depends_on:
       db:

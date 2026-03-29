@@ -9,6 +9,7 @@ services:
     ports:
       - 2424:8000
     environment:
+      - PASSWORD=test1234 # gitleaks:allow
       - DEBUG=True
       - ENABLE_FLOWER=False
     restart: unless-stopped

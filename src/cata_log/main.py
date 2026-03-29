@@ -16,16 +16,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from fastapi import FastAPI, status
+from fastapi import Depends, FastAPI, status
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from cata_log import __version__, api, constants, web
 from cata_log.logging_config import setup_logging
+from cata_log.security import verify_credentials
 
 setup_logging()
 
+
 app = FastAPI(
+    dependencies=[Depends(verify_credentials)],
     title=constants.FAST_API_TITLE,
     description=constants.FAST_API_DESCRIPTION,
     summary=constants.FAST_API_SUMMARY,
