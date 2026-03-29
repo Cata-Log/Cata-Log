@@ -19,11 +19,13 @@
 from .aldi import AldiSued, AldiSuedPreview, AldiSuedPreview2
 from .base import Provider
 from .edeka import EdekaBasissortiment, EdekaMarkt
+from .hofer import Hofer, HoferPreview
 from .kaufland import KauflandWoche, KauflandWochePreview
 from .lidl import Lidl, LidlPreview, LidlPreview2
 from .netto import Netto, NettoPreview
 from .norma import Norma
 from .rewe import Rewe
+from .rossmann import RossmannAngebote
 
 __all__ = [
     "AldiSued",
@@ -31,6 +33,8 @@ __all__ = [
     "AldiSuedPreview2",
     "EdekaBasissortiment",
     "EdekaMarkt",
+    "Hofer",
+    "HoferPreview",
     "KauflandWoche",
     "KauflandWochePreview",
     "Lidl",
@@ -41,4 +45,5 @@ __all__ = [
     "Norma",
     "Provider",
     "Rewe",
+    "RossmannAngebote",
 ]
