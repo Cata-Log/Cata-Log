@@ -31,6 +31,18 @@ def test_list_config(fake_config, client):
     assert data[0]["name"] == fake_config.name
 
 
+def test_list_config__noauth(fake_config, noauth_client):
+    response = noauth_client.get("api/v1/config")
+
+    assert response.status_code == 401
+
+
+def test_list_config__bad_auth(fake_config, bad_auth_client):
+    response = bad_auth_client.get("api/v1/config")
+
+    assert response.status_code == 401
+
+
 def test_list_config_defaults(client):
     response = client.get("api/v1/config/defaults")
 
@@ -42,6 +54,18 @@ def test_list_config_defaults(client):
     assert data[0]["value"] == getattr(DefaultConfig, data[0]["name"])
 
 
+def test_list_config_defaults__noauth(noauth_client):
+    response = noauth_client.get("api/v1/config/defaults")
+
+    assert response.status_code == 401
+
+
+def test_list_config_defaults__bad_auth(bad_auth_client):
+    response = bad_auth_client.get("api/v1/config/defaults")
+
+    assert response.status_code == 401
+
+
 def test_get_config(fake_config, client):
     response = client.get(f"/api/v1/config/{fake_config.name}")
 
@@ -49,6 +73,18 @@ def test_get_config(fake_config, client):
     data = response.json()
     assert data["name"] == fake_config.name
     assert data["value"] == fake_config.value
+
+
+def test_get_config__noauth(fake_config, noauth_client):
+    response = noauth_client.get(f"/api/v1/config/{fake_config.name}")
+
+    assert response.status_code == 401
+
+
+def test_get_config__bad_auth(fake_config, bad_auth_client):
+    response = bad_auth_client.get(f"/api/v1/config/{fake_config.name}")
+
+    assert response.status_code == 401
 
 
 def test_get_config__not_found(client):
@@ -81,6 +117,22 @@ def test_post_config(faker, LocalSession, client):
     assert config.value == config_json["value"]
 
 
+def test_post_config__noauth(faker, noauth_client):
+    config_json = {"name": faker.word(), "value": faker.word()}
+
+    response = noauth_client.post("/api/v1/config", json=config_json)
+
+    assert response.status_code == 401
+
+
+def test_post_config__bad_auth(faker, bad_auth_client):
+    config_json = {"name": faker.word(), "value": faker.word()}
+
+    response = bad_auth_client.post("/api/v1/config", json=config_json)
+
+    assert response.status_code == 401
+
+
 def test_post_config__duplicate(LocalSession, client, fake_config):
     config_json = {"name": fake_config.name, "value": "something"}
     db_session = LocalSession()
@@ -102,6 +154,26 @@ def test_patch_config(faker, fake_config, client):
     assert data["value"] == config_json["value"]
 
 
+def test_patch_config__noauth(faker, fake_config, noauth_client):
+    config_json = {"value": faker.word()}
+
+    response = noauth_client.patch(
+        f"/api/v1/config/{fake_config.name}", json=config_json
+    )
+
+    assert response.status_code == 401
+
+
+def test_patch_config__bad_auth(faker, fake_config, bad_auth_client):
+    config_json = {"value": faker.word()}
+
+    response = bad_auth_client.patch(
+        f"/api/v1/config/{fake_config.name}", json=config_json
+    )
+
+    assert response.status_code == 401
+
+
 def test_patch_config__not_found(client):
     config_json = {"value": "something"}
 
@@ -115,6 +187,18 @@ def test_delete_config(fake_config, client):
     response = client.delete(f"/api/v1/config/{fake_config.name}")
 
     assert response.status_code == 204
+
+
+def test_delete_config__noauth(fake_config, noauth_client):
+    response = noauth_client.delete(f"/api/v1/config/{fake_config.name}")
+
+    assert response.status_code == 401
+
+
+def test_delete_config__bad_auth(fake_config, bad_auth_client):
+    response = bad_auth_client.delete(f"/api/v1/config/{fake_config.name}")
+
+    assert response.status_code == 401
 
 
 def test_delete_config__not_found(client):

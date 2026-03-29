@@ -29,7 +29,7 @@ def noauth_client(fake_fs):
 
 @pytest.fixture
 def bad_auth_client(faker, noauth_client):
-    noauth_client.headers = {"Authorization": faker.word()}
+    noauth_client.headers = {"Authorization": f"Basic {faker.word()}"}
     return noauth_client
 
 

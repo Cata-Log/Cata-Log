@@ -16,9 +16,23 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+from http.client import BAD_REQUEST
+
 import pytest
 
 from cata_log import database
+
+
+def test_list_providers__noauth(full_database, noauth_client):
+    response = noauth_client.get("/api/v1/providers")
+
+    assert response.status_code == 401
+
+
+def test_list_providers__bad_auth(full_database, bad_auth_client):
+    response = bad_auth_client.get("/api/v1/providers")
+
+    assert response.status_code == 401
 
 
 def test_list_providers(full_database, client):
@@ -39,6 +53,18 @@ def test_list_available_providers(client, querystring):
     assert response.status_code == 200
 
 
+def test_list_available_providers__noauth(noauth_client):
+    response = noauth_client.get("/api/v1/providers/available")
+
+    assert response.status_code == 401
+
+
+def test_list_available_providers__bad_auth(bad_auth_client):
+    response = bad_auth_client.get("/api/v1/providers/available")
+
+    assert response.status_code == 401
+
+
 def test_list_provider_catalogs(
     full_database, fake_provider, fake_catalog_preview, client
 ):
@@ -49,6 +75,20 @@ def test_list_provider_catalogs(
     assert len(data) == 3
     assert data[0]
     assert data[0]["id"] == fake_catalog_preview.id
+
+
+def test_list_provider_catalogs__noauth(full_database, fake_provider, noauth_client):
+    response = noauth_client.get(f"/api/v1/providers/{fake_provider.id}/catalogs")
+
+    assert response.status_code == 401
+
+
+def test_list_provider_catalogs__bad_auth(
+    full_database, fake_provider, bad_auth_client
+):
+    response = bad_auth_client.get(f"/api/v1/providers/{fake_provider.id}/catalogs")
+
+    assert response.status_code == 401
 
 
 def test_list_provider_current_catalog(full_database, fake_catalog_current, client):
@@ -63,6 +103,26 @@ def test_list_provider_current_catalog(full_database, fake_catalog_current, clie
     assert data[0]["id"] == fake_catalog_current.id
 
 
+def test_list_provider_current_catalog__noauth(
+    full_database, fake_catalog_current, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_catalog_current.provider_id}/catalogs/current"
+    )
+
+    assert response.status_code == 401
+
+
+def test_list_provider_current_catalog__bad_auth(
+    full_database, fake_catalog_current, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_catalog_current.provider_id}/catalogs/current"
+    )
+
+    assert response.status_code == 401
+
+
 def test_list_provider_previews_catalogs(full_database, fake_catalog_preview, client):
     response = client.get(
         f"/api/v1/providers/{fake_catalog_preview.provider_id}/catalogs/previews"
@@ -73,6 +133,26 @@ def test_list_provider_previews_catalogs(full_database, fake_catalog_preview, cl
     assert len(data) == 1
     assert data[0]
     assert data[0]["id"] == fake_catalog_preview.id
+
+
+def test_list_provider_previews_catalogs__noauth(
+    full_database, fake_catalog_preview, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_catalog_preview.provider_id}/catalogs/previews"
+    )
+
+    assert response.status_code == 401
+
+
+def test_list_provider_previews_catalogs(
+    full_database, fake_catalog_preview, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_catalog_preview.provider_id}/catalogs/previews"
+    )
+
+    assert response.status_code == 401
 
 
 def test_list_provider_outdated_catalogs(full_database, fake_catalog_outdated, client):
@@ -87,6 +167,26 @@ def test_list_provider_outdated_catalogs(full_database, fake_catalog_outdated, c
     assert data[0]["id"] == fake_catalog_outdated.id
 
 
+def test_list_provider_outdated_catalogs__noauth(
+    full_database, fake_catalog_outdated, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_catalog_outdated.provider_id}/catalogs/outdated"
+    )
+
+    assert response.status_code == 401
+
+
+def test_list_provider_outdated_catalogs(
+    full_database, fake_catalog_outdated, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_catalog_outdated.provider_id}/catalogs/outdated"
+    )
+
+    assert response.status_code == 401
+
+
 def test_get_latest_provider_catalog(
     full_database, fake_provider, fake_latest_catalog, client
 ):
@@ -95,6 +195,26 @@ def test_get_latest_provider_catalog(
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == fake_latest_catalog.id
+
+
+def test_get_latest_provider_catalog__noauth(
+    full_database, fake_provider, fake_latest_catalog, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest"
+    )
+
+    assert response.status_code == 401
+
+
+def test_get_latest_provider_catalog__bad_auth(
+    full_database, fake_provider, fake_latest_catalog, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest"
+    )
+
+    assert response.status_code == 401
 
 
 def test_get_latest_provider_catalog__not_found(fake_provider, client):
@@ -117,6 +237,26 @@ def test_list_latest_provider_catalog_pages(
     assert data[0]["id"] == fake_latest_catalog.pages[0].id
 
 
+def test_list_latest_provider_catalog_pages__noauth(
+    full_database, fake_provider, fake_latest_catalog, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages"
+    )
+
+    assert response.status_code == 401
+
+
+def test_list_latest_provider_catalog_pages__bad_auth(
+    full_database, fake_provider, fake_latest_catalog, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages"
+    )
+
+    assert response.status_code == 401
+
+
 def test_get_latest_provider_catalog_pages__no_catalog(fake_provider, client):
     response = client.get(f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages")
 
@@ -135,6 +275,26 @@ def test_get_latest_provider_catalog_page(
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == fake_page.id
+
+
+def test_get_latest_provider_catalog_page__noauth(
+    full_database, fake_provider, fake_page, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}"
+    )
+
+    assert response.status_code == 401
+
+
+def test_get_latest_provider_catalog_page__bad_auth(
+    full_database, fake_provider, fake_page, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}"
+    )
+
+    assert response.status_code == 401
 
 
 def test_get_latest_provider_catalog_page__catalog_not_found(fake_provider, client):
@@ -175,6 +335,26 @@ def test_download_latest_provider_catalog_page(
         response.headers["content-disposition"]
         == f'attachment; filename="{filename or fake_page_file.name}"'
     )
+
+
+def test_download_latest_provider_catalog_page__noauth(
+    full_database, fake_provider, fake_page, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/download"
+    )
+
+    assert response.status_code == 401
+
+
+def test_download_latest_provider_catalog_page__bad_auth(
+    full_database, fake_provider, fake_page, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/download"
+    )
+
+    assert response.status_code == 401
 
 
 def test_download_latest_provider_catalog_page__catalog_not_found(
@@ -219,6 +399,26 @@ def test_embed_latest_provider_catalog_page(
     )
 
 
+def test_embed_latest_provider_catalog_page__noauth(
+    full_database, fake_provider, fake_page, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/embed"
+    )
+
+    assert response.status_code == 401
+
+
+def test_embed_latest_provider_catalog_page__bad_auth(
+    full_database, fake_provider, fake_page, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/embed"
+    )
+
+    assert response.status_code == 401
+
+
 def test_embed_latest_provider_catalog_page__catalog_not_found(fake_provider, client):
     response = client.get(
         f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/972/embed"
@@ -249,6 +449,18 @@ def test_get_provider(fake_provider, client):
     assert data["id"] == fake_provider.id
 
 
+def test_get_provider__noauth(fake_provider, noauth_client):
+    response = noauth_client.get(f"/api/v1/providers/{fake_provider.id}")
+
+    assert response.status_code == 401
+
+
+def test_get_provider__bad_auth(fake_provider, bad_auth_client):
+    response = bad_auth_client.get(f"/api/v1/providers/{fake_provider.id}")
+
+    assert response.status_code == 401
+
+
 def test_get_provider__not_found(client):
     response = client.get("/api/v1/providers/456")
 
@@ -264,6 +476,18 @@ def test_delete_provider(LocalSession, fake_provider, client):
         assert not db_session.query(database.Provider).all()
 
 
+def test_delete_provider__noauth(LocalSession, fake_provider, noauth_client):
+    response = noauth_client.delete(f"/api/v1/providers/{fake_provider.id}")
+
+    assert response.status_code == 401
+
+
+def test_delete_provider__bad_auth(LocalSession, fake_provider, bad_auth_client):
+    response = bad_auth_client.delete(f"/api/v1/providers/{fake_provider.id}")
+
+    assert response.status_code == 401
+
+
 def test_delete_provider__not_found(client):
     response = client.delete("/api/v1/providers/230")
 
@@ -271,11 +495,12 @@ def test_delete_provider__not_found(client):
     assert response.json() == {"detail": "Provider not found"}
 
 
-def test_patch_provider__success(LocalSession, fake_provider, client):
+def test_patch_provider(LocalSession, fake_provider, client):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={"config": {"markt_id": "marktqwertz"}},
     )
+
     assert response.status_code == 200
     data = response.json()
     assert data["class_id"] == "rewe-deutschland"
@@ -283,6 +508,24 @@ def test_patch_provider__success(LocalSession, fake_provider, client):
     with LocalSession() as db_session:
         provider = db_session.get(database.Provider, fake_provider.id)
     assert provider.config == data["config"]
+
+
+def test_patch_provider__noauth(fake_provider, noauth_client):
+    response = noauth_client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"config": {"markt_id": "marktqwertz"}},
+    )
+
+    assert response.status_code == 401
+
+
+def test_patch_provider__bad_auth(fake_provider, bad_auth_client):
+    response = bad_auth_client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"config": {"markt_id": "marktqwertz"}},
+    )
+
+    assert response.status_code == 401
 
 
 def test_patch_provider__not_found(client):
@@ -318,7 +561,7 @@ def test_patch_provider__duplicate(LocalSession, fake_provider, client):
     assert response.status_code == 400
 
 
-def test_post_provider__success(LocalSession, client):
+def test_post_provider(LocalSession, client):
     response = client.post(
         url="/api/v1/providers",
         json={"class_id": "rewe-deutschland", "config": {"markt_id": "1234"}},
@@ -330,6 +573,24 @@ def test_post_provider__success(LocalSession, client):
     assert data["config"] == {"markt_id": "1234"}
     with LocalSession() as db_session:
         assert db_session.get(database.Provider, data["id"])
+
+
+def test_post_provider__noauth(noauth_client):
+    response = noauth_client.post(
+        url="/api/v1/providers",
+        json={"class_id": "rewe-deutschland", "config": {"markt_id": "1234"}},
+    )
+
+    assert response.status_code == 401
+
+
+def test_post_provider__bad_auth(bad_auth_client):
+    response = bad_auth_client.post(
+        url="/api/v1/providers",
+        json={"class_id": "rewe-deutschland", "config": {"markt_id": "1234"}},
+    )
+
+    assert response.status_code == 401
 
 
 def test_post_provider__missing_config(LocalSession, client):
@@ -363,6 +624,22 @@ def test_post_provider__duplicate(LocalSession, fake_provider, client):
     assert response.status_code == 400
     with LocalSession() as db_session:
         assert len(db_session.query(database.Provider).all()) == 1
+
+
+def test_update_provider__noauth(fake_provider, noauth_client):
+    response = noauth_client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/update",
+    )
+
+    assert response.status_code == 401
+
+
+def test_update_provider__bad_auth(fake_provider, bad_auth_client):
+    response = bad_auth_client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/update",
+    )
+
+    assert response.status_code == 401
 
 
 def test_update_provider__not_found(client):
