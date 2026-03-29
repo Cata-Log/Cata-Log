@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import base64
+import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -71,6 +73,19 @@ def fake_fs():
         patcher.fs.add_real_directory(Path(constants.__file__).parent)
         patcher.fs.add_real_file("pyproject.toml")
         yield patcher.fs
+
+
+@pytest.fixture(autouse=True)
+def fake_credentials(faker):
+    os.environ["USERNAME"] = faker.user_name()
+    os.environ["PASSWORD"] = faker.password()
+
+
+@pytest.fixture
+def fake_credentials_encoded():
+    username = os.environ["USERNAME"]
+    password = os.environ["PASSWORD"]
+    return base64.b64encode(f"{username}:{password}".encode()).decode("utf-8")
 
 
 @pytest.fixture

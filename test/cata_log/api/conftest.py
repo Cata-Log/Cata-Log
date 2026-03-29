@@ -21,7 +21,19 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture
-def client(fake_fs):
+def noauth_client(fake_fs):
     from cata_log.main import app  # noqa: PLC0415
 
     return TestClient(app)
+
+
+@pytest.fixture
+def bad_auth_client(faker, noauth_client):
+    noauth_client.headers = {"Authorization": faker.word()}
+    return noauth_client
+
+
+@pytest.fixture
+def client(fake_credentials_encoded, noauth_client):
+    noauth_client.headers = {"Authorization": f"Basic {fake_credentials_encoded}"}
+    return noauth_client
