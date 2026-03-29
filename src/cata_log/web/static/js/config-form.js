@@ -16,7 +16,7 @@ document.getElementById("config-form").addEventListener("submit", (event) => {
       window.location.reload();
     } else {
       response.json().then((json) => {
-        errorElement = event.target.getElementById("form-error");
+        errorElement = event.target.querySelector("#form-error");
         errorElement.innerHTML =
           json.detail || json.message || "An unknown error occurred";
       });

@@ -16,15 +16,10 @@ document.getElementById("provider-form").addEventListener("submit", (event) => {
       window.location.reload();
     } else {
       response.json().then((json) => {
-        errorElement = event.target.getElementById("form-error");
+        errorElement = this.querySelector("#form-error");
         errorElement.innerHTML =
           json.detail || json.message || "An unknown error occurred";
       });
     }
   });
 });
-
-document
-  .getElementById("provider-form")
-  .getElementById("add-config")
-  .addEventListener("click", (event) => {});
