@@ -24,7 +24,10 @@ from sqlalchemy.orm import Session
 
 from cata_log import constants, database
 from cata_log.api.mixins import TimestampMixin
-from cata_log.exceptions import ProviderMisconfiguredWarning
+from cata_log.exceptions import (
+    ProviderConfigIncompleteWarning,
+    ProviderUnknownClassWarning,
+)
 from cata_log.providers import Provider as ProviderType
 from cata_log.tasks import fetch_provider
 from cata_log.utils.queries import latest_provider_catalog_id_subquery
@@ -109,7 +112,7 @@ async def list_available_providers(
         query = query.lower()
     return [
         catalog_class.info()
-        for catalog_class in ProviderType.registry.values()
+        for catalog_class in ProviderType.get_classes()
         if (not query and not region)
         or (region and (region in catalog_class.region.local_name.lower()))
         or (
@@ -132,19 +135,26 @@ async def post_provider(
     new_provider: NewProvider, db_session: Session = database.depends_db_session
 ) -> database.Provider:
     """Set up a new provider."""
-    provider_class = ProviderType.registry.get(new_provider.class_id)
-    if not provider_class:
+    try:
+        provider_class = ProviderType.get_class(new_provider.class_id)
+    except ProviderUnknownClassWarning as unknown_class_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The given provider type is unknown",
-        )
+            detail={
+                "error": "The given provider type is unknown",
+                "class_id": unknown_class_warning.class_id,
+            },
+        ) from unknown_class_warning
     try:
         validated_config = provider_class.validate_config(new_provider.config)
-    except ProviderMisconfiguredWarning as misconfigured_warning:
+    except ProviderConfigIncompleteWarning as incomplete_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The given provider configuration is incomplete",
-        ) from misconfigured_warning
+            detail={
+                "error": "The given provider configuration is incomplete",
+                "missing_configurations": incomplete_warning.missing_configs,
+            },
+        ) from incomplete_warning
     if any(
         provider.config == validated_config
         for provider in db_session.query(database.Provider)
@@ -180,14 +190,26 @@ async def patch_provider(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
         )
-    provider_class = ProviderType.registry[provider.class_id]
     try:
-        validated_config = provider_class.validate_config(provider_update.config)
-    except ProviderMisconfiguredWarning as misconfigured_warning:
+        provider_class = provider.get_provider_class()
+    except ProviderUnknownClassWarning as unknown_class_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The given provider configuration is incomplete",
-        ) from misconfigured_warning
+            detail={
+                "error": "The given provider type is unknown",
+                "class_id": unknown_class_warning.class_id,
+            },
+        ) from unknown_class_warning
+    try:
+        validated_config = provider_class.validate_config(provider_update.config)
+    except ProviderConfigIncompleteWarning as incomplete_warning:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "The given provider configuration is incomplete",
+                "missing_configurations": incomplete_warning.missing_configs,
+            },
+        ) from incomplete_warning
     if any(
         provider.config == validated_config
         for provider in db_session.query(database.Provider)

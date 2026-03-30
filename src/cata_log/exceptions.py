@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+from collections.abc import Collection
+from typing import override
+
 from cata_log.constants import StatusEnum
 
 
@@ -35,10 +38,32 @@ class ProviderBrokenWarning(ProviderWarning):
     provider_status = StatusEnum.BROKEN
 
 
+class ProviderRegistrationWarning(ProviderBrokenWarning):
+    """An error indicating that the provider class could not be registered."""
+
+
 class ProviderMisconfiguredWarning(ProviderWarning):
     """An error indicating that the provider is misconfigured."""
 
     provider_status = StatusEnum.MISCONFIGURED
+
+
+class ProviderConfigIncompleteWarning(ProviderMisconfiguredWarning):
+    """An error indicating that the provider config is incomplete."""
+
+    @override
+    def __init__(self, missing_configs: Collection[str]) -> None:
+        self.missing_configs = missing_configs
+        super().__init__("Provider configuration is incomplete.")
+
+
+class ProviderUnknownClassWarning(ProviderMisconfiguredWarning):
+    """An error indicating that the provider class-id is unknown."""
+
+    @override
+    def __init__(self, class_id: str) -> None:
+        self.class_id = class_id
+        super().__init__("Provider type is unknown.")
 
 
 class ProviderMisconfiguredOrBrokenWarning(ProviderWarning):

@@ -35,8 +35,10 @@ from cata_log.exceptions import (
     NetworkError,
     PagesExhausted,
     ProviderBrokenWarning,
+    ProviderConfigIncompleteWarning,
     ProviderMisconfiguredOrBrokenWarning,
-    ProviderMisconfiguredWarning,
+    ProviderRegistrationWarning,
+    ProviderUnknownClassWarning,
 )
 from cata_log.providers.configuration import Configuration
 from cata_log.utils.page_numbers import PageNumber, page_numbering
@@ -48,7 +50,7 @@ from .regions import Region
 class Provider(abc.ABC):
     """Abstract base class for all catalog providers."""
 
-    registry: ClassVar[dict[str, type[Provider]]] = {}
+    _registry: ClassVar[dict[str, type[Provider]]] = {}
     name: str
     """The name of this catalog provider"""
     description: str
@@ -92,11 +94,14 @@ class Provider(abc.ABC):
     def __init_subclass__(cls) -> None:
         """Subclass constructor.
         Adds the subclass to the registry.
+
+        Raises:
+            ProviderRegistrationWarning: If a provider subclass could not be registered.
         """
         super().__init_subclass__()
-        if cls.id() in cls.registry:
-            raise AttributeError(f"The ID of {cls} is not unique.")
-        cls.registry[cls.id()] = cls
+        if cls.id() in cls._registry:
+            raise ProviderRegistrationWarning
+        cls._registry[cls.id()] = cls
 
     @final
     def __enter__(self) -> Self:
@@ -257,6 +262,7 @@ class Provider(abc.ABC):
         """
         return cls.name + "-" + cls.region.local_name.lower()
 
+    @final
     @classmethod
     def info(cls) -> dict[str, str | dict[str, str] | list[dict[str, str | None]]]:
         """Get user-relevant info about this provider.
@@ -272,6 +278,46 @@ class Provider(abc.ABC):
             "configuration": [config.info() for config in cls.configuration],
         }
 
+    @final
+    @classmethod
+    def get_class(cls, class_id: str) -> type[Provider]:
+        """Get the provider class to a given class-id.
+
+        Args:
+            class_id: The class-id to get the provider for.
+
+        Returns:
+            The class to the class-id.
+
+        Raises:
+            ProviderUnknownClassWarning: If there is no class for the given class-id.
+        """
+        provider_class = cls._registry.get(class_id)
+        if not provider_class:
+            raise ProviderUnknownClassWarning(class_id=class_id)
+        return provider_class
+
+    @final
+    @classmethod
+    def get_class_ids(cls) -> set[str]:
+        """Get all registered class-ids.
+
+        Returns:
+            A set of all registered class identifiers.
+        """
+        return set(cls._registry.keys())
+
+    @final
+    @classmethod
+    def get_classes(cls) -> set[type[Provider]]:
+        """Get all registered classes.
+
+        Returns:
+            A set of all registered classes.
+        """
+        return set(cls._registry.values())
+
+    @final
     @classmethod
     def validate_config(cls, config_dict: dict[str, str]) -> dict[str, str]:
         """Validate a given configuration and return the validated version.
@@ -281,15 +327,23 @@ class Provider(abc.ABC):
 
         Returns:
             The validated configuration.
+
+        Raises:
+            ProviderConfigIncompleteWarning: If the given configuration is incomplete.
         """
         validated_config = {}
+        missing_configs: set[str] = set()
         for config in cls.configuration:
             config_value = config_dict.get(config.name)
             if config_value is None and config.default is None:
-                raise ProviderMisconfiguredWarning
+                missing_configs.add(config.name)
+                continue
             validated_config[config.name] = config_value or config.default
+        if missing_configs:
+            raise ProviderConfigIncompleteWarning(missing_configs=missing_configs)
         return validated_config
 
+    @final
     @classmethod
     def get_new_storage_path(cls) -> Path:
         """Get a new unique storage path for page data.

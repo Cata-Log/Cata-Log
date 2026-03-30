@@ -49,7 +49,7 @@ from sqlalchemy.types import String, TypeDecorator
 
 from cata_log.constants import DATABASE_URL, StatusEnum
 from cata_log.exceptions import (
-    ProviderMisconfiguredWarning,
+    ProviderUnknownClassWarning,
     ProviderWarning,
 )
 from cata_log.providers import Provider as ProviderType
@@ -141,17 +141,7 @@ class Provider(ModelBase, TimestampMixin):
         Returns:
             The provider class.
         """
-        provider_class = ProviderType.registry.get(self.class_id)
-        if not provider_class:
-            logger.error(
-                "Provider class not found!",
-                extra={
-                    "provider_id": self.id,
-                    "provider_class_id": self.class_id,
-                },
-            )
-            raise ProviderMisconfiguredWarning
-        return provider_class
+        return ProviderType.get_class(self.class_id)
 
     def get_provider_instance(self) -> ProviderType:
         """Get a class instance for this provider.
@@ -356,9 +346,10 @@ def after_provider_insert(
     target: Provider,
 ) -> None:
     """Event setting up a providers task after its insertion."""
-    provider_class = ProviderType.registry.get(target.class_id)
-    if not provider_class:
-        logger.error(
+    try:
+        provider_class = target.get_provider_class()
+    except ProviderUnknownClassWarning:
+        logger.exception(
             "No provider class found for newly inserted provider instance!",
             extra={"provider_id": target.id, "provider_class_id": target.class_id},
         )

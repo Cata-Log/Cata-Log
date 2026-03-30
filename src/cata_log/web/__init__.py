@@ -18,7 +18,6 @@
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from cata_log import database
@@ -34,16 +33,16 @@ templates = Jinja2Templates(directory="cata_log/web/templates")
 
 
 @router.get("/", response_class=HTMLResponse)
-def get_dash(request: Request):
+def get_dash(request: Request) -> HTMLResponse:
     """Get the web interface."""
     return templates.TemplateResponse(request, name="dash.html.jinja")
 
 
 @router.get("/providers", response_class=HTMLResponse)
-def get_providers(request: Request):
+def get_providers(request: Request) -> HTMLResponse:
     """Get the providers web interface."""
     available_providers = [
-        catalog_class.info() for catalog_class in Provider.registry.values()
+        catalog_class.info() for catalog_class in Provider.get_classes()
     ]
     with database.DBSession() as db_session:
         providers = db_session.query(database.Provider).all()
@@ -56,7 +55,7 @@ def get_providers(request: Request):
 
 
 @router.get("/config", response_class=HTMLResponse)
-def get_config(request: Request):
+def get_config(request: Request) -> HTMLResponse:
     """Get the web interface."""
     default_configs = list(DefaultConfig)
     with database.DBSession() as db_session:
