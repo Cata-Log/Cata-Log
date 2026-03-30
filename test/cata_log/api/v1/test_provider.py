@@ -17,6 +17,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from http.client import BAD_REQUEST
+from urllib.parse import urljoin
 
 import pytest
 
@@ -48,7 +49,7 @@ def test_list_providers(full_database, client):
     [("?region=deutschland"), ("?region=us"), (""), ("?query=test"), ("?query=aldi")],
 )
 def test_list_available_providers(client, querystring):
-    response = client.get("/api/v1/providers/available" + querystring or "")
+    response = client.get(urljoin("/api/v1/providers/available", querystring or ""))
 
     assert response.status_code == 200
 
@@ -324,8 +325,10 @@ def test_download_latest_provider_catalog_page(
     full_database, fake_provider, fake_page, fake_page_file, client, filename
 ):
     response = client.get(
-        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/download"
-        + (f"?filename={filename}" if filename else "")
+        urljoin(
+            f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/download",
+            f"?filename={filename}" if filename else "",
+        )
     )
 
     assert response.status_code == 200
@@ -386,8 +389,10 @@ def test_embed_latest_provider_catalog_page(
     full_database, fake_provider, fake_page, fake_page_file, client, filename
 ):
     response = client.get(
-        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/embed"
-        + (f"?filename={filename}" if filename else "")
+        urljoin(
+            f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/embed",
+            f"?filename={filename}" if filename else "",
+        )
     )
 
     assert response.status_code == 200

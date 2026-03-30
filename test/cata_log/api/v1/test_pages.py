@@ -17,6 +17,8 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 
+from urllib.parse import urljoin
+
 import pytest
 
 
@@ -74,8 +76,10 @@ def test_get_page__not_found(client):
 @pytest.mark.parametrize(("filename"), [None, "page_image.png"])
 def test_download_page(fake_page, fake_page_file, client, filename):
     response = client.get(
-        f"/api/v1/pages/{fake_page.id}/download"
-        + (f"?filename={filename}" if filename else "")
+        urljoin(
+            f"/api/v1/pages/{fake_page.id}/download",
+            f"?filename={filename}" if filename else "",
+        )
     )
 
     assert response.status_code == 200
@@ -109,8 +113,10 @@ def test_download_page__not_found(client):
 @pytest.mark.parametrize(("filename"), [None, "page_image.png"])
 def test_embed_page(fake_page, fake_page_file, client, filename):
     response = client.get(
-        f"/api/v1/pages/{fake_page.id}/embed"
-        + (f"?filename={filename}" if filename else "")
+        urljoin(
+            f"/api/v1/pages/{fake_page.id}/embed",
+            f"?filename={filename}" if filename else "",
+        )
     )
 
     assert response.status_code == 200

@@ -19,6 +19,7 @@
 from calendar import Day
 from datetime import datetime, time, timedelta
 from typing import override
+from urllib.parse import urljoin
 
 from cata_log.exceptions import PagesExhausted
 from cata_log.utils import page_numbers
@@ -60,7 +61,7 @@ class AldiSued(Provider):
             ]["images"]["at800"]
         except IndexError as error:
             raise PagesExhausted from error
-        response = self._client.get(self.base_url + image_url)
+        response = self._client.get(urljoin(self.base_url, image_url))
         return response.content
 
     @override

@@ -19,6 +19,7 @@
 from calendar import Day
 from datetime import datetime, time, timedelta
 from typing import override
+from urllib.parse import urljoin
 
 from cata_log.exceptions import PagesExhausted
 from cata_log.utils import page_numbers
@@ -38,7 +39,7 @@ class Hofer(Provider):
     first_page_number = 0
 
     overview_url_format = "https://katalog.hofer.at/flipbook_kw{week_number:02}_{short_year}_0/spreads.json"
-    base_url = "https://katalog.hofer.at/"
+    base_url = "https://katalog.hofer.at"
 
     @override
     def _get_catalog_data(self) -> None:
@@ -61,7 +62,7 @@ class Hofer(Provider):
             ]["images"]["at800"]
         except IndexError as error:
             raise PagesExhausted from error
-        response = self._client.get(self.base_url + image_url)
+        response = self._client.get(urljoin(self.base_url, image_url))
         return response.content
 
     @override

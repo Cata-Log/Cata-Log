@@ -19,6 +19,7 @@
 from calendar import Day
 from datetime import datetime, time, timedelta
 from typing import override
+from urllib.parse import urljoin
 
 from celery.schedules import crontab
 
@@ -60,7 +61,7 @@ class Netto(Provider):
             ]
         except IndexError as error:
             raise PagesExhausted from error
-        response = self._client.get(self.base_url + page_url)
+        response = self._client.get(urljoin(self.base_url, page_url))
         return response.content
 
     @override
