@@ -17,125 +17,35 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from collections.abc import Generator
-from datetime import UTC, datetime, tzinfo
+from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
-from typing import override
 
-from celery.schedules import crontab
 from celery_sqlalchemy_v2_scheduler.models import (
-    CrontabSchedule,
     ModelBase,
     PeriodicTask,
 )
-from fastapi import Depends
 from PIL import Image
 from sqlalchemy import (
     JSON,
     Column,
-    Connection,
     DateTime,
-    Dialect,
     ForeignKey,
     UniqueConstraint,
-    create_engine,
-    delete,
-    event,
-    func,
     orm,
 )
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy.types import String, TypeDecorator
 
-from cata_log.constants import DATABASE_URL, StatusEnum
+from cata_log.constants import StatusEnum
 from cata_log.exceptions import (
-    ProviderUnknownClassWarning,
     ProviderWarning,
 )
 from cata_log.providers import Provider as ProviderType
 
+from .mixins import TimestampMixin
+from .types import PathType
+
 logger = logging.getLogger(__name__)
-
-engine = create_engine(url=DATABASE_URL, echo=True)
-
-DBSession = orm.sessionmaker(bind=engine)
-
-
-def get_db_session() -> Generator[orm.Session]:
-    """Shortcut to get a new database session."""
-    with DBSession() as db_session:
-        yield db_session
-
-
-depends_db_session = Depends(get_db_session)
-
-
-def get_or_create_crontab_schedule(
-    db_session: orm.Session, crontab: crontab, tz: tzinfo | None = None
-) -> CrontabSchedule:
-    """Get or create a crontabschedule from a crontab with a custom timezone.
-
-    Note:
-        Analogous to :func:`celery_sqlalchemy_v2_scheduler.models.CrontabSchedule.from_schedule`.
-
-    Args:
-        db_session: The database session to use.
-        crontab: The crontab to make a model from.
-        tz: The timezone of the crontab.
-
-    Returns:
-        The crontabschedule instance to the given data.
-    """
-    spec = {
-        "minute": crontab._orig_minute,  # noqa: SLF001 ; the only way to do this
-        "hour": crontab._orig_hour,  # noqa: SLF001
-        "day_of_week": crontab._orig_day_of_week,  # noqa: SLF001
-        "day_of_month": crontab._orig_day_of_month,  # noqa: SLF001
-        "month_of_year": crontab._orig_month_of_year,  # noqa: SLF001
-    }
-    if tz is not None:
-        spec.update({"timezone": getattr(tz, "zone", str(tz))})
-    crontab = db_session.query(CrontabSchedule).filter_by(**spec).first()
-    if not crontab:
-        crontab = CrontabSchedule(**spec)
-        db_session.add(crontab)
-        db_session.commit()
-    return crontab
-
-
-class TimestampMixin:
-    """Mixin adding standard creation and update timestamps to an ORM model."""
-
-    created_at: orm.Mapped[datetime] = orm.mapped_column(
-        DateTime(timezone=True), server_default=func.current_timestamp(), nullable=False
-    )
-
-    updated_at: orm.Mapped[datetime] = orm.mapped_column(
-        DateTime(timezone=True),
-        server_default=func.current_timestamp(),
-        onupdate=func.current_timestamp(),
-        nullable=False,
-    )
-
-
-class PathType(TypeDecorator):
-    """Custom type for a database field with path behaviour."""
-
-    impl = String
-    cache_ok = True
-
-    @override
-    def process_bind_param(self, value: Path | None, dialect: Dialect) -> str | None:
-        if value is None:
-            return None
-        return str(value)
-
-    @override
-    def process_result_value(self, value: str | None, dialect: Dialect) -> Path | None:
-        if value is None:
-            return None
-        return Path(value)
 
 
 class Config(ModelBase, TimestampMixin):
@@ -357,70 +267,3 @@ class Page(ModelBase, TimestampMixin):
     )
     __tablename__ = "pages"
     __table_args__ = (UniqueConstraint("catalog_id", "number"),)
-
-
-@event.listens_for(Page, "before_delete")
-def before_page_delete(
-    mapper: orm.Mapper,  # noqa: ARG001  # required for event decorator
-    connection: Connection,  # noqa: ARG001  # required for event decorator
-    target: Page,
-) -> None:
-    """Event cleaning up a page file before deleting the page."""
-    target.storage_path.unlink(missing_ok=True)
-    logger.debug(
-        "Success cleaning up page file of a deleted page.",
-        extra={"page_id": target.id, "page_storage_path": target.storage_path},
-    )
-
-
-@event.listens_for(Provider, "after_insert")
-def after_provider_insert(
-    mapper: orm.Mapper,  # noqa: ARG001  # required for event decorator
-    connection: Connection,
-    target: Provider,
-) -> None:
-    """Event setting up a providers task after its insertion."""
-    try:
-        provider_class = target.get_provider_class()
-    except ProviderUnknownClassWarning:
-        logger.exception(
-            "No provider class found for newly inserted provider instance!",
-            extra={"provider_id": target.id, "provider_class_id": target.class_id},
-        )
-        return
-    with orm.Session(bind=connection) as db_session:
-        crontab = get_or_create_crontab_schedule(
-            db_session, provider_class.schedule, provider_class.region.timezone
-        )
-        task = PeriodicTask(
-            name=f"{target.class_id}-{target.config}",
-            task="cata_log.tasks.fetch_provider",
-            args=f"[{target.id}]",
-            crontab_id=crontab.id,
-            enabled=True,
-        )
-        db_session.add(task)
-        db_session.flush()
-        db_session.execute(
-            Provider.__table__.update()
-            .where(Provider.id == target.id)
-            .values(task_id=task.id)
-        )
-    logger.debug(
-        "Success adding periodictask to a newly inserted provider.",
-        extra={"provider_id": target.id, "task_id": target.task_id},
-    )
-
-
-@event.listens_for(Provider, "before_delete")
-def before_provider_delete(
-    mapper: orm.Mapper,  # noqa: ARG001  # required for event decorator
-    connection: Connection,
-    target: Provider,
-) -> None:
-    """Event cleaning up a providers task before deleting the provider."""
-    connection.execute(delete(PeriodicTask).where(PeriodicTask.id == target.task_id))
-    logger.debug(
-        "Success cleaning up periodictask of a deleted provider.",
-        extra={"provider_id": target.id, "task_id": target.task_id},
-    )
