@@ -18,11 +18,12 @@
 
 import logging
 from collections.abc import Generator
-from datetime import UTC, datetime
+from datetime import UTC, datetime, tzinfo
 from io import BytesIO
 from pathlib import Path
 from typing import override
 
+from celery.schedules import crontab
 from celery_sqlalchemy_v2_scheduler.models import (
     CrontabSchedule,
     ModelBase,
@@ -68,6 +69,39 @@ def get_db_session() -> Generator[orm.Session]:
 
 
 depends_db_session = Depends(get_db_session)
+
+
+def get_or_create_crontab_schedule(
+    db_session: orm.Session, crontab: crontab, tz: tzinfo | None = None
+) -> CrontabSchedule:
+    """Get or create a crontabschedule from a crontab with a custom timezone.
+
+    Note:
+        Analogous to :func:`celery_sqlalchemy_v2_scheduler.models.CrontabSchedule.from_schedule`.
+
+    Args:
+        db_session: The database session to use.
+        crontab: The crontab to make a model from.
+        tz: The timezone of the crontab.
+
+    Returns:
+        The crontabschedule instance to the given data.
+    """
+    spec = {
+        "minute": crontab._orig_minute,  # noqa: SLF001 ; the only way to do this
+        "hour": crontab._orig_hour,  # noqa: SLF001
+        "day_of_week": crontab._orig_day_of_week,  # noqa: SLF001
+        "day_of_month": crontab._orig_day_of_month,  # noqa: SLF001
+        "month_of_year": crontab._orig_month_of_year,  # noqa: SLF001
+    }
+    if tz is not None:
+        spec.update({"timezone": getattr(tz, "zone", str(tz))})
+    crontab = db_session.query(CrontabSchedule).filter_by(**spec).first()
+    if not crontab:
+        crontab = CrontabSchedule(**spec)
+        db_session.add(crontab)
+        db_session.commit()
+    return crontab
 
 
 class TimestampMixin:
@@ -355,7 +389,9 @@ def after_provider_insert(
         )
         return
     with orm.Session(bind=connection) as db_session:
-        crontab = CrontabSchedule.from_schedule(db_session, provider_class.schedule)
+        crontab = get_or_create_crontab_schedule(
+            db_session, provider_class.schedule, provider_class.region.timezone
+        )
         task = PeriodicTask(
             name=f"{target.class_id}-{target.config}",
             task="cata_log.tasks.fetch_provider",
