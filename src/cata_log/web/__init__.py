@@ -16,9 +16,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, status
+from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import selectinload
 
 from cata_log import database
 from cata_log.constants import DefaultConfig
@@ -38,7 +40,7 @@ def get_dash(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, name="dash.html.jinja")
 
 
-@router.get("/providers", response_class=HTMLResponse)
+@router.get("/providers/", response_class=HTMLResponse)
 def get_providers(request: Request) -> HTMLResponse:
     """Get the providers web interface."""
     available_providers = [
@@ -54,7 +56,7 @@ def get_providers(request: Request) -> HTMLResponse:
     )
 
 
-@router.get("/config", response_class=HTMLResponse)
+@router.get("/config/", response_class=HTMLResponse)
 def get_config(request: Request) -> HTMLResponse:
     """Get the web interface."""
     default_configs = list(DefaultConfig)
@@ -64,4 +66,21 @@ def get_config(request: Request) -> HTMLResponse:
         request,
         name="config.html.jinja",
         context={"default_configs": default_configs, "configs": configs},
+    )
+
+
+@router.get("/providers/{provider_id}/catalog/", response_class=HTMLResponse)
+def get_provider_catalog(request: Request, provider_id: int) -> HTMLResponse:
+    with database.DBSession() as db_session:
+        provider = db_session.get(
+            database.Provider,
+            provider_id,
+            options=[selectinload(database.Provider.catalogs)],
+        )
+    if not provider:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
+        )
+    return templates.TemplateResponse(
+        request, name="catalog.html.jinja", context={"provider": provider}
     )

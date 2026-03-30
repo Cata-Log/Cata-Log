@@ -1,0 +1,21 @@
+{% extends "base.html.jinja" %}
+
+{% block page_title %}
+    Catalog
+{% endblock page_title %}
+
+{% block content_title %}
+    Latest Catalog of Provider {{ provider.id }}
+{% endblock content_title %}
+
+
+{% block main_content %}
+    <button type="button" id="prev-button" style="flex: 0.1">&lt;</button>
+    <img id="page-image" src="" alt="" style="flex: 1" height="1000" />
+    <button type="button" id="next-button" style="flex: 0.1">&gt;</button>
+{% endblock main_content %}
+
+{% block scripts %}
+    <span id="provider-id" data-id="{{ provider.id }}"></span>
+    <script src="/static/js/catalog-viewer.js"></script>
+{% endblock scripts %}
