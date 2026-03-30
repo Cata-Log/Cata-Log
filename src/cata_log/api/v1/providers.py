@@ -25,7 +25,8 @@ from sqlalchemy.orm import Session
 from cata_log import constants, database
 from cata_log.api.mixins import TimestampMixin
 from cata_log.exceptions import (
-    ProviderConfigIncompleteWarning,
+    ProviderIncompleteConfigWarning,
+    ProviderInvalidConfigWarning,
     ProviderUnknownClassWarning,
 )
 from cata_log.providers import Provider as ProviderType
@@ -75,6 +76,7 @@ class ConfigInfo(BaseModel):
     name: str
     helptext: str
     default: str | None
+    type: str
 
 
 class ProviderInfo(BaseModel):
@@ -147,7 +149,7 @@ async def post_provider(
         ) from unknown_class_warning
     try:
         validated_config = provider_class.validate_config(new_provider.config)
-    except ProviderConfigIncompleteWarning as incomplete_warning:
+    except ProviderIncompleteConfigWarning as incomplete_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -155,6 +157,14 @@ async def post_provider(
                 "missing_configurations": incomplete_warning.missing_configs,
             },
         ) from incomplete_warning
+    except ProviderInvalidConfigWarning as invalid_warning:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "The given provider configuration is invalid",
+                "missing_configurations": invalid_warning.bad_configs,
+            },
+        ) from invalid_warning
     if any(
         provider.config == validated_config
         for provider in db_session.query(database.Provider)
@@ -202,7 +212,7 @@ async def patch_provider(
         ) from unknown_class_warning
     try:
         validated_config = provider_class.validate_config(provider_update.config)
-    except ProviderConfigIncompleteWarning as incomplete_warning:
+    except ProviderIncompleteConfigWarning as incomplete_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -210,6 +220,14 @@ async def patch_provider(
                 "missing_configurations": incomplete_warning.missing_configs,
             },
         ) from incomplete_warning
+    except ProviderInvalidConfigWarning as invalid_warning:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "The given provider configuration is invalid",
+                "invalid_configurations": invalid_warning.bad_configs,
+            },
+        ) from invalid_warning
     if any(
         provider.config == validated_config
         for provider in db_session.query(database.Provider)

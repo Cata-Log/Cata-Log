@@ -15,7 +15,6 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 import abc
 import logging
 import uuid
@@ -35,15 +34,16 @@ from cata_log.exceptions import (
     NetworkError,
     PagesExhausted,
     ProviderBrokenWarning,
-    ProviderConfigIncompleteWarning,
+    ProviderIncompleteConfigWarning,
+    ProviderInvalidConfigWarning,
     ProviderMisconfiguredOrBrokenWarning,
     ProviderRegistrationWarning,
     ProviderUnknownClassWarning,
 )
-from cata_log.providers.configuration import Configuration
 from cata_log.utils.page_numbers import PageNumber, page_numbering
 from cata_log.utils.shortcuts import get_config
 
+from .configuration import Configuration
 from .regions import Region
 
 
@@ -319,7 +319,7 @@ class Provider(abc.ABC):
 
     @final
     @classmethod
-    def validate_config(cls, config_dict: dict[str, str]) -> dict[str, str]:
+    def validate_config(cls, config_dict: dict[str, str]) -> dict[str, object]:
         """Validate a given configuration and return the validated version.
 
         Args:
@@ -330,17 +330,27 @@ class Provider(abc.ABC):
 
         Raises:
             ProviderConfigIncompleteWarning: If the given configuration is incomplete.
+            ProviderBadConfigWarning: If the given configuration is invalid.
         """
         validated_config = {}
         missing_configs: set[str] = set()
+        bad_configs: set[str] = set()
         for config in cls.configuration:
             config_value = config_dict.get(config.name)
             if config_value is None and config.default is None:
                 missing_configs.add(config.name)
                 continue
+            if config_value is not None:
+                try:
+                    config_value = config.type(config_value)
+                except ValueError, TypeError:
+                    bad_configs.add(config.name)
+                    continue
             validated_config[config.name] = config_value or config.default
         if missing_configs:
-            raise ProviderConfigIncompleteWarning(missing_configs=missing_configs)
+            raise ProviderIncompleteConfigWarning(missing_configs=missing_configs)
+        if bad_configs:
+            raise ProviderInvalidConfigWarning(bad_configs=bad_configs)
         return validated_config
 
     @final

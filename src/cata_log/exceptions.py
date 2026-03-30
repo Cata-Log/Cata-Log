@@ -48,13 +48,22 @@ class ProviderMisconfiguredWarning(ProviderWarning):
     provider_status = StatusEnum.MISCONFIGURED
 
 
-class ProviderConfigIncompleteWarning(ProviderMisconfiguredWarning):
+class ProviderIncompleteConfigWarning(ProviderMisconfiguredWarning):
     """An error indicating that the provider config is incomplete."""
 
     @override
     def __init__(self, missing_configs: Collection[str]) -> None:
         self.missing_configs = missing_configs
         super().__init__("Provider configuration is incomplete.")
+
+
+class ProviderInvalidConfigWarning(ProviderMisconfiguredWarning):
+    """An error indicating that a provider config is invalid."""
+
+    @override
+    def __init__(self, bad_configs: Collection[str]) -> None:
+        self.bad_configs = bad_configs
+        super().__init__("Provider configuration is invalid.")
 
 
 class ProviderUnknownClassWarning(ProviderMisconfiguredWarning):
