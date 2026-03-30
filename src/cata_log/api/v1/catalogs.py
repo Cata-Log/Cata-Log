@@ -21,7 +21,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from cata_log import database
 from cata_log.api.mixins import TimestampMixin
@@ -48,6 +48,7 @@ async def list_catalogs(
     """List all catalogs."""
     return (
         db_session.query(database.Catalog)
+        .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
         .all()
     )
@@ -63,6 +64,7 @@ async def list_previews_catalogs(
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
+        .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
         .all()
     )
@@ -80,6 +82,7 @@ async def list_current_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
+        .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
         .all()
     )
@@ -95,6 +98,7 @@ async def list_outdated_catalogs(
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
+        .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
         .all()
     )
@@ -105,7 +109,9 @@ async def get_catalog(
     catalog_id: int, db_session: Session = database.depends_db_session
 ) -> database.Catalog:
     """Get a single catalog."""
-    catalog = db_session.get(database.Catalog, catalog_id)
+    catalog = db_session.get(
+        database.Catalog, catalog_id, options=[selectinload(database.Catalog.pages)]
+    )
     if not catalog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
@@ -120,7 +126,9 @@ async def download_catalog(
     db_session: Session = database.depends_db_session,
 ) -> Response:
     """Download a catalog as pdf."""
-    catalog = db_session.get(database.Catalog, catalog_id)
+    catalog = db_session.get(
+        database.Catalog, catalog_id, options=[selectinload(database.Catalog.pages)]
+    )
     if not catalog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"

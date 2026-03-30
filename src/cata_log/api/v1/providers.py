@@ -20,7 +20,7 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, responses, status
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from cata_log import constants, database
 from cata_log.api.mixins import TimestampMixin
@@ -95,7 +95,14 @@ async def list_providers(
 ) -> list[database.Provider]:
     """List all providers."""
     return (
-        db_session.query(database.Provider).order_by(database.Provider.class_id).all()
+        db_session.query(database.Provider)
+        .options(
+            selectinload(database.Provider.catalogs).selectinload(
+                database.Catalog.pages
+            )
+        )
+        .order_by(database.Provider.class_id)
+        .all()
     )
 
 
@@ -195,7 +202,15 @@ async def patch_provider(
     db_session: Session = database.depends_db_session,
 ) -> database.Provider:
     """Update a provider."""
-    provider = db_session.get(database.Provider, provider_id)
+    provider = db_session.get(
+        database.Provider,
+        provider_id,
+        options=[
+            selectinload(database.Provider.catalogs).selectinload(
+                database.Catalog.pages
+            )
+        ],
+    )
     if not provider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
@@ -286,6 +301,7 @@ async def list_provider_catalogs(
     """List all catalogs of a provider."""
     return (
         db_session.query(database.Catalog)
+        .options(selectinload(database.Catalog.pages))
         .filter(database.Catalog.provider_id == provider_id)
         .order_by(database.Catalog.created_at.desc())
         .all()
@@ -304,6 +320,7 @@ async def get_latest_provider_catalog(
     latest_catalog = (
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
+        .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
         .first()
     )
@@ -327,6 +344,7 @@ async def download_latest_provider_catalog(
     catalog = (
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
+        .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
         .first()
     )
@@ -467,6 +485,7 @@ async def list_provider_current_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since <= datetime.now(tz=UTC))
         .filter(database.Catalog.valid_until > datetime.now(tz=UTC))
+        .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
         .all()
     )
@@ -485,6 +504,7 @@ async def list_provider_preview_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
+        .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
         .all()
     )
@@ -503,6 +523,7 @@ async def list_provider_outdated_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
+        .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
         .all()
     )
@@ -518,7 +539,15 @@ async def post_provider_update(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> database.Provider:
     """Trigger an update of a providers catalogs."""
-    provider = db_session.get(database.Provider, provider_id)
+    provider = db_session.get(
+        database.Provider,
+        provider_id,
+        options=[
+            selectinload(database.Provider.catalogs).selectinload(
+                database.Catalog.pages
+            ),
+        ],
+    )
     if not provider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
