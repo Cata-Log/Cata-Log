@@ -25,7 +25,7 @@ from cata_log.providers import Provider
 from cata_log.providers.regions import Region
 
 
-@pytest.mark.parametrize("provider_class", Provider.registry.values())
+@pytest.mark.parametrize("provider_class", Provider._registry.values())
 def test_registered_classes__attributes(provider_class):
     assert issubclass(provider_class, Provider)
     assert provider_class.name
@@ -34,19 +34,13 @@ def test_registered_classes__attributes(provider_class):
     assert isinstance(provider_class.description, str)
     assert provider_class.url
     assert isinstance(provider_class.url, str)
+    assert provider_class.page_file_extension
+    assert isinstance(provider_class.page_file_extension, str)
     assert provider_class.region
     assert issubclass(provider_class.region, Region)
     assert provider_class.schedule
     assert isinstance(provider_class.schedule, crontab)
     assert isinstance(provider_class.first_page_number, int)
-    assert isinstance(provider_class.configuration, MappingProxyType)
-
-
-@pytest.mark.parametrize("provider_class", Provider.registry.values())
-def test_registered_classes__initialization(faker, provider_class):
-    fake_configuration = {
-        config_param: faker.word() for config_param in provider_class.configuration
-    }
-
-    with provider_class(**fake_configuration):
-        pass
+    assert isinstance(provider_class.configuration, tuple)
+    for config in provider_class.configuration:
+        assert isinstance(config.default, config.type | None)

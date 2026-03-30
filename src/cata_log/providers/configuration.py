@@ -1,7 +1,7 @@
 from pydantic.dataclasses import dataclass
 
 
-@dataclass(frozen=True, validate_on_init=True)
+@dataclass(frozen=True)
 class Configuration:
     """Dataclass of a provider configuration."""
 
