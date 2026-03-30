@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from collections.abc import Collection
+from collections.abc import Sequence
 from typing import override
 
 from cata_log.constants import StatusEnum
@@ -52,7 +52,7 @@ class ProviderIncompleteConfigWarning(ProviderMisconfiguredWarning):
     """An error indicating that the provider config is incomplete."""
 
     @override
-    def __init__(self, missing_configs: Collection[str]) -> None:
+    def __init__(self, missing_configs: Sequence[str]) -> None:
         self.missing_configs = missing_configs
         super().__init__("Provider configuration is incomplete.")
 
@@ -61,7 +61,7 @@ class ProviderInvalidConfigWarning(ProviderMisconfiguredWarning):
     """An error indicating that a provider config is invalid."""
 
     @override
-    def __init__(self, bad_configs: Collection[str]) -> None:
+    def __init__(self, bad_configs: Sequence[str]) -> None:
         self.bad_configs = bad_configs
         super().__init__("Provider configuration is invalid.")
 

@@ -299,23 +299,23 @@ class Provider(abc.ABC):
 
     @final
     @classmethod
-    def get_class_ids(cls) -> set[str]:
+    def get_class_ids(cls) -> list[str]:
         """Get all registered class-ids.
 
         Returns:
             A set of all registered class identifiers.
         """
-        return set(cls._registry.keys())
+        return list(cls._registry.keys())
 
     @final
     @classmethod
-    def get_classes(cls) -> set[type[Provider]]:
+    def get_classes(cls) -> list[type[Provider]]:
         """Get all registered classes.
 
         Returns:
             A set of all registered classes.
         """
-        return set(cls._registry.values())
+        return list(cls._registry.values())
 
     @final
     @classmethod
@@ -333,18 +333,18 @@ class Provider(abc.ABC):
             ProviderBadConfigWarning: If the given configuration is invalid.
         """
         validated_config = {}
-        missing_configs: set[str] = set()
-        bad_configs: set[str] = set()
+        missing_configs: list[str] = []
+        bad_configs: list[str] = []
         for config in cls.configuration:
             config_value = config_dict.get(config.name)
             if config_value is None and config.default is None:
-                missing_configs.add(config.name)
+                missing_configs.append(config.name)
                 continue
             if config_value is not None:
                 try:
                     config_value = config.type(config_value)
                 except ValueError, TypeError:
-                    bad_configs.add(config.name)
+                    bad_configs.append(config.name)
                     continue
             validated_config[config.name] = config_value or config.default
         if missing_configs:
