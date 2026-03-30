@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from cata_log import constants, database
 from cata_log.api.mixins import TimestampMixin
+from cata_log.exceptions import ProviderMisconfiguredWarning
 from cata_log.providers import Provider as ProviderType
 from cata_log.tasks import fetch_provider
 from cata_log.utils.queries import latest_provider_catalog_id_subquery
@@ -65,11 +66,19 @@ class RegionInfo(BaseModel):
     timezone: str
 
 
+class ConfigInfo(BaseModel):
+    """Configuration info data model."""
+
+    name: str
+    helptext: str
+    default: str | None
+
+
 class ProviderInfo(BaseModel):
     """Provider info data model."""
 
     id: str
-    configuration: dict[str, str]
+    configuration: list[ConfigInfo]
     description: str
     url: str
     region: RegionInfo
@@ -92,7 +101,7 @@ async def list_providers(
 )
 async def list_available_providers(
     query: str | None = None, region: str | None = None
-) -> list[dict[str, str | dict[str, str]]]:
+) -> list[dict[str, str | dict[str, str] | list[dict[str, str | None]]]]:
     """List all available providers."""
     if region:
         region = region.lower()
@@ -127,27 +136,28 @@ async def post_provider(
     if not provider_class:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The given provider is unknown",
+            detail="The given provider type is unknown",
         )
-    if any(
-        not new_provider.config.get(config) for config in provider_class.configuration
-    ):
+    try:
+        validated_config = provider_class.validate_config(new_provider.config)
+    except ProviderMisconfiguredWarning as misconfigured_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The given provider configuration is incomplete",
-        )
-    if (
-        db_session.query(database.Provider)
+        ) from misconfigured_warning
+    if any(
+        provider.config == validated_config
+        for provider in db_session.query(database.Provider)
         .filter(database.Provider.class_id == new_provider.class_id)
-        .filter(database.Provider.config == new_provider.config)
-        .first()
-        is not None
+        .all()
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The given provider configuration already exists",
         )
-    provider = database.Provider(**new_provider.model_dump())
+    provider = database.Provider(
+        **new_provider.model_dump(exclude={"config"}), config=validated_config
+    )
     db_session.add(provider)
     db_session.commit()
     db_session.refresh(provider)
@@ -171,16 +181,15 @@ async def patch_provider(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
         )
     provider_class = ProviderType.registry[provider.class_id]
-    if any(
-        not provider_update.config.get(config)
-        for config in provider_class.configuration
-    ):
+    try:
+        validated_config = provider_class.validate_config(provider_update.config)
+    except ProviderMisconfiguredWarning as misconfigured_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The given provider configuration is incomplete",
-        )
+        ) from misconfigured_warning
     if any(
-        provider.config == provider_update.config
+        provider.config == validated_config
         for provider in db_session.query(database.Provider)
         .filter(database.Provider.class_id == provider.class_id)
         .all()
@@ -189,7 +198,7 @@ async def patch_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The given provider configuration already exists",
         )
-    provider.config = provider_update.config
+    provider.config = validated_config
     db_session.commit()
     db_session.refresh(provider)
     return provider

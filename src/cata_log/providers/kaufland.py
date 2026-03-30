@@ -17,13 +17,13 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import datetime, timedelta
-from types import MappingProxyType
 from typing import override
 
 from cata_log.exceptions import PagesExhausted
 from cata_log.utils.page_numbers import PageNumber
 
 from .base import Provider
+from .configuration import Configuration
 from .regions import Germany
 
 
@@ -32,10 +32,8 @@ class KauflandWoche(Provider):
 
     name = "kaufland"
     description = "Kaufland Angebote"
-    configuration = MappingProxyType(
-        {
-            "region_id": "ID der Kaufland-Region",
-        }
+    configuration = (
+        Configuration(name="region_id", helptext="ID der Kaufland-Region"),
     )
     url = "https://filiale.kaufland.de/prospekte.html"
     region = Germany

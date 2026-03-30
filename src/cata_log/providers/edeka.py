@@ -18,12 +18,12 @@
 
 from calendar import Day
 from datetime import datetime, time, timedelta
-from types import MappingProxyType
 from typing import override
 
 from cata_log.utils.page_numbers import PageNumber
 
 from .base import Provider
+from .configuration import Configuration
 from .regions import Germany
 
 
@@ -33,11 +33,9 @@ class EdekaBasissortiment(Provider):
     name = "edeka-basissortiment"
     description = "Edeka Basis Angebote"
     url = "https://www.edeka-wochenangebote.de/"
-    configuration = MappingProxyType(
-        {
-            "region": "Name der Region",
-            "edeka_region": "Name der Edeka Region",
-        }
+    configuration = (
+        Configuration(name="region", helptext="Name der Region"),
+        Configuration(name="edeka_region", helptext="Name der Edeka Region"),
     )
     region = Germany
 
@@ -73,10 +71,8 @@ class EdekaMarkt(EdekaBasissortiment):
 
     name = "edeka-markt"
     description = "Edeka Markt Angebote"
-    configuration = MappingProxyType(
-        {
-            "region": "Name der Edeka Region",
-            "edeka_markt": "Name des Edeka Marktes",
-        }
+    configuration = (
+        Configuration(name="region", helptext="Name der Edeka Region"),
+        Configuration(name="edeka_markt", helptext="Name des Edeka Marktes"),
     )
     url_format = "https://blaetterkatalog.edeka.de/{region}/{edeka_markt}/blaetterkatalog/normal/bk_{page_number}.jpg"

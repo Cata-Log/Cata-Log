@@ -18,13 +18,13 @@
 
 from calendar import Day
 from datetime import datetime, time, timedelta
-from types import MappingProxyType
 from typing import override
 
 from cata_log.exceptions import PagesExhausted
 from cata_log.utils import dates, page_numbers
 
 from .base import Provider
+from .configuration import Configuration
 from .regions import Germany
 
 
@@ -35,7 +35,7 @@ class Rewe(Provider):
     description = "Rewe Katalog"
     url = "https://www.rewe.de/angebote/"
     region = Germany
-    configuration = MappingProxyType({"markt_id": "ID des Rewe Markts"})
+    configuration = (Configuration(name="markt_id", helptext="ID des Rewe Markts"),)
     first_page_number = 0
 
     overview_url_format = "https://view.publitas.com/rewe-markt/rewe_{year}_wk{week_number:02}_{markt_id}/spreads.json"

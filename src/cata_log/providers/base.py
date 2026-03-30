@@ -22,7 +22,7 @@ import uuid
 from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
-from types import MappingProxyType, TracebackType
+from types import TracebackType
 from typing import Any, ClassVar, Self, final
 
 import httpx
@@ -38,6 +38,7 @@ from cata_log.exceptions import (
     ProviderMisconfiguredOrBrokenWarning,
     ProviderMisconfiguredWarning,
 )
+from cata_log.providers.configuration import Configuration
 from cata_log.utils.page_numbers import PageNumber, page_numbering
 from cata_log.utils.shortcuts import get_config
 
@@ -60,7 +61,7 @@ class Provider(abc.ABC):
     """The number of the first page in the providers api"""
     page_file_extension: str = ".jpg"
     """The file extension of page files from the providers api"""
-    configuration: MappingProxyType[str, str] = MappingProxyType({})
+    configuration: tuple[Configuration, ...] = ()
     """The configuration parameters with helptexts for this provider"""
     schedule: crontab = crontab(minute=0, hour=4)
     """The crontab schedule for fetching this provider"""
@@ -69,20 +70,11 @@ class Provider(abc.ABC):
     def __init__(self, **kwargs: Any) -> None:
         """Constructor for a provider instance.
 
-        Stores all kwargs into a the :attr:`_config` member.
+        Stores kwargs into the :attr:`_config` member.
         """
         self._logger = logging.getLogger(self.__class__.__name__)
-        if any(config_key not in kwargs for config_key in self.configuration):
-            self._logger.error(
-                "Provider class missing keyword arguments!",
-                extra={
-                    "provider_class": self.__class__.__name__,
-                    "keyword_arguments": kwargs,
-                    "provider_configuration": self.configuration,
-                },
-            )
-            raise ProviderMisconfiguredWarning
-        self._config = kwargs
+
+        self._config = self.validate_config(kwargs)
         self._relevant_datetime = self.get_relevant_datetime()
         self._client = httpx.Client(
             follow_redirects=True,
@@ -266,7 +258,7 @@ class Provider(abc.ABC):
         return cls.name + "-" + cls.region.local_name.lower()
 
     @classmethod
-    def info(cls) -> dict[str, str | dict[str, str]]:
+    def info(cls) -> dict[str, str | dict[str, str] | list[dict[str, str | None]]]:
         """Get user-relevant info about this provider.
 
         Returns:
@@ -276,9 +268,27 @@ class Provider(abc.ABC):
             "id": cls.id(),
             "description": cls.description,
             "url": cls.url,
-            "configuration": dict(cls.configuration),
             "region": cls.region.info(),
+            "configuration": [config.info() for config in cls.configuration],
         }
+
+    @classmethod
+    def validate_config(cls, config_dict: dict[str, str]) -> dict[str, str]:
+        """Validate a given configuration and return the validated version.
+
+        Args:
+            config_dict: The configuration dictionary to validate.
+
+        Returns:
+            The validated configuration.
+        """
+        validated_config = {}
+        for config in cls.configuration:
+            config_value = config_dict.get(config.name)
+            if config_value is None and config.default is None:
+                raise ProviderMisconfiguredWarning
+            validated_config[config.name] = config_value or config.default
+        return validated_config
 
     @classmethod
     def get_new_storage_path(cls) -> Path:

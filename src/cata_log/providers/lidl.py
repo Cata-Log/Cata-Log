@@ -17,13 +17,13 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import datetime, timedelta
-from types import MappingProxyType
 from typing import override
 
 from cata_log.exceptions import PagesExhausted
 from cata_log.utils.page_numbers import PageNumber
 
 from .base import Provider
+from .configuration import Configuration
 from .regions import Germany
 
 
@@ -34,11 +34,7 @@ class Lidl(Provider):
     description = "Lidl Angebote"
     url = "https://www.lidl.de/c/online-prospekte/s10005610"
     region = Germany
-    configuration = MappingProxyType(
-        {
-            "region_id": "ID der Lidl Region",
-        }
-    )
+    configuration = (Configuration(name="region_id", helptext="ID der Lidl Region"),)
     first_page_number = 0
 
     overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={region_id}&client_locale=lidl/de-DE"

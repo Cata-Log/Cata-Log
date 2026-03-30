@@ -145,7 +145,7 @@ def test_list_provider_previews_catalogs__noauth(
     assert response.status_code == 401
 
 
-def test_list_provider_previews_catalogs(
+def test_list_provider_previews_catalogs__bad_auth(
     full_database, fake_catalog_preview, bad_auth_client
 ):
     response = bad_auth_client.get(
@@ -177,7 +177,7 @@ def test_list_provider_outdated_catalogs__noauth(
     assert response.status_code == 401
 
 
-def test_list_provider_outdated_catalogs(
+def test_list_provider_outdated_catalogs__bad_auth(
     full_database, fake_catalog_outdated, bad_auth_client
 ):
     response = bad_auth_client.get(
@@ -547,6 +547,17 @@ def test_patch_provider__missing_config(fake_provider, client):
     assert response.status_code == 400
 
 
+def test_patch_provider__extra_config(fake_provider, client):
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"config": {"markt_id": "other_id", "extra": "random"}},
+    )
+
+    assert response.status_code == 200
+    assert "extra" not in response.json()["config"]
+    assert response.json()["config"]["markt_id"] == "other_id"
+
+
 def test_patch_provider__duplicate(LocalSession, fake_provider, client):
     provider = database.Provider(class_id=fake_provider.class_id, config={})
     with LocalSession() as db_session:
@@ -602,6 +613,20 @@ def test_post_provider__missing_config(LocalSession, client):
     assert response.status_code == 400
     with LocalSession() as db_session:
         assert not db_session.query(database.Provider).all()
+
+
+def test_post_provider__extra_config(client):
+    response = client.post(
+        url="/api/v1/providers",
+        json={
+            "class_id": "rewe-deutschland",
+            "config": {"markt_id": "someID", "extra": "extradata"},
+        },
+    )
+
+    assert response.status_code == 201
+    assert "extra" not in response.json()["config"]
+    assert response.json()["config"]["markt_id"] == "someID"
 
 
 def test_post_provider__bad_class_id(LocalSession, client):
