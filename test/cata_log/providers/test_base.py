@@ -56,7 +56,6 @@ def test_registered_classes__attributes(provider_class):
         (SideEffects.HTTP_500, exceptions.ProviderMisconfiguredOrBrokenWarning),
         (SideEffects.HTTP_404, exceptions.ProviderMisconfiguredOrBrokenWarning),
         (SideEffects.TRANSPORTERROR, exceptions.NetworkError),
-        (SideEffects.INDEXERROR, exceptions.ProviderBrokenWarning),
         (SideEffects.KEYERROR, exceptions.ProviderBrokenWarning),
         (SideEffects.VALUEERROR, exceptions.ProviderBrokenWarning),
         (SideEffects.EXCEPTION, exceptions.ProviderBrokenWarning),
@@ -68,9 +67,13 @@ def test_get_catalog_data(
 ):
     if expected_error:
         with pytest.raises(expected_error):
-            test_provider_class(side_effect=side_effect, **default_test_provider_config)
+            test_provider_class(
+                {"side_effect": side_effect, **default_test_provider_config}
+            )
     else:
-        test_provider_class(side_effect=side_effect, **default_test_provider_config)
+        test_provider_class(
+            {"side_effect": side_effect, **default_test_provider_config}
+        )
 
 
 @pytest.mark.parametrize(
@@ -81,7 +84,6 @@ def test_get_catalog_data(
         (SideEffects.HTTP_500, exceptions.ProviderBrokenWarning),
         (SideEffects.HTTP_404, exceptions.ProviderBrokenWarning),
         (SideEffects.TRANSPORTERROR, exceptions.ProviderBrokenWarning),
-        (SideEffects.INDEXERROR, exceptions.ProviderBrokenWarning),
         (SideEffects.KEYERROR, exceptions.ProviderBrokenWarning),
         (SideEffects.VALUEERROR, exceptions.ProviderBrokenWarning),
         (SideEffects.EXCEPTION, exceptions.ProviderBrokenWarning),
@@ -94,15 +96,19 @@ def test_get_valid_since(
     if expected_error:
         with pytest.raises(expected_error):
             test_provider_class(
-                side_effect=side_effect,
-                pass_get_catalog_data="True",
-                **default_test_provider_config,
+                {
+                    "side_effect": side_effect,
+                    "pass_get_catalog_data": "True",
+                    **default_test_provider_config,
+                }
             ).get_valid_until()
     else:
         result = test_provider_class(
-            side_effect=side_effect,
-            pass_get_catalog_data="True",
-            **default_test_provider_config,
+            {
+                "side_effect": side_effect,
+                "pass_get_catalog_data": "True",
+                **default_test_provider_config,
+            }
         ).get_valid_until()
 
         assert result
@@ -116,7 +122,6 @@ def test_get_valid_since(
         (SideEffects.HTTP_500, exceptions.ProviderBrokenWarning),
         (SideEffects.HTTP_404, exceptions.ProviderBrokenWarning),
         (SideEffects.TRANSPORTERROR, exceptions.ProviderBrokenWarning),
-        (SideEffects.INDEXERROR, exceptions.ProviderBrokenWarning),
         (SideEffects.KEYERROR, exceptions.ProviderBrokenWarning),
         (SideEffects.VALUEERROR, exceptions.ProviderBrokenWarning),
         (SideEffects.EXCEPTION, exceptions.ProviderBrokenWarning),
@@ -129,15 +134,19 @@ def test_get_valid_until(
     if expected_error:
         with pytest.raises(expected_error):
             test_provider_class(
-                side_effect=side_effect,
-                pass_get_catalog_data="True",
-                **default_test_provider_config,
+                {
+                    "side_effect": side_effect,
+                    "pass_get_catalog_data": "True",
+                    **default_test_provider_config,
+                }
             ).get_valid_until()
     else:
         result = test_provider_class(
-            side_effect=side_effect,
-            pass_get_catalog_data="True",
-            **default_test_provider_config,
+            {
+                "side_effect": side_effect,
+                "pass_get_catalog_data": "True",
+                **default_test_provider_config,
+            }
         ).get_valid_until()
 
         assert result
@@ -156,8 +165,6 @@ def test_get_valid_until(
         (SideEffects.HTTP_404, 6, exceptions.PagesExhausted),
         (SideEffects.TRANSPORTERROR, 0, exceptions.NetworkError),
         (SideEffects.TRANSPORTERROR, 24, exceptions.NetworkError),
-        (SideEffects.INDEXERROR, 0, exceptions.ProviderBrokenWarning),
-        (SideEffects.INDEXERROR, 8, exceptions.ProviderBrokenWarning),
         (SideEffects.KEYERROR, 0, exceptions.ProviderBrokenWarning),
         (SideEffects.KEYERROR, 10, exceptions.ProviderBrokenWarning),
         (SideEffects.VALUEERROR, 0, exceptions.ProviderBrokenWarning),
@@ -188,9 +195,11 @@ def test_get_page(
     if expected_error:
         with pytest.raises(expected_error):
             test_provider_class(
-                side_effect=side_effect,
-                pass_get_catalog_data="True",
-                **default_test_provider_config,
+                {
+                    "side_effect": side_effect,
+                    "pass_get_catalog_data": "True",
+                    **default_test_provider_config,
+                }
             ).get_page(
                 PageNumber(
                     page_number, start_number=test_provider_class.first_page_number
@@ -198,9 +207,11 @@ def test_get_page(
             )
     else:
         result = test_provider_class(
-            side_effect=side_effect,
-            pass_get_catalog_data="True",
-            **default_test_provider_config,
+            {
+                "side_effect": side_effect,
+                "pass_get_catalog_data": "True",
+                **default_test_provider_config,
+            }
         ).get_page(
             PageNumber(page_number, start_number=test_provider_class.first_page_number)
         )

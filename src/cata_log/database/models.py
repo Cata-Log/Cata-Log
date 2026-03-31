@@ -92,7 +92,7 @@ class Provider(ModelBase, TimestampMixin):
         Returns:
             The provider instance.
         """
-        return self.get_provider_class()(**self.config)
+        return self.get_provider_class()(self.config)
 
     def fetch_catalog(self, db_session: orm.Session) -> None:
         """Fetch this provider's catalog and save it to storage and db."""

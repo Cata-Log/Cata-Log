@@ -22,7 +22,7 @@ from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
 from types import TracebackType
-from typing import Any, ClassVar, Self, final, override
+from typing import ClassVar, Self, final, override
 
 import httpx
 from celery.schedules import crontab
@@ -70,14 +70,14 @@ class Provider(abc.ABC):
 
     @final
     @override
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, configuration: dict[str, str]) -> None:
         """Constructor for a provider instance.
 
         Stores kwargs into the :attr:`_config` member.
         """
         self._logger = logging.getLogger(self.__class__.__name__)
 
-        self._config = self.validate_config(kwargs)
+        self._config = self.validate_config(configuration)
         self._relevant_datetime = self.get_relevant_datetime()
         self._client = httpx.Client(
             follow_redirects=True,
