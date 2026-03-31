@@ -80,4 +80,4 @@ class WeekCountingStartpoints(enum.Enum):
         Returns:
             The datetime formatter string.
         """
-        return "%U" if self == calendar.Day.SUNDAY else "%W"
+        return "%U" if self.value == calendar.Day.SUNDAY.value else "%W"

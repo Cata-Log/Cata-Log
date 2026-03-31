@@ -28,7 +28,6 @@ from celery_sqlalchemy_v2_scheduler.models import (
 from PIL import Image
 from sqlalchemy import (
     JSON,
-    Column,
     DateTime,
     ForeignKey,
     UniqueConstraint,
@@ -62,7 +61,7 @@ class Provider(ModelBase, TimestampMixin):
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     class_id: orm.Mapped[str] = orm.mapped_column()
-    config = Column(JSON)
+    config: orm.Mapped[dict[str, str]] = orm.mapped_column(JSON)
     task: orm.Mapped[PeriodicTask] = orm.relationship()
     task_id: orm.Mapped[int] = orm.mapped_column(
         ForeignKey(PeriodicTask.__tablename__ + ".id", ondelete="CASCADE"),

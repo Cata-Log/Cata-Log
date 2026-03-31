@@ -18,11 +18,13 @@
 
 
 from collections.abc import Generator
+from typing import override
 
 
 class PageNumber:
     """Pagenumber logic class."""
 
+    @override
     def __init__(self, page_number: int, start_number: int = 0) -> None:
         """Constructor for the pagenumber.
 
@@ -33,6 +35,7 @@ class PageNumber:
         self._number = page_number - start_number
         self._offset = start_number
 
+    @override
     def __repr__(self) -> str:
         """Representation of the pagenumber.
 
@@ -77,6 +80,7 @@ class PageNumber:
             return self - other.as_page_number()
         raise TypeError("Cannot subtract this object from this pagenumber.")
 
+    @override
     def __hash__(self) -> int:
         """Hash of the pagenumber.
 
@@ -93,6 +97,7 @@ class PageNumber:
         """
         return self._number + self._offset
 
+    @override
     def __str__(self) -> str:
         """Convert the pagenumber as a string.
 
@@ -101,6 +106,7 @@ class PageNumber:
         """
         return str(int(self))
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Comparison of the pagenumber, double-pagenumber and int.
 
@@ -113,7 +119,7 @@ class PageNumber:
             return self.as_double_page_number() == other
         if isinstance(other, int):
             return int(self) == other
-        return False
+        raise NotImplementedError
 
     def next(self) -> PageNumber:
         """Get the next pagenumber.
@@ -154,6 +160,7 @@ class PageNumber:
 class DoublePageNumber:
     """Pagenumber logic class."""
 
+    @override
     def __init__(
         self, double_page_number: int, double_page_index: int, start_number: int = 0
     ) -> None:
@@ -171,6 +178,7 @@ class DoublePageNumber:
             self._index = double_page_index % 2
         self._offset = start_number
 
+    @override
     def __repr__(self) -> str:
         """Representation of the pagenumber.
 
@@ -179,6 +187,7 @@ class DoublePageNumber:
         """
         return f"Double page {self._number}, side {self._index}"
 
+    @override
     def __hash__(self) -> int:
         """Hash of the pagenumber.
 
@@ -219,6 +228,7 @@ class DoublePageNumber:
         """
         return self._number
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Comparison of the double-pagenumber, double-pagenumber and int.
 
@@ -235,7 +245,7 @@ class DoublePageNumber:
             return self.as_page_number() == other
         if isinstance(other, int):
             return int(self) == other
-        return False
+        raise NotImplementedError
 
     def next(self) -> DoublePageNumber:
         """Get the next double-pagenumber.

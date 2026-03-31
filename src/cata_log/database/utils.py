@@ -52,9 +52,9 @@ def get_or_create_crontab_schedule(
     }
     if tz is not None:
         spec.update({"timezone": getattr(tz, "zone", str(tz))})
-    crontab = db_session.query(CrontabSchedule).filter_by(**spec).first()
-    if not crontab:
-        crontab = CrontabSchedule(**spec)
-        db_session.add(crontab)
+    crontab_schedule = db_session.query(CrontabSchedule).filter_by(**spec).first()
+    if not crontab_schedule:
+        crontab_schedule = CrontabSchedule(**spec)
+        db_session.add(crontab_schedule)
         db_session.commit()
-    return crontab
+    return crontab_schedule

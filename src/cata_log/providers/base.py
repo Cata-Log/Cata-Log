@@ -22,7 +22,7 @@ from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
 from types import TracebackType
-from typing import Any, ClassVar, Self, final
+from typing import Any, ClassVar, Self, final, override
 
 import httpx
 from celery.schedules import crontab
@@ -69,6 +69,7 @@ class Provider(abc.ABC):
     """The crontab schedule for fetching this provider"""
 
     @final
+    @override
     def __init__(self, **kwargs: Any) -> None:
         """Constructor for a provider instance.
 
@@ -91,6 +92,7 @@ class Provider(abc.ABC):
         self.get_catalog_data()
 
     @final
+    @override
     def __init_subclass__(cls) -> None:
         """Subclass constructor.
         Adds the subclass to the registry.
@@ -126,6 +128,7 @@ class Provider(abc.ABC):
         self._client.close()
 
     @final
+    @override
     def __str__(self) -> str:
         """String representation of this provider."""
         return f"Catalog {self.id}"
@@ -319,7 +322,7 @@ class Provider(abc.ABC):
 
     @final
     @classmethod
-    def validate_config(cls, config_dict: dict[str, str]) -> dict[str, object]:
+    def validate_config(cls, config_dict: dict[str, str]) -> dict[str, str]:
         """Validate a given configuration and return the validated version.
 
         Args:
@@ -332,21 +335,20 @@ class Provider(abc.ABC):
             ProviderConfigIncompleteWarning: If the given configuration is incomplete.
             ProviderBadConfigWarning: If the given configuration is invalid.
         """
-        validated_config = {}
+        validated_config: dict[str, str] = {}
         missing_configs: list[str] = []
         bad_configs: list[str] = []
         for config in cls.configuration:
-            config_value = config_dict.get(config.name)
-            if config_value is None and config.default is None:
+            config_value = config_dict.get(config.name, config.default)
+            if config_value is None:
                 missing_configs.append(config.name)
-                continue
-            if config_value is not None:
+            else:
                 try:
-                    config_value = config.type(config_value)
+                    config.parse_as(config_value)
                 except ValueError, TypeError:
                     bad_configs.append(config.name)
-                    continue
-            validated_config[config.name] = config_value or config.default
+                else:
+                    validated_config[config.name] = config_value
         if missing_configs:
             raise ProviderIncompleteConfigWarning(missing_configs=missing_configs)
         if bad_configs:

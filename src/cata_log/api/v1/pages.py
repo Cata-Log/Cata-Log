@@ -52,7 +52,7 @@ class Page(BaseModel, TimestampMixin):
         """
         return str(storage_path)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]  # as documented for this decorator
     @property
     def static_filename(self) -> str:
         """Compute the static filename from the storage path."""
