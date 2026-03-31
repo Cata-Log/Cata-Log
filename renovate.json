@@ -1,0 +1,65 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    ":automergeDisabled",
+    ":assignee(@Dacid99)",
+    ":configMigration",
+    ":disableDigestUpdates",
+    ":enablePreCommit",
+    ":pinDigestsDisabled",
+    ":prConcurrentLimitNone",
+    ":preserveSemverRanges",
+    ":prHourlyLimitNone",
+    ":rebaseStalePrs",
+    ":semanticPrefixChore",
+    "customManagers:gitlabPipelineVersions",
+    "customManagers:dockerfileVersions",
+    "customManagers:makefileVersions",
+    "mergeConfidence:all-badges"
+  ],
+  "ignorePresets": [
+    ":maintainLockFilesWeekly",
+    ":pinDevDependencies",
+    ":semanticPrefixFixDepsChoreOthers",
+    "docker:pinDigests"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["at any time"]
+  },
+  "packageRules": [
+    {
+      "matchManagers": ["uv"],
+      "matchUpdateTypes": ["minor"],
+      "groupName": "all uv minor releases",
+      "groupSlug": "uv minor"
+    },
+    {
+      "matchManagers": ["uv"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "all uv patch releases",
+      "groupSlug": "uv patch"
+    },
+    {
+      "matchManagers": ["gitlabci"],
+      "groupName": "all gitlab-ci releases",
+      "groupSlug": "gitlab-ci"
+    },
+    {
+      "matchManagers": ["dockerfile"],
+      "groupName": "all Dockerfile releases",
+      "groupSlug": "dockerfile"
+    },
+    {
+      "matchManagers": ["docker-compose"],
+      "groupName": "all docker-compose releases",
+      "groupSlug": "docker-compose"
+    },
+    {
+      "matchManagers": ["pre-commit"],
+      "groupName": "all pre-commit releases",
+      "groupSlug": "pre-commit"
+    }
+  ]
+}
