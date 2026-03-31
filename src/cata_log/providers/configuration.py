@@ -7,14 +7,14 @@ class Configuration:
 
     name: str
     helptext: str
-    type: type = str
-    default: object | None = None
+    parse_as: type = str
+    default: str | None = None
 
     def info(self) -> dict[str, str | None]:
         """Get information about the configuration."""
         return {
             "name": self.name,
             "helptext": self.helptext,
-            "default": str(self.default),
-            "type": str(self.type),
+            "default": self.default,
+            "parse_as": str(self.parse_as),
         }

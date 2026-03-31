@@ -76,7 +76,7 @@ class ConfigInfo(BaseModel):
     name: str
     helptext: str
     default: str | None
-    type: str
+    parse_as: str
 
 
 class ProviderInfo(BaseModel):

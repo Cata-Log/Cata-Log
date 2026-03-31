@@ -17,16 +17,22 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import base64
+import enum
 import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import override
 
 import pytest
 from freezegun import freeze_time
+from httpx import HTTPStatusError, Request, Response, TransportError
 from pyfakefs.fake_filesystem_unittest import Patcher
 from sqlalchemy import StaticPool, create_engine, orm
 
-from cata_log import constants, database
+from cata_log import constants, database, exceptions
+from cata_log.providers import Provider
+from cata_log.providers.configuration import Configuration
+from cata_log.providers.regions import Germany
 
 
 @pytest.fixture
@@ -208,3 +214,124 @@ def full_database(
     fake_page,
 ):
     pass
+
+
+class SideEffects(enum.StrEnum):
+    DONOTHING = "donothing"
+    HTTP_400 = "400"
+    HTTP_404 = "404"
+    HTTP_500 = "500"
+    TRANSPORTERROR = "transporterror"
+    KEYERROR = "keyerror"
+    VALUEERROR = "valueerror"
+    EXCEPTION = "exception"
+    PAGESEXHAUSTED = "pagesexhausted"
+    CATALOGUNAVAILABLE = "catalogunavailable"
+
+    @classmethod
+    def run(cls, side_effect):
+        match side_effect:
+            case cls.HTTP_400:
+                raise HTTPStatusError(
+                    message="",
+                    request=Request(method="GET", url="https://test-error.it"),
+                    response=Response(status_code=400),
+                )
+            case cls.HTTP_404:
+                raise HTTPStatusError(
+                    message="",
+                    request=Request(method="GET", url="https://test-error.it"),
+                    response=Response(status_code=404),
+                )
+            case cls.HTTP_500:
+                raise HTTPStatusError(
+                    message="",
+                    request=Request(method="GET", url="https://test-error.it"),
+                    response=Response(status_code=500),
+                )
+            case cls.TRANSPORTERROR:
+                raise TransportError(message="")
+            case cls.VALUEERROR:
+                raise ValueError
+            case cls.KEYERROR:
+                raise KeyError
+            case cls.EXCEPTION:
+                raise Exception  # noqa: TRY002  # test for the most generic exception
+            case cls.PAGESEXHAUSTED:
+                raise exceptions.PagesExhausted
+            case cls.CATALOGUNAVAILABLE:
+                raise exceptions.CatalogUnavailableWarning
+            case _:
+                return
+
+
+@pytest.fixture(scope="session")
+def test_provider_class(_session_faker):  # noqa: PT019 # simplifies things
+    class TestProvider(Provider):
+        name = "test-provider"
+        description = "A provider for testing"
+        url = "https://test.provider.it/catalog"
+        region = Germany
+        first_page_number = 0
+        configuration = (
+            Configuration(
+                name="side_effect",
+                helptext="set the side effect of a method execution",
+                default=SideEffects.DONOTHING,
+            ),
+            Configuration(
+                name="pass_get_catalog_data",
+                helptext="whether to pass in _get_catalog_data",
+                default="",
+                parse_as=bool,
+            ),
+            Configuration(
+                name="required_config", helptext="helptext for required config"
+            ),
+            Configuration(
+                name="optional_config",
+                helptext="helptext for optional config",
+                default="default_config",
+            ),
+            Configuration(
+                name="typed_config", helptext="helptext for typed config", parse_as=int
+            ),
+            Configuration(
+                name="optional_typed_config",
+                helptext="helptext for typed optional config",
+                default="14.5",
+                parse_as=float,
+            ),
+        )
+
+        @override
+        def _get_page(self, page_number):
+            SideEffects.run(self._config["side_effect"])
+            return _session_faker.text().encode()
+
+        @override
+        def _get_catalog_data(self):
+            if self._config["pass_get_catalog_data"]:
+                return
+            SideEffects.run(self._config["side_effect"])
+
+        @override
+        def _get_valid_since(self):
+            SideEffects.run(self._config["side_effect"])
+            return _session_faker.date_time()
+
+        @override
+        def _get_valid_until(self):
+            SideEffects.run(self._config["side_effect"])
+            return self._get_valid_since() + _session_faker.time_delta()
+
+    return TestProvider
+
+
+@pytest.fixture(scope="session")
+def default_test_provider_config(test_provider_class):
+    return {
+        config.name: "1"
+        for config in test_provider_class.configuration
+        if config.default is None
+    }
