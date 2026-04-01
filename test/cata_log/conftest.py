@@ -193,11 +193,12 @@ def fake_page_file(faker, fake_fs):
 
 
 @pytest.fixture
-def fake_page(db_session, fake_catalog_preview, fake_page_file):
+def fake_page(faker, db_session, fake_catalog_preview, fake_page_file):
     fake_page = database.Page(
         number=0,
         catalog_id=fake_catalog_preview.id,
         storage_path=str(fake_page_file),
+        sha256=faker.sha256(),
     )
     db_session.add(fake_page)
     db_session.commit()
