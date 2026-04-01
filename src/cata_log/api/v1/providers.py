@@ -21,6 +21,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException, responses, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, selectinload
+from starlette.responses import JSONResponse
 
 from cata_log import constants, database
 from cata_log.api.mixins import TimestampMixin
@@ -188,6 +189,7 @@ async def post_provider(
     db_session.add(provider)
     db_session.commit()
     db_session.refresh(provider)
+    fetch_provider.delay(provider.id)
     return provider
 
 
@@ -532,12 +534,12 @@ async def list_provider_outdated_catalogs(
 @router.post(
     "/{provider_id}/update",
     status_code=status.HTTP_200_OK,
-    response_model=Provider,
+    response_class=JSONResponse,
     operation_id="request-provider-update-v1",
 )
 async def post_provider_update(
     provider_id: int, db_session: Session = database.depends_db_session
-) -> database.Provider:
+) -> dict[str, str]:
     """Trigger an update of a providers catalogs."""
     provider = db_session.get(
         database.Provider,
@@ -552,6 +554,5 @@ async def post_provider_update(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
         )
-    fetch_provider.delay(provider_id).get()
-    db_session.refresh(provider)
-    return provider
+    fetch_provider.delay(provider_id)
+    return {"detail": "Provider update scheduled."}
