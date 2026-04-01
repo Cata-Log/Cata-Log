@@ -1,0 +1,41 @@
+image: python:3.14-slim
+
+default:
+  interruptible: true
+  before_script:
+    - export DEBIAN_FRONTEND=noninteractive
+    - export PYTHONPATH='src'
+    - pip install --no-cache uv
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+variables:
+  GITLAB_API_URL: "https://gitlab.com/-/project/$CI_PROJECT_ID"
+  GITHUB_API_URL: "https://github.com/-/project/$CI_PROJECT_ID"
+  CHECK_PATH: "tools/"
+  CHECK_CONFIG_PATH: "tools/"
+  CHECK_REPORT_PATH: "tools/reports/"
+  TEST_PATH: "test/"
+  TEST_CONFIG_PATH: "test/"
+  TEST_REPORT_PATH: "test/reports/"
+
+stages:
+  - check
+  - test
+  - build
+  - release
+
+include:
+  - local: .gitlab/ci/.gitlab-ci-check-version.yml
+  - local: .gitlab/ci/.gitlab-ci-optional-lint.yml
+  - local: .gitlab/ci/.gitlab-ci-lint.yml
+  - local: .gitlab/ci/.gitlab-ci-test.yml
+  - local: .gitlab/ci/.gitlab-ci-build.yml
+  - local: .gitlab/ci/.gitlab-ci-debug-build.yml
+  - local: .gitlab/ci/.gitlab-ci-release.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+  - template: Jobs/SAST.gitlab-ci.yml

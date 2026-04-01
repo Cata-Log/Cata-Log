@@ -23,14 +23,21 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "lxml>=6.0.2",
-    "mypy>=1.19.1",
     "pip-licenses>=5.5.1",
     "pre-commit>=4.5.1",
 ]
 docs = [
     "myst-parser>=5.0.0",
     "sphinx>=9.1.0",
+]
+lint = [
+    "mypy>=1.19.1",
+    "lxml>=6.0.2",
+    "ruff>=0.15.8",
+    "codespell>=2.4.2",
+    "djlint>=1.36.4",
+    "gitlab-ci-verify>=2.11.0",
+    "doc8>=2.0.0",
 ]
 stubs = [
     "celery-types>=0.26.0",
