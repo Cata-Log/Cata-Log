@@ -18,6 +18,7 @@
 
 import logging
 from datetime import UTC, datetime
+from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
 
@@ -135,6 +136,7 @@ class Provider(ModelBase, TimestampMixin):
                         catalog_id=new_catalog.id,
                         number=page_number,
                         storage_path=str(page_storage_path),
+                        sha256=sha256(page_bytes).hexdigest(),
                     )
                     db_session.add(new_page)
         except ProviderWarning as provider_warning:
@@ -260,6 +262,7 @@ class Page(ModelBase, TimestampMixin):
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     number: orm.Mapped[int] = orm.mapped_column()
     storage_path: orm.Mapped[Path] = orm.mapped_column(PathType, unique=True)
+    sha256: orm.Mapped[str] = orm.mapped_column()
     catalog: orm.Mapped[Catalog] = orm.relationship(back_populates="pages")
     catalog_id: orm.Mapped[int] = orm.mapped_column(
         ForeignKey(Catalog.__tablename__ + ".id", ondelete="CASCADE"), nullable=False

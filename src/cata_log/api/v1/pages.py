@@ -36,6 +36,7 @@ class Page(BaseModel, TimestampMixin):
     number: int
     catalog_id: int
     storage_path: Path
+    sha256: str
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
     """Pydantic model configuration."""
