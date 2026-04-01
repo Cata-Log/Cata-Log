@@ -5,16 +5,15 @@
 {% endblock page_title %}
 
 {% block content_title %}
-    Dashboard
 {% endblock content_title %}
 
 {% block main_content %}
-<div style="display: flex;">
-    <a style="flex:1;" href="/providers">
-        <h2>Providers</h2>
-    </a>
-    <a style="flex:1;" href="/config">
-        <h2>Configuration</h2>
-    </a>
-</div>
-{% endblock main_content%}
+    <div role="group">
+        <a href="{{ url_for('get_providers_webpage') }}">
+            <h2 role="button" class="primary">Providers</h2>
+        </a>
+        <a href="{{ url_for('get_config_webpage') }}">
+            <h2 role="button" class="secondary">Configuration</h2>
+        </a>
+    </div>
+{% endblock main_content %}

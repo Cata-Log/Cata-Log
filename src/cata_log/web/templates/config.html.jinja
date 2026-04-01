@@ -4,37 +4,40 @@
     Configuration
 {% endblock page_title %}
 
-{% block content_title %}
-    Configuration
-{% endblock content_title %}
-
 {% block main_content %}
-    <div style="display:flex">
-        <div style="flex:1">
-            <h4>Your Configuration</h4>
-            <div style="height: 75vh; overflow-y: auto;">
-                {% for config in configs %}
-                    {% include "partials/_config.html.jinja" %}
-                {% endfor %}
-            </div>
-            <div>
-                <h4>Set A Configuration</h4>
+    <div class="grid">
+        <div>
+            <article>
+                <h3>Set A Configuration</h3>
 
                 {% include "partials/_config_form.html.jinja" %}
 
-            </div>
+            </article>
+            <article>
+                <h3>Your Configuration</h3>
+                <div class="overflow-auto">
+                    {% for config in configs %}
+
+                        {% include "partials/_config.html.jinja" %}
+
+                    {% endfor %}
+                </div>
+            </article>
         </div>
-        <div style="flex:1">
-            <h4>Default Configuration</h4>
-            <div style="height: 100vh; overflow-y: auto;">
+        <article>
+            <h3>Default Configuration</h3>
+            <div class="overflow-auto">
                 {% for default_config in default_configs %}
-                        {% include "partials/_default_config.html.jinja" %}
+
+                    {% include "partials/_default_config.html.jinja" %}
+
                 {% endfor %}
             </div>
-        </div>
+        </article>
     </div>
 
 {% endblock main_content %}
+
 
 {% block scripts %}
     <script src="/static/js/config-form.js"></script>

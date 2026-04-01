@@ -4,15 +4,19 @@
     Catalog
 {% endblock page_title %}
 
-{% block content_title %}
-    Latest Catalog of Provider {{ provider.id }}
-{% endblock content_title %}
-
-
 {% block main_content %}
-    <button type="button" id="prev-button" style="flex: 0.1">&lt;</button>
-    <img id="page-image" src="" alt="" style="flex: 1" height="1000" />
-    <button type="button" id="next-button" style="flex: 0.1">&gt;</button>
+    <h2>Latest Catalog of Provider {{ provider.id }}</h2>
+    <div class="grid">
+        <button type="button" id="prev-button">&lt;</button>
+        <img id="page-image" src="" alt="" height="80vh" />
+        <button type="button" id="next-button">&gt;</button>
+    </div>
+    <div>
+        <small>{{ catalog.valid_since }} - {{ catalog.valid_until }}</small>
+    </div>
+    <div>
+        <small>Created {{ catalog.created_at }}</small>
+    </div>
 {% endblock main_content %}
 
 {% block scripts %}

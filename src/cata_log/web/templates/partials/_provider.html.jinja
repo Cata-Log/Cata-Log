@@ -1,14 +1,13 @@
 <article id="provider-{{ provider.id }}">
     <header>
-        Provider {{ provider.id }}
+        <h4>Provider {{ provider.id }}</h4>
+        <small>{{ provider.class_id }}</small>
     </header>
-    <div>{{ provider.class_id }}</div>
-    <a href="/providers/{{ provider.id }}/catalog/">Latest Catalog</a>
-
+    <div>{{ provider.status | title }}</div>
 
     {% if provider.config %}
         <div>
-            Configuration
+            <h6>Configuration</h6>
             <ul>
                 {% for config_key, config_value in provider.config.items() %}
                     <li>
@@ -18,4 +17,7 @@
             </ul>
         </div>
     {% endif %}
+    <footer>
+        <a href="{{ url_for('get_provider_catalog_webpage', provider_id=provider.id) }}">Latest Catalog</a>
+    </footer>
 </article>

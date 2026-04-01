@@ -20,7 +20,6 @@ from fastapi import APIRouter, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import selectinload
 
 from cata_log import database
 from cata_log.constants import DefaultConfig
@@ -41,7 +40,7 @@ def get_dash(request: Request) -> HTMLResponse:
 
 
 @router.get("/providers/", response_class=HTMLResponse)
-def get_providers(request: Request) -> HTMLResponse:
+def get_providers_webpage(request: Request) -> HTMLResponse:
     """Get the providers web interface."""
     available_providers = [
         catalog_class.info() for catalog_class in Provider.get_classes()
@@ -57,7 +56,7 @@ def get_providers(request: Request) -> HTMLResponse:
 
 
 @router.get("/config/", response_class=HTMLResponse)
-def get_config(request: Request) -> HTMLResponse:
+def get_config_webpage(request: Request) -> HTMLResponse:
     """Get the web interface."""
     default_configs = list(DefaultConfig)
     with database.DBSession() as db_session:
@@ -70,17 +69,24 @@ def get_config(request: Request) -> HTMLResponse:
 
 
 @router.get("/providers/{provider_id}/catalog/", response_class=HTMLResponse)
-def get_provider_catalog(request: Request, provider_id: int) -> HTMLResponse:
+def get_provider_catalog_webpage(request: Request, provider_id: int) -> HTMLResponse:
     with database.DBSession() as db_session:
-        provider = db_session.get(
-            database.Provider,
-            provider_id,
-            options=[selectinload(database.Provider.catalogs)],
-        )
-    if not provider:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
+        provider = db_session.get(database.Provider, provider_id)
+        if not provider:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
+            )
+        catalog = (
+            db_session.query(database.Catalog)
+            .filter(database.Catalog.provider_id == provider.id)
+            .order_by(database.Catalog.created_at.desc())
+            .first()
         )
     return templates.TemplateResponse(
-        request, name="catalog.html.jinja", context={"provider": provider}
+        request,
+        name="catalog.html.jinja",
+        context={
+            "provider": provider,
+            "catalog": catalog,
+        },
     )

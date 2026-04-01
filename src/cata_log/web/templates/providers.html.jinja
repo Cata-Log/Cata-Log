@@ -4,37 +4,39 @@
     Providers
 {% endblock page_title %}
 
-{% block content_title %}
-    Providers
-{% endblock content_title %}
-
 {% block main_content %}
-    <div style="display:flex">
-        <div style="flex:1">
-            <h4>Your Providers</h4>
-            <div style="height: 75vh; overflow-y: auto;">
-                {% for provider in providers %}
-                    {% include "partials/_provider.html.jinja" %}
-                {% endfor %}
-            </div>
-            <div>
-                <h4>Add A Provider</h4>
+    <div class="grid">
+        <div>
+            <article>
+                <h3>Add A Provider</h3>
 
                 {% include "partials/_provider_form.html.jinja" %}
 
-            </div>
+            </article>
+            <article>
+                <h3>Your Providers</h3>
+                <div class="overflow-auto">
+                    {% for provider in providers %}
+
+                        {% include "partials/_provider.html.jinja" %}
+
+                    {% endfor %}
+                </div>
+            </article>
         </div>
-        <div style="flex:1">
-            <h4>Available Providers</h4>
-            <div style="height: 100vh; overflow-y: auto;">
+        <article>
+            <h3>Available Providers</h3>
+            <div class="overflow-auto">
                 {% for provider_info in available_providers %}
-                        {% include "partials/_provider_info.html.jinja" %}
+
+                    {% include "partials/_provider_info.html.jinja" %}
+
                 {% endfor %}
             </div>
-
-        </div>
+        </article>
     </div>
 {% endblock main_content %}
+
 
 {% block scripts %}
     <script src="/static/js/provider-form.js"></script>

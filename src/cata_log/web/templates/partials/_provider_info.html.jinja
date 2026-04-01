@@ -1,24 +1,22 @@
 <article>
     <header>
-        <a href="{{ provider_info.url }}">{{ provider_info.id }}</a>
+        <a href="{{ provider_info.url }}"><strong>{{ provider_info.id }}</strong></a>
     </header>
-    <body>
-        <div>{{ provider_info.description }}</div>
-        <div>{{ provider_info.region.local_name }}</div>
+    <div>{{ provider_info.description }}</div>
+    <div>{{ provider_info.region.local_name }}</div>
 
-        {% if provider_info.configuration %}
-            <div>
-                Configuration
-                <ul>
-                    {% for config in provider_info.configuration %}
-                        <li>
-                            <strong>{{ config.name }}</strong>: {{ config.type }}
-                            {% if config.default %}({{ config.default }}){% endif %}
-                            {{ config.helptext }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-    </body>
+    {% if provider_info.configuration %}
+        <div>
+            <u><b>Configuration</b></u>
+            <ul>
+                {% for config in provider_info.configuration %}
+                    <li>
+                        <strong>{{ config.name }}</strong>:
+                        {% if config.default %}({{ config.default }}){% endif %}
+                        {{ config.helptext }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 </article>
