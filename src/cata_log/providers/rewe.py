@@ -21,6 +21,8 @@ from datetime import datetime, time, timedelta
 from typing import override
 from urllib.parse import urljoin
 
+from celery.schedules import crontab
+
 from cata_log.exceptions import PagesExhausted
 from cata_log.utils import dates, page_numbers
 
@@ -76,3 +78,15 @@ class Rewe(Provider):
     @override
     def _get_valid_until(self) -> datetime:
         return self._get_valid_since() + timedelta(days=7)
+
+
+class RewePreview(Rewe):
+    """Provider class for Rewe preview catalog."""
+
+    name = "rewe"
+    description = Rewe.description + " nächste Woche"
+    schedule = crontab(minute=30, hour=4, day_of_week="6,7")
+
+    @override
+    def get_relevant_datetime(self) -> datetime:
+        return super().get_relevant_datetime() + timedelta(days=7)
