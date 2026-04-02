@@ -86,7 +86,7 @@ class RewePreview(Rewe):
 
     name = "rewe-preview"
     description = Rewe.description + " nächste Woche"
-    schedule = crontab(minute=30, hour=4, day_of_week="6,7")
+    schedule = crontab(minute=30, hour=4, day_of_week="6,0")
 
     @override
     def get_relevant_datetime(self) -> datetime:
