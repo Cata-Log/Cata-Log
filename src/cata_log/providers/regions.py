@@ -59,3 +59,12 @@ class Austria(Germany):
 
     local_name = "Österreich"
     timezone = zoneinfo.ZoneInfo("Europe/Vienna")
+
+
+class Italy(Region):
+    """Region class for italy."""
+
+    week_counting_startpoint = WeekCountingStartpoints.MONDAY
+    timezone = zoneinfo.ZoneInfo("Europe/Rome")
+    language_code = "it"
+    local_name = "Italia"

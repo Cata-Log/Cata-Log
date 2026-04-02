@@ -61,8 +61,7 @@ class Netto(Provider):
             ]
         except IndexError as error:
             raise PagesExhausted from error
-        response = self._client.get(urljoin(self.base_url, page_url))
-        return response.content
+        return self._client.get(urljoin(self.base_url, page_url)).content
 
     @override
     def _get_valid_since(self) -> datetime:

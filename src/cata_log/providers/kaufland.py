@@ -19,7 +19,7 @@
 from datetime import datetime, timedelta
 from typing import override
 
-from cata_log.exceptions import PagesExhausted
+from cata_log.exceptions import CatalogUnavailableWarning, PagesExhausted
 from cata_log.utils.page_numbers import PageNumber
 
 from .base import Provider
@@ -33,18 +33,22 @@ class KauflandWoche(Provider):
     name = "kaufland"
     description = "Kaufland Angebote"
     configuration = (
-        Configuration(name="region_id", helptext="ID der Kaufland-Region"),
+        Configuration(name="region_id", helptext="ID der Kaufland-Region", default="0"),
     )
     url = "https://filiale.kaufland.de/prospekte.html"
     region = Germany
     first_page_number = 0
 
-    overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={region_id}&client_locale=kaufland/de-DE"
+    overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={region_id}&client_locale=kaufland/{language_code_lower}-{language_code_upper}"
 
     @override
     def _get_catalog_data(self) -> None:
         overview_response = self._client.get(
-            self.overview_url_template.format(**self._config)
+            self.overview_url_template.format(
+                **self._config,
+                language_code_lower=self.region.language_code.lower(),
+                language_code_upper=self.region.language_code.upper(),
+            )
         )
         flyer_json_response = self._client.get(
             overview_response.json()["categories"][0]["subcategories"][-2]["flyers"][0][
@@ -84,11 +88,18 @@ class KauflandWochePreview(KauflandWoche):
     @override
     def _get_catalog_data(self) -> None:
         overview_response = self._client.get(
-            self.overview_url_template.format(**self._config)
+            self.overview_url_template.format(
+                **self._config,
+                language_code_lower=self.region.language_code.lower(),
+                language_code_upper=self.region.language_code.upper(),
+            )
         )
-        flyer_json_response = self._client.get(
-            overview_response.json()["categories"][0]["subcategories"][-2]["flyers"][1][
-                "flyerJson"
-            ]
-        )
+        try:
+            flyer_json_response = self._client.get(
+                overview_response.json()["categories"][0]["subcategories"][-2][
+                    "flyers"
+                ][1]["flyerJson"]
+            )
+        except IndexError as index_error:
+            raise CatalogUnavailableWarning from index_error
         self.flyer_json = flyer_json_response.json()
