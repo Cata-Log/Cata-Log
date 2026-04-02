@@ -84,7 +84,7 @@ class Rewe(Provider):
 class RewePreview(Rewe):
     """Provider class for Rewe preview catalog."""
 
-    name = "rewe"
+    name = "rewe-preview"
     description = Rewe.description + " nächste Woche"
     schedule = crontab(minute=30, hour=4, day_of_week="6,7")
 

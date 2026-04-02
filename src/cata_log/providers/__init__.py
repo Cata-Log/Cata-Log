@@ -29,7 +29,7 @@ from .lidl import (
 )
 from .netto import Netto, NettoPreview
 from .norma import Norma
-from .rewe import Rewe
+from .rewe import Rewe, RewePreview
 from .rossmann import RossmannAngebote
 
 __all__ = [
@@ -51,5 +51,6 @@ __all__ = [
     "Norma",
     "Provider",
     "Rewe",
+    "RewePreview",
     "RossmannAngebote",
 ]
