@@ -22,8 +22,9 @@ from typing import override
 from urllib.parse import urljoin
 
 from celery.schedules import crontab
+from httpx import HTTPStatusError
 
-from cata_log.exceptions import PagesExhausted
+from cata_log.exceptions import CatalogUnavailableWarning, PagesExhausted
 from cata_log.utils import dates, page_numbers
 
 from .base import Provider
@@ -90,3 +91,10 @@ class RewePreview(Rewe):
     @override
     def get_relevant_datetime(self) -> datetime:
         return super().get_relevant_datetime() + timedelta(days=7)
+
+    @override
+    def _get_catalog_data(self) -> None:
+        try:
+            return super()._get_catalog_data()
+        except HTTPStatusError as status_error:
+            raise CatalogUnavailableWarning from status_error
