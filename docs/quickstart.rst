@@ -7,13 +7,10 @@
 Quickstart Guide
 ================
 
-Run
+Get the *docker/docker-compose.yml* file from the git repository and run
 
 .. code-block:: console
 
-    docker compose -f docker-compose.debug.yml up -d
+    docker compose -f docker-compose.yml up -d
 
-and visit `http://localhost:2424/docs`.
-
-View all available providers via the `/providers/available` endpoint
-and set up the providers you need by posting to the `/providers/` endpoint.
+Then visit `http://localhost:2424/`.

@@ -8,16 +8,22 @@ Install uv
 pipx install uv
 ```
 
-and set up a venv
+and install all dependencies in a venv
 
 ```bash
-uv venv
+uv pip install --all-groups
 ```
 
-Then install the pre-commit hooks
+Also install the pre-commit hooks
 
 ```bash
 pre-commit install
+```
+
+Don't forget to activate the venv
+
+```bash
+source .venv/bin/activate
 ```
 
 ## Debug

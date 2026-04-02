@@ -17,8 +17,8 @@ What's the point of this application?
 
 If you prefer to shop things that are on sale, you likely skim the shops catalog or flyer.
 
-Some proprietary shopping list apps (not to be named here) have a feature that presents the current flyers to the user.
-This is something that I felt was missing in all the open-source shopping list apps and servers.
+Some proprietary shopping list apps (not to be named here) have a feature to read the current flyers in-app.
+This is something that is missing in all the open-source shopping list apps and servers.
 
 One of the reasons for this is that the API of the various providers are obscure and vary strongly.
 This makes it hard for developers of the apps to incorporate the catalog and flyer data.
@@ -32,14 +32,15 @@ That way an app can check and fetch
 
 Developers of the third-parties now only have to design one logic for connecting to the Cata-Log API.
 
-In the future Cata-Log may even provide libraries for this purpose for even more ease on the side of app developers.
+Cata-Log also provides libraries for this purpose for even more ease on the side of app developers.
 
 
 I am new to self-hosting, how can I set up an instance the easiest?
 -------------------------------------------------------------------
 
 Setting up a Cata-Log server is quick and straightforward.
-The simplest path is described on :doc:`the quickstart page <quickstart>`.
+The simplest way to spin Cata-Log up for the first time is described on :doc:`the quickstart page <quickstart>`.
+For a complete install check out :doc:`the installation guide <installation>`.
 
 
 Do I need special hard- or software to run Cata-Log?
@@ -94,5 +95,5 @@ How can I contribute to this project?
 
 Everyone is welcome to help with the development of Cata-Log!
 
-To get you off to a good start please check out the quickstart and codestyle guidelines.
+To get you off to a good start please check out the quickstart and how-to guidelines.
 You can find them alongside the source code documentation in the :doc:`developers section <developers>`.
