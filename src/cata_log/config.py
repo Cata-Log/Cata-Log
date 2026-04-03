@@ -6,11 +6,11 @@ from typing import override
 class Config(enum.StrEnum):
     """Enum listing all configuration defaults."""
 
-    request_timeout = "10"
-    expiration_days = "28"
-    log_level = "INFO"
-    log_file_backup_count = "10"
-    log_file_maxsize = "2097152"  # 2 MB
+    REQUEST_TIMEOUT = "10"
+    EXPIRATION_DAYS = "14"
+    LOG_LEVEL = "INFO"
+    LOG_FILE_BACKUP_COUNT = "10"
+    LOG_FILE_MAXSIZE = "2097152"  # 2 MB
 
     @property
     @override

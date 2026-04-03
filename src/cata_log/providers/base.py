@@ -87,7 +87,7 @@ class Provider(abc.ABC):
                     lambda r, *_, **__: r.raise_for_status(),
                 ]
             },
-            timeout=int(Config.request_timeout),
+            timeout=int(Config.REQUEST_TIMEOUT),
         )
         self.get_catalog_data()
 
