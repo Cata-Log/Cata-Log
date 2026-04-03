@@ -132,12 +132,13 @@ def test_Catalog_deletion(db_session, full_database, fake_catalog):
     assert not db_session.query(database.Page).all()
 
 
-def test_Page_insertion(LocalSession, fake_catalog):
+def test_Page_insertion(faker, LocalSession, fake_catalog):
     with LocalSession() as db_session:
         page = database.Page(
             number=4,
             storage_path=STORAGE_PATH / "testfile.jpg",
             catalog_id=fake_catalog.id,
+            sha256=faker.sha256(),
         )
         db_session.add(page)
         db_session.commit()
@@ -145,6 +146,7 @@ def test_Page_insertion(LocalSession, fake_catalog):
 
         assert page.id
         assert page.number == 4
+        assert page.sha256
         assert page.storage_path == STORAGE_PATH / "testfile.jpg"
         assert page.catalog.id == fake_catalog.id
         assert page.catalog.valid_since == fake_catalog.valid_since

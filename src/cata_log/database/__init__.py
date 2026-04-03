@@ -21,18 +21,13 @@ from collections.abc import Generator
 
 from fastapi import Depends
 from sqlalchemy import create_engine, orm
-from sqlalchemy.sql import text
 
 from cata_log.constants import DATABASE_URL
 
 from .models import Catalog, Config, ModelBase, Page, Provider
 from .signals import *  # noqa: F403 # all signals must be loaded
 
-engine = create_engine(url=DATABASE_URL, echo=True)
-
-with engine.connect() as connection:
-    connection.execute(text("PRAGMA journaling = WAL"))
-    connection.commit()
+engine = create_engine(url=DATABASE_URL)
 
 DBSession = orm.sessionmaker(bind=engine)
 

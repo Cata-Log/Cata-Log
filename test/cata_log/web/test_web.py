@@ -16,15 +16,43 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import os
 
-import pytest
+def test_providers__noauth(full_database, noauth_client):
+    response = noauth_client.get("/providers")
+
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_providers__bad_auth(full_database, bad_auth_client):
+    response = bad_auth_client.get("/providers")
+
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_providers(full_database, client):
     response = client.get("/providers")
 
     assert response.status_code == 200
+
+
+def test_configs__noauth(full_database, noauth_client):
+    response = noauth_client.get("/config")
+
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_configs__bad_auth(full_database, bad_auth_client):
+    response = bad_auth_client.get("/config")
+
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_configs(full_database, client):

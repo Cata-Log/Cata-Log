@@ -53,7 +53,7 @@ $RECYCLE.BIN/
 .cache
 .com.apple.timemachine.donotpresent
 .coverage
-.coverage.*.c
+.coverage.*
 .cursorignore
 .cursorindexingignore
 .directory

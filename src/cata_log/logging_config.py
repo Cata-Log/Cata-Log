@@ -68,7 +68,7 @@ LOGGING_CONFIG = {
         },
     },
     "root": {
-        "handlers": ["console", "root-logfile"],
+        "handlers": ["root-logfile"],
         "level": getattr(
             logging,
             get_config(DefaultConfig.log_level.name),
@@ -76,11 +76,14 @@ LOGGING_CONFIG = {
         ),
     },
     "loggers": {
-        "uvicorn": {"handlers": ["uvicorn-logfile"], **COMMON_LOGGER_CONFIG},
+        "uvicorn": {"handlers": ["console", "uvicorn-logfile"], **COMMON_LOGGER_CONFIG},
         "celery": {"handlers": ["celery-logfile"], **COMMON_LOGGER_CONFIG},
         "sqlalchemy": {"handlers": ["sqlalchemy-logfile"], **COMMON_LOGGER_CONFIG},
         "amqp": {"handlers": ["amqp-logfile"], **COMMON_LOGGER_CONFIG},
-        "cata_log": {"handlers": ["cata-log-logfile"], **COMMON_LOGGER_CONFIG},
+        "cata_log": {
+            "handlers": ["console", "cata-log-logfile"],
+            **COMMON_LOGGER_CONFIG,
+        },
     },
 }
 

@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import override
 
 import pytest
+from fastapi.testclient import TestClient
 from freezegun import freeze_time
 from httpx import HTTPStatusError, Request, Response, TransportError
 from pyfakefs.fake_filesystem_unittest import Patcher
@@ -43,9 +44,11 @@ def engine():
         poolclass=StaticPool,
     )
     database.ModelBase.metadata.create_all(engine)
-    yield engine
-    database.ModelBase.metadata.drop_all(engine)
-    engine.dispose()
+    try:
+        yield engine
+    finally:
+        database.ModelBase.metadata.drop_all(engine)
+        engine.dispose()
 
 
 @pytest.fixture
@@ -53,7 +56,12 @@ def LocalSession(engine):
     return orm.sessionmaker(bind=engine)
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
+def patch_engine(monkeypatch, engine):
+    monkeypatch.setattr("cata_log.database.engine", engine)
+
+
+@pytest.fixture
 def patch_DBSession(monkeypatch, LocalSession):
     monkeypatch.setattr("cata_log.database.DBSession", LocalSession)
 
@@ -62,6 +70,38 @@ def patch_DBSession(monkeypatch, LocalSession):
 def db_session(LocalSession):
     with LocalSession() as db_session:
         yield db_session
+
+
+@pytest.fixture(autouse=True)
+def fake_credentials(faker):
+    os.environ["USERNAME"] = faker.user_name()
+    os.environ["PASSWORD"] = faker.password()
+
+
+@pytest.fixture
+def fake_credentials_encoded():
+    username = os.environ["USERNAME"]
+    password = os.environ["PASSWORD"]
+    return base64.b64encode(f"{username}:{password}".encode()).decode("utf-8")
+
+
+@pytest.fixture
+def noauth_client(fake_fs):
+    from cata_log.main import app  # noqa: PLC0415
+
+    return TestClient(app)
+
+
+@pytest.fixture
+def bad_auth_client(faker, noauth_client):
+    noauth_client.headers = {"Authorization": f"Basic {faker.word()}"}
+    return noauth_client
+
+
+@pytest.fixture
+def client(fake_credentials_encoded, noauth_client):
+    noauth_client.headers = {"Authorization": f"Basic {fake_credentials_encoded}"}
+    return noauth_client
 
 
 @pytest.fixture
@@ -82,19 +122,6 @@ def fake_fs():
             "src/cata_log/web/static/js", target_path="/opt/cata_log/web/static/js"
         )
         yield patcher.fs
-
-
-@pytest.fixture(autouse=True)
-def fake_credentials(faker):
-    os.environ["USERNAME"] = faker.user_name()
-    os.environ["PASSWORD"] = faker.password()
-
-
-@pytest.fixture
-def fake_credentials_encoded():
-    username = os.environ["USERNAME"]
-    password = os.environ["PASSWORD"]
-    return base64.b64encode(f"{username}:{password}".encode()).decode("utf-8")
 
 
 @pytest.fixture

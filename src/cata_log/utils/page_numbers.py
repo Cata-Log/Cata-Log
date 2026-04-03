@@ -119,7 +119,7 @@ class PageNumber:
             return self.as_double_page_number() == other
         if isinstance(other, int):
             return int(self) == other
-        raise NotImplementedError
+        return NotImplemented
 
     def next(self) -> PageNumber:
         """Get the next pagenumber.
@@ -245,7 +245,7 @@ class DoublePageNumber:
             return self.as_page_number() == other
         if isinstance(other, int):
             return int(self) == other
-        raise NotImplementedError
+        return NotImplemented
 
     def next(self) -> DoublePageNumber:
         """Get the next double-pagenumber.

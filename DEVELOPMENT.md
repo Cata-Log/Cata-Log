@@ -40,7 +40,7 @@ The projects tests are in the test/ directory.
 You can run them from the project root with
 
 ```bash
-pytest test
+pytest
 ```
 
 ## Validation and Linting

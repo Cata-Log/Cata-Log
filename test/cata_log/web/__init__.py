@@ -15,10 +15,3 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-
-import pytest
-
-
-@pytest.fixture(autouse=True)
-def patch_database(patch_engine, patch_DBSession):
-    """Patch the database."""
