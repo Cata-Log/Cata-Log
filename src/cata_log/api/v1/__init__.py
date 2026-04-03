@@ -18,12 +18,11 @@
 
 from fastapi import APIRouter
 
-from . import catalogs, config, pages, providers
+from . import catalogs, pages, providers
 
 router = APIRouter(prefix="/v1", tags=["v1"])
 
 router.include_router(pages.router)
-router.include_router(config.router)
 router.include_router(providers.router)
 router.include_router(catalogs.router)
 

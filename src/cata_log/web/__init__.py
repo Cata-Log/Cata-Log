@@ -22,7 +22,6 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from cata_log import database
-from cata_log.constants import DefaultConfig
 from cata_log.providers import Provider
 
 router = APIRouter(prefix="", tags=["web"])
@@ -34,12 +33,6 @@ templates = Jinja2Templates(directory="cata_log/web/templates")
 
 
 @router.get("/", response_class=HTMLResponse)
-def get_dash(request: Request) -> HTMLResponse:
-    """Get the web interface."""
-    return templates.TemplateResponse(request, name="dash.html.jinja")
-
-
-@router.get("/providers/", response_class=HTMLResponse)
 def get_providers_webpage(request: Request) -> HTMLResponse:
     """Get the providers web interface."""
     available_providers = [
@@ -55,20 +48,7 @@ def get_providers_webpage(request: Request) -> HTMLResponse:
     )
 
 
-@router.get("/config/", response_class=HTMLResponse)
-def get_config_webpage(request: Request) -> HTMLResponse:
-    """Get the web interface."""
-    default_configs = list(DefaultConfig)
-    with database.DBSession() as db_session:
-        configs = db_session.query(database.Config).all()
-    return templates.TemplateResponse(
-        request,
-        name="config.html.jinja",
-        context={"default_configs": default_configs, "configs": configs},
-    )
-
-
-@router.get("/providers/{provider_id}/catalog/", response_class=HTMLResponse)
+@router.get("/catalogs/provider/{provider_id}/latest/", response_class=HTMLResponse)
 def get_provider_catalog_webpage(request: Request, provider_id: int) -> HTMLResponse:
     with database.DBSession() as db_session:
         provider = db_session.get(database.Provider, provider_id)

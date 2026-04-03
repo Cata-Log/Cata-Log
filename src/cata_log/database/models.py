@@ -48,15 +48,6 @@ from .types import PathType
 logger = logging.getLogger(__name__)
 
 
-class Config(ModelBase, TimestampMixin):
-    """ORM model for a cata_log instance configuration."""
-
-    id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
-    name: orm.Mapped[str] = orm.mapped_column(unique=True)
-    value: orm.Mapped[str] = orm.mapped_column()
-    __tablename__ = "config"
-
-
 class Provider(ModelBase, TimestampMixin):
     """ORM model for a catalog provider."""
 

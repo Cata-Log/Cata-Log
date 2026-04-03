@@ -125,15 +125,6 @@ def fake_fs():
 
 
 @pytest.fixture
-def fake_config(db_session):
-    fake_config = database.Config(name="test_conf", value="test_val")
-    db_session.add(fake_config)
-    db_session.commit()
-    db_session.refresh(fake_config)
-    return fake_config
-
-
-@pytest.fixture
 def fake_provider(db_session):
     fake_provider = database.Provider(
         class_id="rewe-deutschland", config={"markt_id": "rewe123"}

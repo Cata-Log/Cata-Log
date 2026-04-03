@@ -24,7 +24,7 @@ from sqlalchemy import create_engine, orm
 
 from cata_log.constants import DATABASE_URL
 
-from .models import Catalog, Config, ModelBase, Page, Provider
+from .models import Catalog, ModelBase, Page, Provider
 from .signals import *  # noqa: F403 # all signals must be loaded
 
 engine = create_engine(url=DATABASE_URL)
@@ -43,7 +43,6 @@ depends_db_session = Depends(get_db_session)
 
 __all__ = [
     "Catalog",
-    "Config",
     "DBSession",
     "ModelBase",
     "Page",

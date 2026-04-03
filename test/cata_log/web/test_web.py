@@ -17,45 +17,45 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 
-def test_providers__noauth(full_database, noauth_client):
-    response = noauth_client.get("/providers")
+def test_webui_startpage__noauth(full_database, noauth_client):
+    response = noauth_client.get("/")
 
     assert response.status_code == 401
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
 
-def test_providers__bad_auth(full_database, bad_auth_client):
-    response = bad_auth_client.get("/providers")
+def test_webui_startpage__bad_auth(full_database, bad_auth_client):
+    response = bad_auth_client.get("/")
 
     assert response.status_code == 401
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
 
-def test_providers(full_database, client):
-    response = client.get("/providers")
+def test_webui_startpage(full_database, client):
+    response = client.get("/")
 
     assert response.status_code == 200
 
 
-def test_configs__noauth(full_database, noauth_client):
-    response = noauth_client.get("/config")
+def test_webui_catalog__noauth(full_database, fake_provider, noauth_client):
+    response = noauth_client.get(f"/catalogs/provider/{fake_provider.id}/latest/")
 
     assert response.status_code == 401
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
 
-def test_configs__bad_auth(full_database, bad_auth_client):
-    response = bad_auth_client.get("/config")
+def test_webui_catalog__bad_auth(full_database, fake_provider, bad_auth_client):
+    response = bad_auth_client.get(f"/catalogs/provider/{fake_provider.id}/latest/")
 
     assert response.status_code == 401
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
 
-def test_configs(full_database, client):
-    response = client.get("/config")
+def test_webui_catalog(full_database, fake_provider, client):
+    response = client.get(f"/catalogs/provider/{fake_provider.id}/latest/")
 
     assert response.status_code == 200

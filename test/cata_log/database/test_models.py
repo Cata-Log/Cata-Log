@@ -27,20 +27,6 @@ from cata_log.constants import STORAGE_PATH
 from cata_log.providers import AldiSued
 
 
-def test_Config_insertion(LocalSession):
-    with LocalSession() as db_session:
-        config = database.Config(name="testkey", value="testvalue")
-        db_session.add(config)
-        db_session.commit()
-        db_session.refresh(config)
-
-        assert config.id
-        assert config.name == "testkey"
-        assert config.value == "testvalue"
-        assert config.created_at
-        assert config.updated_at
-
-
 def test_Provider_insertion(LocalSession):
     with LocalSession() as db_session:
         provider = database.Provider(class_id=AldiSued.id(), config={})
