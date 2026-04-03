@@ -21,7 +21,7 @@ from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from cata_log import database
+from cata_log import constants, database
 from cata_log.providers import Provider
 
 router = APIRouter(prefix="", tags=["web"])
@@ -29,7 +29,7 @@ router = APIRouter(prefix="", tags=["web"])
 
 __all__ = ["router"]
 
-templates = Jinja2Templates(directory="cata_log/web/templates")
+templates = Jinja2Templates(directory=constants.SOURCE_PATH / "cata_log/web/templates")
 
 
 @router.get("/", response_class=HTMLResponse)

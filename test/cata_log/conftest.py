@@ -117,10 +117,10 @@ def fake_fs():
         patcher.fs.create_dir(constants.STORAGE_PATH)
         patcher.fs.create_dir(constants.LOG_DIRECTORY_PATH)
         patcher.fs.add_real_directory(Path(constants.__file__).parent)
-        patcher.fs.add_real_file("pyproject.toml")
         patcher.fs.add_real_directory(
-            "src/cata_log/web/static/js", target_path="/opt/cata_log/web/static/js"
+            Path(constants.__file__).parent, target_path="/opt/cata_log"
         )
+        patcher.fs.add_real_file("pyproject.toml")
         yield patcher.fs
 
 

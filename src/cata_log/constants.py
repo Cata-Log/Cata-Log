@@ -20,10 +20,11 @@ import calendar
 import enum
 from pathlib import Path
 
-STORAGE_PATH = Path("/mnt/storage/").resolve()
+SOURCE_PATH = Path("/opt/")
+STORAGE_PATH = Path("/mnt/storage/")
 DATABASE_URL = "sqlite:////mnt/db/cata-log.sqlite3"
 BROKER_URL = "amqp://guest:guest@localhost:5672//"
-LOG_DIRECTORY_PATH = Path("/var/log/cata-log/").resolve()
+LOG_DIRECTORY_PATH = Path("/var/log/cata-log/")
 
 FAST_API_TITLE = "Cata-Log"
 FAST_API_DESCRIPTION = "The Central Hub For Grocery Store Catalogs"
