@@ -29,6 +29,7 @@ from .lidl import (
     LidlDeutschlandPreview2,
     LidlItalia,
 )
+from .metro import MetroWochenangebote, MetroWochenangebotePreview
 from .netto import Netto, NettoPreview
 from .norma import Norma
 from .rewe import Rewe, RewePreview
@@ -50,6 +51,8 @@ __all__ = [
     "LidlDeutschlandPreview",
     "LidlDeutschlandPreview2",
     "LidlItalia",
+    "MetroWochenangebote",
+    "MetroWochenangebotePreview",
     "Netto",
     "NettoPreview",
     "Norma",
