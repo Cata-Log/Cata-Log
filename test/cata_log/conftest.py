@@ -73,18 +73,29 @@ def db_session(LocalSession):
 
 
 @pytest.fixture
-def fake_credentials(faker):
-    os.environ["USERNAME"] = faker.user_name()
-    os.environ["PASSWORD"] = faker.password()
-    yield
+def fake_username(faker):
+    fake_username = faker.user_name()
+    os.environ["USERNAME"] = fake_username
+    yield fake_username
     del os.environ["USERNAME"]
+
+
+@pytest.fixture
+def fake_password(faker):
+    fake_password = faker.password()
+    os.environ["PASSWORD"] = fake_password
+    yield fake_password
     del os.environ["PASSWORD"]
 
 
 @pytest.fixture
+def fake_credentials(fake_username, fake_password):
+    return fake_username, fake_password
+
+
+@pytest.fixture
 def fake_credentials_encoded(fake_credentials):
-    username = os.environ["USERNAME"]
-    password = os.environ["PASSWORD"]
+    username, password = fake_credentials
     return base64.b64encode(f"{username}:{password}".encode()).decode("utf-8")
 
 
