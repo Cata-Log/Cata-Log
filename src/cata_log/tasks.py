@@ -36,12 +36,6 @@ app.conf.update(
     beat_dburi=DATABASE_URL,
     broker_url=BROKER_URL,
     result_backend=None,
-    task_annotations={
-        "*": {
-            "autoretry_for": (NetworkError,),
-            "max_retries": Settings.MAX_RETRIES.value,
-        }
-    },
     task_ignore_result=True,
     task_acks_late=False,
 )
@@ -60,7 +54,11 @@ def setup_periodic_tasks(sender: Celery, **kwargs: Any) -> None:  # noqa: ARG001
     )
 
 
-@app.task
+@app.task(
+    autoretry_for=(NetworkError,),
+    max_retries=Settings.MAX_RETRIES.value,
+    default_retry_delay=Settings.RETRY_DELAY.value,
+)
 def fetch_provider(provider_id: int) -> None:
     """Task for fetching all pages of a catalog from a provider.
 

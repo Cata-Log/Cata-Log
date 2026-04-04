@@ -29,6 +29,7 @@ class Settings(enum.Enum):
     PUBLIC_GET = False
     REQUEST_TIMEOUT = 10
     MAX_RETRIES = 3
+    RETRY_DELAY = 180
     EXPIRATION_DAYS = 14
     LOG_LEVEL = "INFO"
     LOG_FILE_BACKUP_COUNT = 5
