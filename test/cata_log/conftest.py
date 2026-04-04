@@ -72,21 +72,31 @@ def db_session(LocalSession):
         yield db_session
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def fake_credentials(faker):
     os.environ["USERNAME"] = faker.user_name()
     os.environ["PASSWORD"] = faker.password()
+    yield
+    del os.environ["USERNAME"]
+    del os.environ["PASSWORD"]
 
 
 @pytest.fixture
-def fake_credentials_encoded():
+def fake_credentials_encoded(fake_credentials):
     username = os.environ["USERNAME"]
     password = os.environ["PASSWORD"]
     return base64.b64encode(f"{username}:{password}".encode()).decode("utf-8")
 
 
 @pytest.fixture
-def noauth_client(fake_fs):
+def public_get():
+    os.environ["PUBLIC_GET"] = "true"
+    yield
+    del os.environ["PUBLIC_GET"]
+
+
+@pytest.fixture
+def noauth_client(fake_fs, fake_credentials):
     from cata_log.main import app  # noqa: PLC0415
 
     return TestClient(app)

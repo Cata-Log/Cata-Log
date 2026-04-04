@@ -6,13 +6,13 @@ from cata_log.constants import LOG_DIRECTORY_PATH
 COMMON_FILEHANDLER_CONFIG = {
     "level": "DEBUG",
     "class": "logging.handlers.RotatingFileHandler",
-    "maxBytes": int(Settings.LOG_FILE_MAXSIZE),
-    "backupCount": int(Settings.LOG_FILE_BACKUP_COUNT),
+    "maxBytes": Settings.LOG_FILE_MAXSIZE.value,
+    "backupCount": Settings.LOG_FILE_BACKUP_COUNT.value,
     "formatter": "json",
 }
 
 COMMON_LOGGER_CONFIG = {
-    "level": Settings.LOG_LEVEL,
+    "level": Settings.LOG_LEVEL.value,
     "propagate": True,
 }
 
@@ -63,7 +63,7 @@ LOGGING_CONFIG = {
     },
     "root": {
         "handlers": ["root-logfile"],
-        "level": Settings.LOG_LEVEL,
+        "level": Settings.LOG_LEVEL.value,
     },
     "loggers": {
         "uvicorn": {"handlers": ["console", "uvicorn-logfile"], **COMMON_LOGGER_CONFIG},

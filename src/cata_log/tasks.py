@@ -78,7 +78,7 @@ def fetch_provider(provider_id: int) -> None:
 def cleanup_catalogs() -> None:
     """Task to cleanup outdated catalogs."""
     with database.DBSession() as db_session:
-        expiration_days = int(Settings.EXPIRATION_DAYS)
+        expiration_days = Settings.EXPIRATION_DAYS.value
         expiration_date = datetime.now(tz=UTC) - timedelta(days=expiration_days)
         database.Catalog.cleanup(db_session, expiration_date)
 

@@ -7,7 +7,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from src.cata_log.config import Settings
 
-http_basic_security = HTTPBasic()
+http_basic_security = HTTPBasic(auto_error=False)
 
 depends_http_basic_security = Depends(http_basic_security)
 
@@ -31,12 +31,16 @@ def verify_credentials(
         request: The request that needs to be authenticated.
         credentials: The user-given credentials.
     """
-    if Settings.PUBLIC_GET and request.method == "GET":
+    if Settings.PUBLIC_GET.value and request.method == "GET":
         return
     username, password = get_credentials()
-    if not password or not (
-        secrets.compare_digest(credentials.username, username)
-        and secrets.compare_digest(credentials.password, password)
+    if (
+        not password
+        or not credentials
+        or not (
+            secrets.compare_digest(credentials.username, username)
+            and secrets.compare_digest(credentials.password, password)
+        )
     ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

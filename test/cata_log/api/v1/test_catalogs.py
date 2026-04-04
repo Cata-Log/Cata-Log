@@ -42,6 +42,12 @@ def test_list_catalogs__bad_auth(full_database, bad_auth_client):
     assert response.status_code == 401
 
 
+def test_list_catalogs__noauth__public_get(full_database, noauth_client, public_get):
+    response = noauth_client.get("/api/v1/catalogs")
+
+    assert response.status_code == 200
+
+
 def test_list_previews_catalogs(full_database, fake_catalog_preview, client):
     response = client.get("/api/v1/catalogs/previews")
 
@@ -62,6 +68,18 @@ def test_list_previews_catalogs__bad_auth(full_database, bad_auth_client):
     response = bad_auth_client.get("/api/v1/catalogs/previews")
 
     assert response.status_code == 401
+
+
+def test_list_previews_catalogs__noauth__public_get(
+    full_database, fake_catalog_preview, noauth_client, public_get
+):
+    response = noauth_client.get("/api/v1/catalogs/previews")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]
+    assert data[0]["id"] == fake_catalog_preview.id
 
 
 def test_list_current_catalogs(full_database, fake_catalog_current, client):
@@ -86,6 +104,18 @@ def test_list_current_catalogs__bad_auth(full_database, bad_auth_client):
     assert response.status_code == 401
 
 
+def test_list_current_catalogs__noauth__public_get(
+    full_database, fake_catalog_current, noauth_client, public_get
+):
+    response = noauth_client.get("/api/v1/catalogs/current")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]
+    assert data[0]["id"] == fake_catalog_current.id
+
+
 def test_list_outdated_catalogs(full_database, fake_catalog_outdated, client):
     response = client.get("/api/v1/catalogs/outdated")
 
@@ -108,6 +138,18 @@ def test_list_outdated_catalogs__bad_auth(full_database, bad_auth_client):
     assert response.status_code == 401
 
 
+def test_list_outdated_catalogs__noauth__public_get(
+    full_database, fake_catalog_outdated, noauth_client, public_get
+):
+    response = noauth_client.get("/api/v1/catalogs/outdated")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]
+    assert data[0]["id"] == fake_catalog_outdated.id
+
+
 def test_get_catalog(fake_catalog, client):
     response = client.get(f"/api/v1/catalogs/{fake_catalog.id}")
 
@@ -126,6 +168,14 @@ def test_get_catalog__bad_auth(fake_catalog, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/catalogs/{fake_catalog.id}")
 
     assert response.status_code == 401
+
+
+def test_get_catalog__noauth__public_get(fake_catalog, noauth_client, public_get):
+    response = noauth_client.get(f"/api/v1/catalogs/{fake_catalog.id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == fake_catalog.id
 
 
 def test_get_catalog__not_found(client):
@@ -161,6 +211,18 @@ def test_get_catalog_page__bad_auth(fake_catalog, fake_page, bad_auth_client):
     assert response.status_code == 401
 
 
+def test_get_catalog_page__noauth__public_get(
+    fake_catalog, fake_page, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/catalogs/{fake_catalog.id}/pages/{fake_page.number}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == fake_page.id
+
+
 def test_get_catalog_pages(fake_catalog, fake_page, client):
     response = client.get(f"/api/v1/catalogs/{fake_catalog.id}/pages")
 
@@ -180,6 +242,17 @@ def test_get_catalog_pages__bad_auth(fake_catalog, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/catalogs/{fake_catalog.id}/pages")
 
     assert response.status_code == 401
+
+
+def test_get_catalog_pages__noauth__public_get(
+    fake_catalog, fake_page, noauth_client, public_get
+):
+    response = noauth_client.get(f"/api/v1/catalogs/{fake_catalog.id}/pages")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["id"] == fake_page.id
 
 
 def test_get_catalog_page__catalog_not_found(client):
@@ -232,6 +305,22 @@ def test_download_catalog_page__bad_auth(fake_catalog, fake_page, bad_auth_clien
     assert response.status_code == 401
 
 
+def test_download_catalog_page__noauth__public_get(
+    fake_catalog, fake_page, fake_page_file, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/catalogs/{fake_catalog.id}/pages/{fake_page.number}/download"
+    )
+
+    assert response.status_code == 200
+    assert response.content == fake_page_file.read_bytes()
+    assert "content-disposition" in response.headers
+    assert (
+        response.headers["content-disposition"]
+        == f'attachment; filename="{fake_page_file.name}"'
+    )
+
+
 def test_download_catalog_page__page_not_found(fake_catalog, client):
     response = client.get(f"/api/v1/catalogs/{fake_catalog.id}/pages/456/download")
 
@@ -278,6 +367,22 @@ def test_embed_catalog_page__bad_auth(fake_catalog, fake_page, bad_auth_client):
     )
 
     assert response.status_code == 401
+
+
+def test_embed_catalog_page(
+    fake_catalog, fake_page, fake_page_file, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/catalogs/{fake_catalog.id}/pages/{fake_page.number}/embed",
+    )
+
+    assert response.status_code == 200
+    assert response.content == fake_page_file.read_bytes()
+    assert "content-disposition" in response.headers
+    assert (
+        response.headers["content-disposition"]
+        == f'inline; filename="{fake_page_file.name}"'
+    )
 
 
 def test_embed_catalog_page__page_not_found(fake_catalog, client):

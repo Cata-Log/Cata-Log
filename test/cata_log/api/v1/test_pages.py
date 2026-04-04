@@ -46,6 +46,20 @@ def test_list_pages__bad_auth(full_database, bad_auth_client):
     assert response.status_code == 401
 
 
+def test_list_pages__noauth__public_get(
+    full_database, fake_page, noauth_client, public_get
+):
+    response = noauth_client.get("/api/v1/pages")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]
+    assert data[0]["id"] == fake_page.id
+    assert data[0]["catalog_id"] == fake_page.catalog_id
+    assert data[0]["number"] == fake_page.number
+
+
 def test_get_page(fake_page, client):
     response = client.get(f"/api/v1/pages/{fake_page.id}")
 
@@ -64,6 +78,14 @@ def test_get_page__bad_auth(fake_page, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/pages/{fake_page.id}")
 
     assert response.status_code == 401
+
+
+def test_get_page__noauth__public_get(fake_page, noauth_client, public_get):
+    response = noauth_client.get(f"/api/v1/pages/{fake_page.id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == fake_page.id
 
 
 def test_get_page__not_found(client):
@@ -103,6 +125,22 @@ def test_download_page__bad_auth(fake_page, bad_auth_client):
     assert response.status_code == 401
 
 
+def test_download_page__noauth__public_get(
+    fake_page, fake_page_file, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/pages/{fake_page.id}/download",
+    )
+
+    assert response.status_code == 200
+    assert response.content == fake_page_file.read_bytes()
+    assert "content-disposition" in response.headers
+    assert (
+        response.headers["content-disposition"]
+        == f'attachment; filename="{fake_page_file.name}"'
+    )
+
+
 def test_download_page__not_found(client):
     response = client.get("/api/v1/pages/456/download")
 
@@ -138,6 +176,20 @@ def test_embed_page__bad_auth(fake_page, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/pages/{fake_page.id}/embed")
 
     assert response.status_code == 401
+
+
+def test_embed_page(fake_page, fake_page_file, noauth_client, public_get):
+    response = noauth_client.get(
+        f"/api/v1/pages/{fake_page.id}/embed",
+    )
+
+    assert response.status_code == 200
+    assert response.content == fake_page_file.read_bytes()
+    assert "content-disposition" in response.headers
+    assert (
+        response.headers["content-disposition"]
+        == f'inline; filename="{fake_page_file.name}"'
+    )
 
 
 def test_embed_page__not_found(client):
