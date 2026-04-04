@@ -10,7 +10,8 @@ services:
       - 4848:8000
     environment:
       - USERNAME=admin
-      - PASSWORD=SafE_pAs5w0rd #gitleaks:allow
+      - PASSWORD=SafE_pAs5w0rd # setting no password makes authentication impossible #gitleaks:allow
+      - PUBLIC_GET= # set this to make all GET endpoints unprotected
       - REQUEST_TIMEOUT=10
       - EXPIRATION_DAYS=14
       - LOG_LEVEL=INFO

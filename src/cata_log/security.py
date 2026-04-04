@@ -1,9 +1,11 @@
 import os
 import secrets
 
-from fastapi import Depends, status
+from fastapi import Depends, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+
+from src.cata_log.config import Settings
 
 http_basic_security = HTTPBasic()
 
@@ -20,13 +22,17 @@ def get_credentials() -> tuple[str, str | None]:
 
 
 def verify_credentials(
+    request: Request,
     credentials: HTTPBasicCredentials = depends_http_basic_security,
 ) -> None:
     """Verify credentials given by the user.
 
     Args:
+        request: The request that needs to be authenticated.
         credentials: The user-given credentials.
     """
+    if Settings.PUBLIC_GET and request.method == "GET":
+        return
     username, password = get_credentials()
     if not password or not (
         secrets.compare_digest(credentials.username, username)
