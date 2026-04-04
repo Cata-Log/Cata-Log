@@ -21,6 +21,7 @@ from .base import Provider
 from .edeka import EdekaBasissortiment, EdekaMarkt
 from .hofer import Hofer, HoferPreview
 from .kaufland import KauflandWoche, KauflandWochePreview
+from .kik import Kik
 from .lidl import (
     LidlDeutschland,
     LidlDeutschlandPreview,
@@ -42,6 +43,7 @@ __all__ = [
     "HoferPreview",
     "KauflandWoche",
     "KauflandWochePreview",
+    "Kik",
     "LidlDeutschland",
     "LidlDeutschlandPreview",
     "LidlDeutschlandPreview2",
