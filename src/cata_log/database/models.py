@@ -38,6 +38,7 @@ from sqlalchemy import Enum as SQLEnum
 
 from cata_log.constants import StatusEnum
 from cata_log.exceptions import (
+    NetworkError,
     ProviderWarning,
 )
 from cata_log.providers import Provider as ProviderType
@@ -140,6 +141,15 @@ class Provider(ModelBase, TimestampMixin):
                 },
             )
             self.status = provider_warning.provider_status
+        except NetworkError:
+            logger.warning(
+                "Network error while fetching provider catalog.",
+                extra={
+                    "provider_id": self.id,
+                },
+                exc_info=True,
+            )
+            raise
         else:
             logger.debug(
                 "Success fetching catalog of provider.",
