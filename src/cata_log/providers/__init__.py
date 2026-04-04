@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+from .action import Action
 from .aldi import AldiSued, AldiSuedPreview, AldiSuedPreview2
 from .base import Provider
 from .edeka import EdekaBasissortiment, EdekaMarkt
@@ -34,6 +35,7 @@ from .rewe import Rewe, RewePreview
 from .rossmann import RossmannAngebote
 
 __all__ = [
+    "Action",
     "AldiSued",
     "AldiSuedPreview",
     "AldiSuedPreview2",
