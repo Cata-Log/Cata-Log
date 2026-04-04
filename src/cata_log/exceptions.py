@@ -22,6 +22,10 @@ from typing import override
 from cata_log.constants import StatusEnum
 
 
+class ApplicationMisconfiguredError(Exception):
+    """An error indicating a bad app configuration."""
+
+
 class ProviderWarning(Warning):
     """A warning about a provider."""
 

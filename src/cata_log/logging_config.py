@@ -1,18 +1,18 @@
 import logging.config
 
-from cata_log.config import Config
+from cata_log.config import Settings
 from cata_log.constants import LOG_DIRECTORY_PATH
 
 COMMON_FILEHANDLER_CONFIG = {
     "level": "DEBUG",
     "class": "logging.handlers.RotatingFileHandler",
-    "maxBytes": int(Config.LOG_FILE_MAXSIZE),
-    "backupCount": int(Config.LOG_FILE_BACKUP_COUNT),
+    "maxBytes": int(Settings.LOG_FILE_MAXSIZE),
+    "backupCount": int(Settings.LOG_FILE_BACKUP_COUNT),
     "formatter": "json",
 }
 
 COMMON_LOGGER_CONFIG = {
-    "level": Config.LOG_LEVEL,
+    "level": Settings.LOG_LEVEL,
     "propagate": True,
 }
 
@@ -63,7 +63,7 @@ LOGGING_CONFIG = {
     },
     "root": {
         "handlers": ["root-logfile"],
-        "level": Config.LOG_LEVEL,
+        "level": Settings.LOG_LEVEL,
     },
     "loggers": {
         "uvicorn": {"handlers": ["console", "uvicorn-logfile"], **COMMON_LOGGER_CONFIG},

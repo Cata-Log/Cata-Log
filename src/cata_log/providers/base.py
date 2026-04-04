@@ -28,7 +28,7 @@ import httpx
 from celery.schedules import crontab
 from fake_useragent import UserAgent
 
-from cata_log.config import Config
+from cata_log.config import Settings
 from cata_log.constants import STORAGE_PATH
 from cata_log.exceptions import (
     CatalogUnavailableWarning,
@@ -87,7 +87,7 @@ class Provider(abc.ABC):
                     lambda r, *_, **__: r.raise_for_status(),
                 ]
             },
-            timeout=int(Config.REQUEST_TIMEOUT),
+            timeout=int(Settings.REQUEST_TIMEOUT),
         )
         self.get_catalog_data()
 

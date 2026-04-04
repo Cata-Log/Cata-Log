@@ -25,7 +25,7 @@ from celery.schedules import crontab
 from sqlalchemy import select
 
 from cata_log import constants, database
-from cata_log.config import Config
+from cata_log.config import Settings
 from cata_log.constants import BROKER_URL, DATABASE_URL
 from cata_log.exceptions import NetworkError
 
@@ -78,7 +78,7 @@ def fetch_provider(provider_id: int) -> None:
 def cleanup_catalogs() -> None:
     """Task to cleanup outdated catalogs."""
     with database.DBSession() as db_session:
-        expiration_days = int(Config.EXPIRATION_DAYS)
+        expiration_days = int(Settings.EXPIRATION_DAYS)
         expiration_date = datetime.now(tz=UTC) - timedelta(days=expiration_days)
         database.Catalog.cleanup(db_session, expiration_date)
 
