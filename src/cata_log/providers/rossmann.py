@@ -38,7 +38,7 @@ class RossmannAngebote(Provider):
     region = Germany
     schedule = crontab(minute=0, hour=5, day_of_week=0)
 
-    url_format = "https://www.rossmann.de/de/kataloge/angebote/catalogs/{year}_kw{week_number}_beilage/thumbnails/bk_{page_number}.jpg"
+    url_format = "https://www.rossmann.de/de/kataloge/angebote/catalogs/{year}_kw{week_number}_beilage/normal/bk_{page_number}.jpg"
 
     @override
     def _get_catalog_data(self) -> None:

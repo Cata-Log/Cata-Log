@@ -57,7 +57,7 @@ class Netto(Provider):
     def _get_page(self, page_number: page_numbers.PageNumber) -> bytes:
         try:
             page_url = self.catalog_data[int(page_number)]["pages"][0]["images"][
-                "at800"
+                "at2400"
             ]
         except IndexError as error:
             raise PagesExhausted from error

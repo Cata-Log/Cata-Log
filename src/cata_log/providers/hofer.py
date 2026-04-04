@@ -59,7 +59,7 @@ class Hofer(Provider):
         try:
             image_url = self.catalog_data[double_page_number.number]["pages"][
                 double_page_number.side
-            ]["images"]["at800"]
+            ]["images"]["at2400"]
         except IndexError as error:
             raise PagesExhausted from error
         response = self._client.get(urljoin(self.base_url, image_url))
