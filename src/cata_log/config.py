@@ -20,7 +20,7 @@ import enum
 import os
 from typing import override
 
-from src.cata_log.exceptions import ApplicationMisconfiguredError
+from cata_log.exceptions import ApplicationMisconfiguredError
 
 
 class Settings(enum.Enum):
