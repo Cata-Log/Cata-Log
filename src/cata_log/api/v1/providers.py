@@ -258,6 +258,7 @@ async def patch_provider(
     provider.config = validated_config
     db_session.commit()
     db_session.refresh(provider)
+    fetch_provider.delay(provider.id)
     return provider
 
 
