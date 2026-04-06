@@ -40,6 +40,7 @@ class LidlDeutschland(Provider):
     first_page_number = 0
 
     overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={region_id}&client_locale=lidl/{language_code_lower}-{language_code_upper}"
+    flyer_index = 0
 
     @override
     def _get_catalog_data(self) -> None:
@@ -51,9 +52,9 @@ class LidlDeutschland(Provider):
             )
         )
         flyer_json_response = self._client.get(
-            overview_response.json()["categories"][0]["subcategories"][0]["flyers"][0][
-                "flyerJson"
-            ]
+            overview_response.json()["categories"][0]["subcategories"][0]["flyers"][
+                self.flyer_index
+            ]["flyerJson"]
         )
         self.flyer_json = flyer_json_response.json()
 
@@ -84,21 +85,7 @@ class LidlDeutschlandPreview(LidlDeutschland):
 
     name = "lidl-preview"
     description = LidlDeutschland.description + " nächste Woche"
-
-    @override
-    def _get_catalog_data(self) -> None:
-        overview_response = self._client.get(
-            self.overview_url_template.format(**self._config)
-        )
-        try:
-            flyer_json_response = self._client.get(
-                overview_response.json()["categories"][0]["subcategories"][0]["flyers"][
-                    1
-                ]["flyerJson"]
-            )
-        except IndexError as index_error:
-            raise CatalogUnavailableWarning from index_error
-        self.flyer_json = flyer_json_response.json()
+    flyer_index = 1
 
 
 class LidlDeutschlandPreview2(LidlDeutschland):
@@ -106,21 +93,14 @@ class LidlDeutschlandPreview2(LidlDeutschland):
 
     name = "lidl-preview2"
     description = LidlDeutschland.description + " übernächste Woche"
+    flyer_index = 2
 
     @override
     def _get_catalog_data(self) -> None:
-        overview_response = self._client.get(
-            self.overview_url_template.format(**self._config)
-        )
         try:
-            flyer_json_response = self._client.get(
-                overview_response.json()["categories"][0]["subcategories"][0]["flyers"][
-                    2
-                ]["flyerJson"]
-            )
+            super()._get_catalog_data()
         except IndexError as index_error:
             raise CatalogUnavailableWarning from index_error
-        self.flyer_json = flyer_json_response.json()
 
 
 class LidlItalia(LidlDeutschland):
