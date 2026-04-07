@@ -2,17 +2,21 @@
     <header>
         <a href="{{ provider_info.url }}"><strong>{{ provider_info.id }}</strong></a>
     </header>
-    <div>{{ provider_info.description }}</div>
-    <div>{{ provider_info.region.local_name }}</div>
+    <p>{{ provider_info.description }}, {{ provider_info.region.local_name }}</p>
 
     {% if provider_info.configuration %}
         <div>
-            <u><b>Configuration</b></u>
+            <strong>Configuration</strong>
             <ul>
                 {% for config in provider_info.configuration %}
                     <li>
-                        <strong>{{ config.name }}</strong>:
-                        {% if config.default %}({{ config.default }}){% endif %}
+                        <strong>{{ config.name }}</strong>
+                        {% if config.default %}
+                            ({{ config.default }})
+                        {% else %}
+                            *
+                        {% endif %}
+                        :
                         {{ config.helptext }}
                     </li>
                 {% endfor %}

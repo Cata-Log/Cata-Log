@@ -1,9 +1,21 @@
 <article id="provider-{{ provider.id }}">
     <header>
-        <h4>Provider {{ provider.id }}</h4>
-        <small>{{ provider.class_id }}</small>
+        {{ provider.class_id }}
     </header>
-    <div>{{ provider.status | title }}</div>
+    <nav>
+        <ul>
+            {{ provider.status | title }}
+        </ul>
+        <ul>
+            <div role="group">
+                <button class="outline secondary schedule-provider-update-button"
+                        data-id="{{ provider.id }}">Update</button>
+                <button class="outline secondary delete-provider-button"
+                        data-id="{{ provider.id }}">X</button>
+            </div>
+        </ul>
+    </nav>
+
 
     {% if provider.config %}
         <div>
