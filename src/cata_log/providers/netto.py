@@ -22,12 +22,11 @@ from typing import override
 from urllib.parse import urljoin
 
 from celery.schedules import crontab
-from httpx import HTTPStatusError
 
-from cata_log.exceptions import CatalogUnavailableWarning, PagesExhausted
+from cata_log.exceptions import PagesExhausted
 from cata_log.utils import dates, page_numbers
 
-from .base import Provider
+from .base import Preview, Provider
 from .regions import Germany
 
 
@@ -78,20 +77,10 @@ class Netto(Provider):
         return self._get_valid_since() + timedelta(days=7)
 
 
-class NettoPreview(Netto):
+class NettoPreview(Preview, Netto):
     """Provider class for Netto preview catalog for next week."""
 
     name = "netto-preview"
     description = Netto.description + " nächste Woche"
     schedule = crontab(minute=0, hour=4)
-
-    @override
-    def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() + timedelta(days=7)
-
-    @override
-    def _get_catalog_data(self) -> None:
-        try:
-            super()._get_catalog_data()
-        except HTTPStatusError as status_error:
-            raise CatalogUnavailableWarning from status_error
+    preview_timedelta = timedelta(days=7)

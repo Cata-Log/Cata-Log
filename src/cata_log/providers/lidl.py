@@ -22,7 +22,7 @@ from typing import override
 from cata_log.exceptions import CatalogUnavailableWarning, PagesExhausted
 from cata_log.utils.page_numbers import PageNumber
 
-from .base import Provider
+from .base import Preview, Provider
 from .configuration import Configuration
 from .regions import Germany, Italy
 
@@ -80,20 +80,13 @@ class LidlDeutschland(Provider):
         ).astimezone(tz=self.region.timezone) + timedelta(days=1)
 
 
-class LidlDeutschlandPreview(LidlDeutschland):
+class LidlDeutschlandPreview(Preview, LidlDeutschland):
     """Provider class for Lidl preview catalog for next week."""
 
     name = "lidl-preview"
     description = LidlDeutschland.description + " nächste Woche"
     flyer_index = 1
-
-
-class LidlDeutschlandPreview2(LidlDeutschland):
-    """Provider class for Lidl preview catalog for second-next week."""
-
-    name = "lidl-preview2"
-    description = LidlDeutschland.description + " übernächste Woche"
-    flyer_index = 2
+    preview_timedelta = timedelta(days=7)
 
     @override
     def _get_catalog_data(self) -> None:
@@ -101,6 +94,15 @@ class LidlDeutschlandPreview2(LidlDeutschland):
             super()._get_catalog_data()
         except IndexError as index_error:
             raise CatalogUnavailableWarning from index_error
+
+
+class LidlDeutschlandPreview2(LidlDeutschlandPreview):
+    """Provider class for Lidl preview catalog for second-next week."""
+
+    name = "lidl-preview2"
+    description = LidlDeutschland.description + " übernächste Woche"
+    flyer_index = 2
+    preview_timedelta = timedelta(days=14)
 
 
 class LidlItalia(LidlDeutschland):

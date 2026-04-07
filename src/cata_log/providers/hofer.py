@@ -25,7 +25,7 @@ from cata_log.exceptions import PagesExhausted
 from cata_log.utils import page_numbers
 from cata_log.utils.dates import get_calendar_week_number
 
-from .base import Provider
+from .base import Preview, Provider
 from .regions import Austria
 
 
@@ -79,12 +79,9 @@ class Hofer(Provider):
         return self._get_valid_since() + timedelta(days=7)
 
 
-class HoferPreview(Hofer):
+class HoferPreview(Preview, Hofer):
     """Provider class for Hofer preview catalog for next week."""
 
     name = "hofer-preview"
     description = Hofer.description + " für nächste Woche"
-
-    @override
-    def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() + timedelta(days=7)
+    preview_timedelta = timedelta(days=7)

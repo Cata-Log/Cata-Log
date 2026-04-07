@@ -25,7 +25,7 @@ from cata_log.exceptions import PagesExhausted
 from cata_log.utils import page_numbers
 from cata_log.utils.dates import get_calendar_week_number
 
-from .base import Provider
+from .base import Preview, Provider
 from .regions import Germany
 
 
@@ -78,7 +78,7 @@ class AldiSued(Provider):
         return self._get_valid_since() + timedelta(days=7)
 
 
-class AldiSuedPreview(AldiSued):
+class AldiSuedPreview(Preview, AldiSued):
     """Provider class for Aldi-Süd preview catalog for next week."""
 
     name = "aldi-sued-preview"
@@ -86,13 +86,10 @@ class AldiSuedPreview(AldiSued):
     overview_url_format = (
         "https://prospekt.aldi-sued.de/kw{week_number:02}-{year}-op/spreads.json"
     )
-
-    @override
-    def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() + timedelta(days=7)
+    preview_timedelta = timedelta(days=7)
 
 
-class AldiSuedPreview2(AldiSued):
+class AldiSuedPreview2(Preview, AldiSued):
     """Provider class for Aldi-Süd preview catalog for the second-next week."""
 
     name = "aldi-sued-preview2"
@@ -100,7 +97,4 @@ class AldiSuedPreview2(AldiSued):
     overview_url_format = (
         "https://prospekt.aldi-sued.de/kw{week_number:02}-{year}-vop/spreads.json"
     )
-
-    @override
-    def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() + timedelta(days=14)
+    preview_timedelta = timedelta(days=14)

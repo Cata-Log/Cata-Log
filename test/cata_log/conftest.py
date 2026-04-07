@@ -34,6 +34,7 @@ from cata_log import constants, database, exceptions
 from cata_log.providers import Provider
 from cata_log.providers.configuration import Configuration
 from cata_log.providers.regions import Germany
+from src.cata_log.providers.base import Preview
 
 
 @pytest.fixture
@@ -366,6 +367,15 @@ def test_provider_class(_session_faker):  # noqa: PT019 # simplifies things
             return self._get_valid_since() + _session_faker.time_delta()
 
     return TestProvider
+
+
+@pytest.fixture(scope="session")
+def test_preview_provider_class(test_provider_class):
+    class TestPreviewProvider(Preview, test_provider_class):
+        name = test_provider_class.name + "-preview"
+        preview_timedelta = timedelta(days=7)
+
+    return TestPreviewProvider
 
 
 @pytest.fixture(scope="session")

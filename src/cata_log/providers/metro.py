@@ -24,7 +24,7 @@ from urllib.parse import urljoin
 from cata_log.exceptions import PagesExhausted
 from cata_log.utils import page_numbers
 
-from .base import Provider
+from .base import Preview, Provider
 from .regions import Germany
 
 
@@ -78,12 +78,9 @@ class MetroWochenangebote(Provider):
         return self._get_valid_since() + timedelta(days=7)
 
 
-class MetroWochenangebotePreview(MetroWochenangebote):
+class MetroWochenangebotePreview(Preview, MetroWochenangebote):
     """Provider class for Metro Wochenangebote preview catalog for next week."""
 
     name = "metro-wochenangebote-preview"
     description = MetroWochenangebote.description + " für nächste Woche"
-
-    @override
-    def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() + timedelta(days=7)
+    preview_timedelta = timedelta(days=7)

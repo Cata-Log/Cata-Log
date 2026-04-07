@@ -19,7 +19,7 @@ import abc
 import logging
 import uuid
 from collections.abc import Generator
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from types import TracebackType
 from typing import ClassVar, Self, final, override
@@ -40,6 +40,7 @@ from cata_log.exceptions import (
     ProviderMisconfiguredOrBrokenWarning,
     ProviderRegistrationWarning,
     ProviderUnknownClassWarning,
+    ProviderWarning,
 )
 from cata_log.utils.page_numbers import PageNumber, page_numbering
 
@@ -179,7 +180,6 @@ class Provider(abc.ABC):
             The downloaded page in bytes.
         """
 
-    @final
     def get_page(self, page_number: PageNumber) -> bytes:
         """_get_page wrapped in error handling."""
         self._logger.debug("Getting page %s ...", page_number)
@@ -221,7 +221,6 @@ class Provider(abc.ABC):
         Can be passed if no data beside the pagenumber is required to fetch pages from the provider.
         """
 
-    @final
     def get_catalog_data(self) -> None:
         """_get_catalog_data wrapped in error handling."""
         self._logger.debug("Getting catalog data ...")
@@ -365,3 +364,34 @@ class Provider(abc.ABC):
         """
         filename = str(uuid.uuid4()) + cls.page_file_extension
         return STORAGE_PATH / filename
+
+
+class Preview:
+    """Preview mixin for a provider class."""
+
+    preview_timedelta: timedelta
+
+    @override
+    def get_relevant_datetime(self) -> datetime:
+        return super().get_relevant_datetime() + self.preview_timedelta
+
+    @override
+    def get_catalog_data(self) -> None:
+        try:
+            super().get_catalog_data()
+        except ProviderWarning as provider_warning:
+            if isinstance(provider_warning.__cause__, httpx.HTTPStatusError):
+                raise CatalogUnavailableWarning from provider_warning.__cause__
+            raise
+
+    @override
+    def get_page(self, page_number: PageNumber) -> bytes:
+        try:
+            return super().get_page(page_number)
+        except ProviderWarning as provider_warning:
+            if (
+                isinstance(provider_warning.__cause__, httpx.HTTPStatusError)
+                and page_number == self.first_page_number
+            ):
+                raise CatalogUnavailableWarning from provider_warning.__cause__
+            raise

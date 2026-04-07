@@ -20,13 +20,10 @@ from calendar import Day
 from datetime import datetime, time, timedelta
 from typing import override
 
-import httpx
-
-from cata_log.exceptions import CatalogUnavailableWarning
 from cata_log.utils.dates import get_calendar_week_number
 from cata_log.utils.page_numbers import PageNumber
 
-from .base import Provider
+from .base import Preview, Provider
 from .regions import Germany
 
 
@@ -71,65 +68,33 @@ class Norma(Provider):
         return self._get_valid_since() + timedelta(days=7)
 
 
-class NormaPreview(Norma):
+class NormaPreview(Preview, Norma):
     """Provider class for Norma preview catalog for next week."""
 
     name = "norma-preview"
     description = Norma.description + " nächste Woche"
-
-    @override
-    def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() + timedelta(days=7)
+    preview_timedelta = timedelta(days=7)
 
 
-class NormaPreview2(Norma):
+class NormaPreview2(NormaPreview):
     """Provider class for Norma preview catalog for second-next week."""
 
     name = "norma-preview2"
     description = Norma.description + " übernächste Woche"
-
-    @override
-    def _get_page(self, page_number: PageNumber) -> bytes:
-        try:
-            page_data = super()._get_page(page_number)
-        except httpx.HTTPStatusError as status_error:
-            if status_error.response.status_code == httpx.codes.NOT_FOUND:
-                raise CatalogUnavailableWarning from status_error
-            raise
-        return page_data
-
-    @override
-    def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() + timedelta(days=14)
+    preview_timedelta = timedelta(days=14)
 
 
-class NormaRetrospect(Norma):
+class NormaRetrospect(NormaPreview):
     """Provider class for Norma retrospect catalog for last week."""
 
     name = "norma-retrospect"
     description = Norma.description + " letzte Woche"
-
-    @override
-    def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() - timedelta(days=7)
+    preview_timedelta = -timedelta(days=7)
 
 
-class NormaRetrospect2(Norma):
+class NormaRetrospect2(NormaPreview):
     """Provider class for Norma retrospect catalog for second-last week."""
 
     name = "norma-retrospect2"
     description = Norma.description + " vorletzte Woche"
-
-    @override
-    def _get_page(self, page_number: PageNumber) -> bytes:
-        try:
-            page_data = super()._get_page(page_number)
-        except httpx.HTTPStatusError as status_error:
-            if status_error.response.status_code == httpx.codes.NOT_FOUND:
-                raise CatalogUnavailableWarning from status_error
-            raise
-        return page_data
-
-    @override
-    def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() - timedelta(days=14)
+    preview_timedelta = -timedelta(days=14)

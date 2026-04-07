@@ -22,7 +22,7 @@ from typing import override
 from cata_log.exceptions import CatalogUnavailableWarning, PagesExhausted
 from cata_log.utils.page_numbers import PageNumber
 
-from .base import Provider
+from .base import Preview, Provider
 from .configuration import Configuration
 from .regions import Germany
 
@@ -79,11 +79,12 @@ class KauflandWoche(Provider):
         ).astimezone(tz=self.region.timezone) + timedelta(days=1)
 
 
-class KauflandWochePreview(KauflandWoche):
+class KauflandWochePreview(Preview, KauflandWoche):
     """Provider class for Kaufland Wochenangebote preview catalog for next week."""
 
     name = "kaufland-preview"
     description = KauflandWoche.description + " im nächsten Katalog"
+    preview_timedelta = timedelta(days=7)
 
     @override
     def _get_catalog_data(self) -> None:

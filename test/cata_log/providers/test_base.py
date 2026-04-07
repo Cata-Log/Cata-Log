@@ -220,6 +220,189 @@ def test_get_page(
 
 
 @pytest.mark.parametrize(
+    ("side_effect", "expected_error"),
+    [
+        (SideEffects.DONOTHING, None),
+        (SideEffects.HTTP_400, exceptions.CatalogUnavailableWarning),
+        (SideEffects.HTTP_500, exceptions.CatalogUnavailableWarning),
+        (SideEffects.HTTP_404, exceptions.CatalogUnavailableWarning),
+        (SideEffects.TRANSPORTERROR, exceptions.NetworkError),
+        (SideEffects.KEYERROR, exceptions.ProviderBrokenWarning),
+        (SideEffects.VALUEERROR, exceptions.ProviderBrokenWarning),
+        (SideEffects.EXCEPTION, exceptions.ProviderBrokenWarning),
+        (SideEffects.CATALOGUNAVAILABLE, exceptions.CatalogUnavailableWarning),
+    ],
+)
+def test_get_catalog_data__preview(
+    test_preview_provider_class,
+    default_test_provider_config,
+    side_effect,
+    expected_error,
+):
+    if expected_error:
+        with pytest.raises(expected_error):
+            test_preview_provider_class(
+                {"side_effect": side_effect, **default_test_provider_config}
+            )
+    else:
+        test_preview_provider_class(
+            {"side_effect": side_effect, **default_test_provider_config}
+        )
+
+
+@pytest.mark.parametrize(
+    ("side_effect", "expected_error"),
+    [
+        (SideEffects.DONOTHING, None),
+        (SideEffects.HTTP_400, exceptions.ProviderBrokenWarning),
+        (SideEffects.HTTP_500, exceptions.ProviderBrokenWarning),
+        (SideEffects.HTTP_404, exceptions.ProviderBrokenWarning),
+        (SideEffects.TRANSPORTERROR, exceptions.ProviderBrokenWarning),
+        (SideEffects.KEYERROR, exceptions.ProviderBrokenWarning),
+        (SideEffects.VALUEERROR, exceptions.ProviderBrokenWarning),
+        (SideEffects.EXCEPTION, exceptions.ProviderBrokenWarning),
+        (SideEffects.CATALOGUNAVAILABLE, exceptions.ProviderBrokenWarning),
+    ],
+)
+def test_get_valid_since__preview(
+    test_preview_provider_class,
+    default_test_provider_config,
+    side_effect,
+    expected_error,
+):
+    if expected_error:
+        with pytest.raises(expected_error):
+            test_preview_provider_class(
+                {
+                    "side_effect": side_effect,
+                    "pass_get_catalog_data": "True",
+                    **default_test_provider_config,
+                }
+            ).get_valid_until()
+    else:
+        result = test_preview_provider_class(
+            {
+                "side_effect": side_effect,
+                "pass_get_catalog_data": "True",
+                **default_test_provider_config,
+            }
+        ).get_valid_until()
+
+        assert result
+
+
+@pytest.mark.parametrize(
+    ("side_effect", "expected_error"),
+    [
+        (SideEffects.DONOTHING, None),
+        (SideEffects.HTTP_400, exceptions.ProviderBrokenWarning),
+        (SideEffects.HTTP_500, exceptions.ProviderBrokenWarning),
+        (SideEffects.HTTP_404, exceptions.ProviderBrokenWarning),
+        (SideEffects.TRANSPORTERROR, exceptions.ProviderBrokenWarning),
+        (SideEffects.KEYERROR, exceptions.ProviderBrokenWarning),
+        (SideEffects.VALUEERROR, exceptions.ProviderBrokenWarning),
+        (SideEffects.EXCEPTION, exceptions.ProviderBrokenWarning),
+        (SideEffects.CATALOGUNAVAILABLE, exceptions.ProviderBrokenWarning),
+    ],
+)
+def test_get_valid_until__preview(
+    test_preview_provider_class,
+    default_test_provider_config,
+    side_effect,
+    expected_error,
+):
+    if expected_error:
+        with pytest.raises(expected_error):
+            test_preview_provider_class(
+                {
+                    "side_effect": side_effect,
+                    "pass_get_catalog_data": "True",
+                    **default_test_provider_config,
+                }
+            ).get_valid_until()
+    else:
+        result = test_preview_provider_class(
+            {
+                "side_effect": side_effect,
+                "pass_get_catalog_data": "True",
+                **default_test_provider_config,
+            }
+        ).get_valid_until()
+
+        assert result
+
+
+@pytest.mark.parametrize(
+    ("side_effect", "page_number", "expected_error"),
+    [
+        (SideEffects.DONOTHING, 0, None),
+        (SideEffects.DONOTHING, 6, None),
+        (SideEffects.HTTP_400, 0, exceptions.CatalogUnavailableWarning),
+        (SideEffects.HTTP_400, 3, exceptions.ProviderMisconfiguredOrBrokenWarning),
+        (SideEffects.HTTP_500, 0, exceptions.CatalogUnavailableWarning),
+        (SideEffects.HTTP_500, 4, exceptions.ProviderMisconfiguredOrBrokenWarning),
+        (SideEffects.HTTP_404, 0, exceptions.CatalogUnavailableWarning),
+        (SideEffects.HTTP_404, 6, exceptions.PagesExhausted),
+        (SideEffects.TRANSPORTERROR, 0, exceptions.NetworkError),
+        (SideEffects.TRANSPORTERROR, 24, exceptions.NetworkError),
+        (SideEffects.KEYERROR, 0, exceptions.ProviderBrokenWarning),
+        (SideEffects.KEYERROR, 10, exceptions.ProviderBrokenWarning),
+        (SideEffects.VALUEERROR, 0, exceptions.ProviderBrokenWarning),
+        (SideEffects.VALUEERROR, 94, exceptions.ProviderBrokenWarning),
+        (SideEffects.EXCEPTION, 0, exceptions.ProviderBrokenWarning),
+        (SideEffects.EXCEPTION, 5, exceptions.ProviderBrokenWarning),
+        (
+            SideEffects.PAGESEXHAUSTED,
+            0,
+            exceptions.ProviderMisconfiguredOrBrokenWarning,
+        ),
+        (SideEffects.PAGESEXHAUSTED, 34, exceptions.PagesExhausted),
+        (SideEffects.CATALOGUNAVAILABLE, 0, exceptions.CatalogUnavailableWarning),
+        (
+            SideEffects.CATALOGUNAVAILABLE,
+            6,
+            exceptions.ProviderMisconfiguredOrBrokenWarning,
+        ),
+    ],
+)
+def test_get_page__preview(
+    test_preview_provider_class,
+    default_test_provider_config,
+    side_effect,
+    page_number,
+    expected_error,
+):
+    if expected_error:
+        with pytest.raises(expected_error):
+            test_preview_provider_class(
+                {
+                    "side_effect": side_effect,
+                    "pass_get_catalog_data": "True",
+                    **default_test_provider_config,
+                }
+            ).get_page(
+                PageNumber(
+                    page_number,
+                    start_number=test_preview_provider_class.first_page_number,
+                )
+            )
+    else:
+        result = test_preview_provider_class(
+            {
+                "side_effect": side_effect,
+                "pass_get_catalog_data": "True",
+                **default_test_provider_config,
+            }
+        ).get_page(
+            PageNumber(
+                page_number, start_number=test_preview_provider_class.first_page_number
+            )
+        )
+
+        assert result
+
+
+@pytest.mark.parametrize(
     "config",
     [
         {
