@@ -56,8 +56,8 @@ LOGGING_CONFIG = {
             "filename": str(LOG_DIRECTORY_PATH / "sqlalchemy.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
-        "uvicorn-logfile": {
-            "filename": str(LOG_DIRECTORY_PATH / "uvicorn.log"),
+        "fastapi-logfile": {
+            "filename": str(LOG_DIRECTORY_PATH / "fastapi.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
     },
@@ -66,7 +66,11 @@ LOGGING_CONFIG = {
         "level": Settings.LOG_LEVEL.value,
     },
     "loggers": {
-        "uvicorn": {"handlers": ["console", "uvicorn-logfile"], **COMMON_LOGGER_CONFIG},
+        "uvicorn": {"handlers": ["console", "fastapi-logfile"], **COMMON_LOGGER_CONFIG},
+        "starlette": {
+            "handlers": ["console", "fastapi-logfile"],
+            **COMMON_LOGGER_CONFIG,
+        },
         "celery": {"handlers": ["celery-logfile"], **COMMON_LOGGER_CONFIG},
         "sqlalchemy": {"handlers": ["sqlalchemy-logfile"], **COMMON_LOGGER_CONFIG},
         "amqp": {"handlers": ["amqp-logfile"], **COMMON_LOGGER_CONFIG},
