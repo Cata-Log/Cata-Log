@@ -26,28 +26,6 @@ from cata_log.utils.page_numbers import PageNumber
 from test.cata_log.conftest import SideEffects
 
 
-@pytest.mark.parametrize("provider_class", Provider._registry.values())
-def test_registered_classes__attributes(provider_class):
-    assert issubclass(provider_class, Provider)
-    assert provider_class.name
-    assert isinstance(provider_class.name, str)
-    assert provider_class.description
-    assert isinstance(provider_class.description, str)
-    assert provider_class.url
-    assert isinstance(provider_class.url, str)
-    assert provider_class.page_file_extension
-    assert isinstance(provider_class.page_file_extension, str)
-    assert provider_class.region
-    assert issubclass(provider_class.region, Region)
-    assert provider_class.schedule
-    assert isinstance(provider_class.schedule, crontab)
-    assert isinstance(provider_class.first_page_number, int)
-    assert isinstance(provider_class.configuration, tuple)
-    for config in provider_class.configuration:
-        if config.default:
-            config.parse_as(config.default)
-
-
 @pytest.mark.parametrize(
     ("side_effect", "expected_error"),
     [

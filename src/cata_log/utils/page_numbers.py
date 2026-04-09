@@ -57,12 +57,12 @@ class PageNumber:
             TypeError: If the other object is of incompatible type.
         """
         if isinstance(other, int):
-            return PageNumber(self._number + other, self._offset)
+            return PageNumber(self._number + other + self._offset, self._offset)
         if isinstance(other, PageNumber) and self._offset == other._offset:
-            return PageNumber(self._number + other._number, self._offset)
+            return PageNumber(self._number + other._number + self._offset, self._offset)
         if isinstance(other, DoublePageNumber):
             return self + other.as_page_number()
-        raise TypeError("Cannot subtract this object from this pagenumber.")
+        raise TypeError("Cannot add this object to this pagenumber.")
 
     def __sub__(self, other: object) -> PageNumber:
         """Subtract another object from this instance.
@@ -75,9 +75,9 @@ class PageNumber:
             TypeError: If the other object is of incompatible type.
         """
         if isinstance(other, int):
-            return PageNumber(self._number - other, self._offset)
+            return PageNumber(self._number - other + self._offset, self._offset)
         if isinstance(other, PageNumber) and self._offset == other._offset:
-            return PageNumber(self._number - other._number, self._offset)
+            return PageNumber(self._number - other._number + self._offset, self._offset)
         if isinstance(other, DoublePageNumber):
             return self - other.as_page_number()
         raise TypeError("Cannot subtract this object from this pagenumber.")
@@ -116,9 +116,9 @@ class PageNumber:
             Whether the objects are equal.
         """
         if isinstance(other, PageNumber):
-            return other._number == self._number and other._offset == self._offset
+            return other._number == self._number
         if isinstance(other, DoublePageNumber):
-            return self.as_double_page_number() == other
+            return self == other.as_page_number()
         if isinstance(other, int):
             return int(self) == other
         return NotImplemented
@@ -130,9 +130,9 @@ class PageNumber:
             Whether this object is greater than the other.
         """
         if isinstance(other, PageNumber):
-            return self._number > other._number and other._offset == self._offset
+            return self._number > other._number
         if isinstance(other, DoublePageNumber):
-            return self.as_double_page_number() > other
+            return self > other.as_page_number()
         if isinstance(other, int):
             return int(self) > other
         return NotImplemented
@@ -252,17 +252,7 @@ class DoublePageNumber:
         Returns:
             Whether the objects are equal.
         """
-        if isinstance(other, DoublePageNumber):
-            return (
-                other._number == self._number
-                and other._index == self._index
-                and other._offset == self._offset
-            )
-        if isinstance(other, PageNumber):
-            return self.as_page_number() == other
-        if isinstance(other, int):
-            return int(self) == other
-        return NotImplemented
+        return self.as_page_number() == other
 
     def __gt__(self, other: object) -> bool:
         """Comparison of the double-pagenumber, pagenumber and int.
@@ -270,17 +260,7 @@ class DoublePageNumber:
         Returns:
             Whether this object is greater than the other.
         """
-        if isinstance(other, DoublePageNumber):
-            return (
-                self._number > other._number
-                and other._index == self._index
-                and other._offset == self._offset
-            )
-        if isinstance(other, PageNumber):
-            return self.as_page_number() > other
-        if isinstance(other, int):
-            return int(self) > other
-        return NotImplemented
+        return self.as_page_number() > other
 
     def next(self) -> DoublePageNumber:
         """Get the next double-pagenumber.
@@ -317,7 +297,7 @@ class DoublePageNumber:
             The pagenumber class equivalent to this double-pagenumber.
         """
         return PageNumber(
-            0
+            self._offset
             if self._number == 0
             else self._number * 2 - 1 + self._index + self._offset,
             self._offset,

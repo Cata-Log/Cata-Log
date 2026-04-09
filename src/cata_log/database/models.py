@@ -158,42 +158,6 @@ class Provider(ModelBase, TimestampMixin):
             self.status = StatusEnum.HEALTHY
         db_session.commit()
 
-    @property
-    def is_healthy(self) -> bool:
-        """Shortcut property to check this providers health.
-
-        Returns:
-            Whether this provider is healthy.
-        """
-        return self.status in [
-            StatusEnum.HEALTHY,
-            StatusEnum.UNAVAILABLE,
-        ]
-
-    @property
-    def is_misconfigured(self) -> bool:
-        """Shortcut property to check this providers health.
-
-        Returns:
-            Whether this provider is or may be misconfigured.
-        """
-        return self.status in [
-            StatusEnum.MISCONFIGURED,
-            StatusEnum.MISCONFIGURED_OR_BROKEN,
-        ]
-
-    @property
-    def is_broken(self) -> bool:
-        """Shortcut property to check this providers health.
-
-        Returns:
-            Whether this provider is or may be broken.
-        """
-        return self.status in [
-            StatusEnum.BROKEN,
-            StatusEnum.MISCONFIGURED_OR_BROKEN,
-        ]
-
 
 class Catalog(ModelBase, TimestampMixin):
     """ORM model for a catalog."""
@@ -214,7 +178,7 @@ class Catalog(ModelBase, TimestampMixin):
         """Compress the catalog to a pdf file.
 
         Returns:
-            A BytesIO of the pdf file.
+            The pdf file bytes.
         """
         pdf_bytes_io = BytesIO()
         page_images = [Image.open(page.storage_path) for page in self.pages]

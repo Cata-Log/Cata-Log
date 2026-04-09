@@ -59,3 +59,9 @@ def test_webui_catalog(full_database, fake_provider, client):
     response = client.get(f"/catalogs/provider/{fake_provider.id}/latest/")
 
     assert response.status_code == 200
+
+
+def test_webui_catalog__not_found(full_database, client):
+    response = client.get("/catalogs/provider/324/latest/")
+
+    assert response.status_code == 404

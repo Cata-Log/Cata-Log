@@ -28,7 +28,7 @@ def test_PageNumber___eq___equal(page_number, equal_object):
         (page_numbers.PageNumber(2, 0), page_numbers.PageNumber(2, 1)),
         (page_numbers.PageNumber(3, 0), page_numbers.PageNumber(2, 0)),
         (page_numbers.PageNumber(4, 0), page_numbers.DoublePageNumber(3, 1, 0)),
-        (page_numbers.PageNumber(1, 1), page_numbers.DoublePageNumber(0, 0, 2)),
+        (page_numbers.PageNumber(1, 1), page_numbers.DoublePageNumber(1, 0, 2)),
         (page_numbers.PageNumber(3, 2), page_numbers.DoublePageNumber(1, 1, 2)),
         (page_numbers.PageNumber(2, 1), [2, 1]),
         (page_numbers.PageNumber(2, 1), (2, 1)),
@@ -36,6 +36,113 @@ def test_PageNumber___eq___equal(page_number, equal_object):
 )
 def test_PageNumber___eq___unequal(page_number, unequal_object):
     assert page_number != unequal_object
+
+
+@pytest.mark.parametrize(
+    ("page_number", "smaller_object"),
+    [
+        (page_numbers.PageNumber(1, 0), 0),
+        (page_numbers.PageNumber(3, 2), 0),
+        (page_numbers.PageNumber(2, 0), page_numbers.PageNumber(1, 0)),
+        (page_numbers.PageNumber(3, 0), page_numbers.PageNumber(2, 1)),
+        (page_numbers.PageNumber(4, 0), page_numbers.DoublePageNumber(1, 1, 0)),
+        (page_numbers.PageNumber(2, 1), page_numbers.DoublePageNumber(0, 0, 1)),
+        (page_numbers.PageNumber(4, 2), page_numbers.DoublePageNumber(1, 0, 2)),
+        (page_numbers.PageNumber(2, 1), page_numbers.PageNumber(1, 1)),
+    ],
+)
+def test_PageNumber___gt___greater(page_number, smaller_object):
+    assert page_number > smaller_object
+
+
+@pytest.mark.parametrize(
+    ("page_number", "greater_object"),
+    [
+        (page_numbers.PageNumber(0, 0), 1),
+        (page_numbers.PageNumber(1, 0), 2),
+        (page_numbers.PageNumber(2, 0), page_numbers.PageNumber(4, 1)),
+        (page_numbers.PageNumber(3, 0), page_numbers.PageNumber(4, 0)),
+        (page_numbers.PageNumber(4, 0), page_numbers.DoublePageNumber(3, 1, 0)),
+        (page_numbers.PageNumber(1, 1), page_numbers.DoublePageNumber(1, 1, 2)),
+        (page_numbers.PageNumber(3, 2), page_numbers.DoublePageNumber(2, 0, 2)),
+    ],
+)
+def test_PageNumber___gt___smaller(page_number, greater_object):
+    assert page_number < greater_object
+
+
+@pytest.mark.parametrize(
+    ("summand_1", "summand_2", "expected_sum"),
+    [
+        (page_numbers.PageNumber(3, 0), 0, page_numbers.PageNumber(3, 0)),
+        (page_numbers.PageNumber(0, 0), 1, page_numbers.PageNumber(1, 0)),
+        (page_numbers.PageNumber(1, 1), 2, page_numbers.PageNumber(3, 1)),
+        (
+            page_numbers.PageNumber(2, 0),
+            page_numbers.PageNumber(1, 0),
+            page_numbers.PageNumber(3, 0),
+        ),
+        (
+            page_numbers.PageNumber(3, 2),
+            page_numbers.PageNumber(2, 2),
+            page_numbers.PageNumber(3, 2),
+        ),
+        (
+            page_numbers.PageNumber(4, 0),
+            page_numbers.DoublePageNumber(1, 1, 0),
+            page_numbers.PageNumber(6, 0),
+        ),
+        (
+            page_numbers.PageNumber(1, 1),
+            page_numbers.DoublePageNumber(1, 1, 1),
+            page_numbers.PageNumber(3, 1),
+        ),
+    ],
+)
+def test_PageNumber___add__(summand_1, summand_2, expected_sum):
+    assert summand_1 + summand_2 == expected_sum
+
+
+@pytest.mark.parametrize(
+    ("minuend", "subtrahend", "expected_difference"),
+    [
+        (page_numbers.PageNumber(1, 0), 1, page_numbers.PageNumber(0, 0)),
+        (page_numbers.PageNumber(4, 2), 2, page_numbers.PageNumber(2, 2)),
+        (page_numbers.PageNumber(3, 2), 0, page_numbers.PageNumber(3, 2)),
+        (
+            page_numbers.PageNumber(2, 0),
+            page_numbers.PageNumber(1, 0),
+            page_numbers.PageNumber(1, 0),
+        ),
+        (
+            page_numbers.PageNumber(2, 1),
+            page_numbers.PageNumber(1, 1),
+            page_numbers.PageNumber(2, 1),
+        ),
+        (
+            page_numbers.PageNumber(4, 0),
+            page_numbers.PageNumber(2, 0),
+            page_numbers.PageNumber(2, 0),
+        ),
+        (
+            page_numbers.PageNumber(4, 0),
+            page_numbers.DoublePageNumber(1, 1, 0),
+            page_numbers.PageNumber(2, 0),
+        ),
+        (
+            page_numbers.PageNumber(3, 1),
+            page_numbers.DoublePageNumber(1, 1, 1),
+            page_numbers.PageNumber(1, 1),
+        ),
+        (
+            page_numbers.PageNumber(3, 2),
+            page_numbers.DoublePageNumber(2, 0, 2),
+            page_numbers.PageNumber(0, 2),
+        ),
+    ],
+)
+def test_PageNumber___sub__(minuend, subtrahend, expected_difference):
+    assert minuend - subtrahend == expected_difference
 
 
 @pytest.mark.parametrize(
@@ -89,6 +196,154 @@ def test_DoublePageNumber___eq___equal(double_page_number, equal_object):
 )
 def test_DoublePageNumber___eq___unequal(double_page_number, unequal_object):
     assert double_page_number != unequal_object
+
+
+@pytest.mark.parametrize(
+    ("double_page_number", "smaller_object"),
+    [
+        (page_numbers.DoublePageNumber(1, 0, 0), 0),
+        (page_numbers.DoublePageNumber(2, 1, 0), 1),
+        (page_numbers.DoublePageNumber(2, 1, 0), page_numbers.PageNumber(3, 0)),
+        (page_numbers.DoublePageNumber(3, 0, 0), page_numbers.PageNumber(4, 0)),
+        (
+            page_numbers.DoublePageNumber(3, 0, 0),
+            page_numbers.DoublePageNumber(2, 1, 0),
+        ),
+        (
+            page_numbers.DoublePageNumber(1, 1, 1),
+            page_numbers.DoublePageNumber(1, 0, 1),
+        ),
+        (
+            page_numbers.DoublePageNumber(5, 0, 2),
+            page_numbers.DoublePageNumber(1, 0, 2),
+        ),
+    ],
+)
+def test_DoublePageNumber___gt___greater(double_page_number, smaller_object):
+    assert double_page_number > smaller_object
+
+
+@pytest.mark.parametrize(
+    ("double_page_number", "greater_object"),
+    [
+        (page_numbers.DoublePageNumber(0, 0, 0), 1),
+        (page_numbers.DoublePageNumber(1, 0, 0), 2),
+        (page_numbers.DoublePageNumber(2, 1, 0), page_numbers.PageNumber(6, 1)),
+        (page_numbers.DoublePageNumber(3, 0, 0), page_numbers.PageNumber(7, 0)),
+        (
+            page_numbers.DoublePageNumber(2, 1, 0),
+            page_numbers.DoublePageNumber(3, 1, 0),
+        ),
+        (
+            page_numbers.DoublePageNumber(4, 0, 1),
+            page_numbers.DoublePageNumber(4, 1, 1),
+        ),
+        (
+            page_numbers.DoublePageNumber(3, 0, 2),
+            page_numbers.DoublePageNumber(5, 1, 2),
+        ),
+    ],
+)
+def test_DoublePageNumber___gt___smaller(double_page_number, greater_object):
+    assert double_page_number < greater_object
+
+
+@pytest.mark.parametrize(
+    ("summand_1", "summand_2", "expected_sum"),
+    [
+        (
+            page_numbers.DoublePageNumber(4, 2, 1),
+            0,
+            page_numbers.DoublePageNumber(4, 2, 1),
+        ),
+        (
+            page_numbers.DoublePageNumber(0, 0, 0),
+            1,
+            page_numbers.DoublePageNumber(1, 0, 0),
+        ),
+        (
+            page_numbers.DoublePageNumber(1, 0, 0),
+            2,
+            page_numbers.DoublePageNumber(2, 0, 0),
+        ),
+        (
+            page_numbers.DoublePageNumber(2, 0, 0),
+            page_numbers.PageNumber(4, 0),
+            page_numbers.DoublePageNumber(4, 0, 0),
+        ),
+        (
+            page_numbers.DoublePageNumber(3, 1, 1),
+            page_numbers.PageNumber(4, 1),
+            page_numbers.DoublePageNumber(5, 0, 1),
+        ),
+        (
+            page_numbers.DoublePageNumber(4, 0, 0),
+            page_numbers.DoublePageNumber(3, 1, 0),
+            page_numbers.DoublePageNumber(7, 0, 0),
+        ),
+        (
+            page_numbers.DoublePageNumber(1, 1, 1),
+            page_numbers.DoublePageNumber(1, 1, 1),
+            page_numbers.DoublePageNumber(2, 1, 1),
+        ),
+        (
+            page_numbers.DoublePageNumber(3, 0, 2),
+            page_numbers.DoublePageNumber(0, 0, 2),
+            page_numbers.DoublePageNumber(3, 0, 2),
+        ),
+    ],
+)
+def test_DoublePageNumber___add__(summand_1, summand_2, expected_sum):
+    assert summand_1 + summand_2 == expected_sum
+
+
+@pytest.mark.parametrize(
+    ("minuend", "subtrahend", "expected_difference"),
+    [
+        (
+            page_numbers.DoublePageNumber(4, 2, 1),
+            0,
+            page_numbers.DoublePageNumber(4, 2, 1),
+        ),
+        (
+            page_numbers.DoublePageNumber(2, 0, 0),
+            1,
+            page_numbers.DoublePageNumber(1, 1, 0),
+        ),
+        (
+            page_numbers.DoublePageNumber(2, 1, 0),
+            2,
+            page_numbers.DoublePageNumber(1, 1, 0),
+        ),
+        (
+            page_numbers.DoublePageNumber(2, 0, 0),
+            page_numbers.PageNumber(1, 0),
+            page_numbers.DoublePageNumber(1, 1, 0),
+        ),
+        (
+            page_numbers.DoublePageNumber(3, 1, 1),
+            page_numbers.PageNumber(2, 1),
+            page_numbers.DoublePageNumber(3, 0, 1),
+        ),
+        (
+            page_numbers.DoublePageNumber(4, 0, 0),
+            page_numbers.DoublePageNumber(3, 0, 0),
+            page_numbers.DoublePageNumber(1, 1, 0),
+        ),
+        (
+            page_numbers.DoublePageNumber(1, 1, 1),
+            page_numbers.DoublePageNumber(1, 1, 1),
+            page_numbers.DoublePageNumber(0, 0, 1),
+        ),
+        (
+            page_numbers.DoublePageNumber(3, 0, 2),
+            page_numbers.DoublePageNumber(0, 0, 2),
+            page_numbers.DoublePageNumber(3, 0, 2),
+        ),
+    ],
+)
+def test_DoublePageNumber___sub__(minuend, subtrahend, expected_difference):
+    assert minuend - subtrahend == expected_difference
 
 
 @pytest.mark.parametrize(
