@@ -18,9 +18,11 @@
 
 
 from collections.abc import Generator
+from functools import total_ordering
 from typing import override
 
 
+@total_ordering
 class PageNumber:
     """Pagenumber logic class."""
 
@@ -121,6 +123,20 @@ class PageNumber:
             return int(self) == other
         return NotImplemented
 
+    def __gt__(self, other: object) -> bool:
+        """Comparison of the pagenumber, double-pagenumber and int.
+
+        Returns:
+            Whether this object is greater than the other.
+        """
+        if isinstance(other, PageNumber):
+            return self._number > other._number and other._offset == self._offset
+        if isinstance(other, DoublePageNumber):
+            return self.as_double_page_number() > other
+        if isinstance(other, int):
+            return int(self) > other
+        return NotImplemented
+
     def next(self) -> PageNumber:
         """Get the next pagenumber.
 
@@ -157,6 +173,7 @@ class PageNumber:
         return self._number
 
 
+@total_ordering
 class DoublePageNumber:
     """Pagenumber logic class."""
 
@@ -230,7 +247,7 @@ class DoublePageNumber:
 
     @override
     def __eq__(self, other: object) -> bool:
-        """Comparison of the double-pagenumber, double-pagenumber and int.
+        """Comparison of the double-pagenumber, pagenumber and int.
 
         Returns:
             Whether the objects are equal.
@@ -245,6 +262,24 @@ class DoublePageNumber:
             return self.as_page_number() == other
         if isinstance(other, int):
             return int(self) == other
+        return NotImplemented
+
+    def __gt__(self, other: object) -> bool:
+        """Comparison of the double-pagenumber, pagenumber and int.
+
+        Returns:
+            Whether this object is greater than the other.
+        """
+        if isinstance(other, DoublePageNumber):
+            return (
+                self._number > other._number
+                and other._index == self._index
+                and other._offset == self._offset
+            )
+        if isinstance(other, PageNumber):
+            return self.as_page_number() > other
+        if isinstance(other, int):
+            return int(self) > other
         return NotImplemented
 
     def next(self) -> DoublePageNumber:
