@@ -62,17 +62,15 @@ def test_registered_classes__attributes(provider_class):
         (SideEffects.CATALOGUNAVAILABLE, exceptions.CatalogUnavailableWarning),
     ],
 )
-def test_get_catalog_data(
-    test_provider_class, default_test_provider_config, side_effect, expected_error
-):
+def test_get_catalog_data(provider_test_class, side_effect, expected_error):
     if expected_error:
         with pytest.raises(expected_error):
-            test_provider_class(
-                {"side_effect": side_effect, **default_test_provider_config}
+            provider_test_class(
+                {"side_effect": side_effect, **provider_test_class.default_config}
             )
     else:
-        test_provider_class(
-            {"side_effect": side_effect, **default_test_provider_config}
+        provider_test_class(
+            {"side_effect": side_effect, **provider_test_class.default_config}
         )
 
 
@@ -90,24 +88,22 @@ def test_get_catalog_data(
         (SideEffects.CATALOGUNAVAILABLE, exceptions.ProviderBrokenWarning),
     ],
 )
-def test_get_valid_since(
-    test_provider_class, default_test_provider_config, side_effect, expected_error
-):
+def test_get_valid_since(provider_test_class, side_effect, expected_error):
     if expected_error:
         with pytest.raises(expected_error):
-            test_provider_class(
+            provider_test_class(
                 {
                     "side_effect": side_effect,
                     "pass_get_catalog_data": "True",
-                    **default_test_provider_config,
+                    **provider_test_class.default_config,
                 }
             ).get_valid_until()
     else:
-        result = test_provider_class(
+        result = provider_test_class(
             {
                 "side_effect": side_effect,
                 "pass_get_catalog_data": "True",
-                **default_test_provider_config,
+                **provider_test_class.default_config,
             }
         ).get_valid_until()
 
@@ -128,24 +124,22 @@ def test_get_valid_since(
         (SideEffects.CATALOGUNAVAILABLE, exceptions.ProviderBrokenWarning),
     ],
 )
-def test_get_valid_until(
-    test_provider_class, default_test_provider_config, side_effect, expected_error
-):
+def test_get_valid_until(provider_test_class, side_effect, expected_error):
     if expected_error:
         with pytest.raises(expected_error):
-            test_provider_class(
+            provider_test_class(
                 {
                     "side_effect": side_effect,
                     "pass_get_catalog_data": "True",
-                    **default_test_provider_config,
+                    **provider_test_class.default_config,
                 }
             ).get_valid_until()
     else:
-        result = test_provider_class(
+        result = provider_test_class(
             {
                 "side_effect": side_effect,
                 "pass_get_catalog_data": "True",
-                **default_test_provider_config,
+                **provider_test_class.default_config,
             }
         ).get_valid_until()
 
@@ -186,34 +180,33 @@ def test_get_valid_until(
     ],
 )
 def test_get_page(
-    test_provider_class,
-    default_test_provider_config,
+    provider_test_class,
     side_effect,
     page_number,
     expected_error,
 ):
     if expected_error:
         with pytest.raises(expected_error):
-            test_provider_class(
+            provider_test_class(
                 {
                     "side_effect": side_effect,
                     "pass_get_catalog_data": "True",
-                    **default_test_provider_config,
+                    **provider_test_class.default_config,
                 }
             ).get_page(
                 PageNumber(
-                    page_number, start_number=test_provider_class.first_page_number
+                    page_number, start_number=provider_test_class.first_page_number
                 )
             )
     else:
-        result = test_provider_class(
+        result = provider_test_class(
             {
                 "side_effect": side_effect,
                 "pass_get_catalog_data": "True",
-                **default_test_provider_config,
+                **provider_test_class.default_config,
             }
         ).get_page(
-            PageNumber(page_number, start_number=test_provider_class.first_page_number)
+            PageNumber(page_number, start_number=provider_test_class.first_page_number)
         )
 
         assert result
@@ -234,19 +227,21 @@ def test_get_page(
     ],
 )
 def test_get_catalog_data__preview(
-    test_preview_provider_class,
-    default_test_provider_config,
+    preview_provider_test_class,
     side_effect,
     expected_error,
 ):
     if expected_error:
         with pytest.raises(expected_error):
-            test_preview_provider_class(
-                {"side_effect": side_effect, **default_test_provider_config}
+            preview_provider_test_class(
+                {
+                    "side_effect": side_effect,
+                    **preview_provider_test_class.default_config,
+                }
             )
     else:
-        test_preview_provider_class(
-            {"side_effect": side_effect, **default_test_provider_config}
+        preview_provider_test_class(
+            {"side_effect": side_effect, **preview_provider_test_class.default_config}
         )
 
 
@@ -265,26 +260,25 @@ def test_get_catalog_data__preview(
     ],
 )
 def test_get_valid_since__preview(
-    test_preview_provider_class,
-    default_test_provider_config,
+    preview_provider_test_class,
     side_effect,
     expected_error,
 ):
     if expected_error:
         with pytest.raises(expected_error):
-            test_preview_provider_class(
+            preview_provider_test_class(
                 {
                     "side_effect": side_effect,
                     "pass_get_catalog_data": "True",
-                    **default_test_provider_config,
+                    **preview_provider_test_class.default_config,
                 }
             ).get_valid_until()
     else:
-        result = test_preview_provider_class(
+        result = preview_provider_test_class(
             {
                 "side_effect": side_effect,
                 "pass_get_catalog_data": "True",
-                **default_test_provider_config,
+                **preview_provider_test_class.default_config,
             }
         ).get_valid_until()
 
@@ -306,26 +300,25 @@ def test_get_valid_since__preview(
     ],
 )
 def test_get_valid_until__preview(
-    test_preview_provider_class,
-    default_test_provider_config,
+    preview_provider_test_class,
     side_effect,
     expected_error,
 ):
     if expected_error:
         with pytest.raises(expected_error):
-            test_preview_provider_class(
+            preview_provider_test_class(
                 {
                     "side_effect": side_effect,
                     "pass_get_catalog_data": "True",
-                    **default_test_provider_config,
+                    **preview_provider_test_class.default_config,
                 }
             ).get_valid_until()
     else:
-        result = test_preview_provider_class(
+        result = preview_provider_test_class(
             {
                 "side_effect": side_effect,
                 "pass_get_catalog_data": "True",
-                **default_test_provider_config,
+                **preview_provider_test_class.default_config,
             }
         ).get_valid_until()
 
@@ -366,36 +359,35 @@ def test_get_valid_until__preview(
     ],
 )
 def test_get_page__preview(
-    test_preview_provider_class,
-    default_test_provider_config,
+    preview_provider_test_class,
     side_effect,
     page_number,
     expected_error,
 ):
     if expected_error:
         with pytest.raises(expected_error):
-            test_preview_provider_class(
+            preview_provider_test_class(
                 {
                     "side_effect": side_effect,
                     "pass_get_catalog_data": "True",
-                    **default_test_provider_config,
+                    **preview_provider_test_class.default_config,
                 }
             ).get_page(
                 PageNumber(
                     page_number,
-                    start_number=test_preview_provider_class.first_page_number,
+                    start_number=preview_provider_test_class.first_page_number,
                 )
             )
     else:
-        result = test_preview_provider_class(
+        result = preview_provider_test_class(
             {
                 "side_effect": side_effect,
                 "pass_get_catalog_data": "True",
-                **default_test_provider_config,
+                **preview_provider_test_class.default_config,
             }
         ).get_page(
             PageNumber(
-                page_number, start_number=test_preview_provider_class.first_page_number
+                page_number, start_number=preview_provider_test_class.first_page_number
             )
         )
 
@@ -427,10 +419,10 @@ def test_get_page__preview(
         },
     ],
 )
-def test_validate_config__success(test_provider_class, config):
-    validated_config = test_provider_class.validate_config(config)
+def test_validate_config__success(provider_test_class, config):
+    validated_config = provider_test_class.validate_config(config)
 
-    for configuration in test_provider_class.configuration:
+    for configuration in provider_test_class.configuration:
         assert configuration.name in validated_config
         assert validated_config[configuration.name] == config.get(
             configuration.name, configuration.default
@@ -464,9 +456,9 @@ def test_validate_config__success(test_provider_class, config):
         ({}, ["required_config", "typed_config"]),
     ],
 )
-def test_validate_config__missing_field(test_provider_class, config, missing_configs):
+def test_validate_config__missing_field(provider_test_class, config, missing_configs):
     with pytest.raises(exceptions.ProviderIncompleteConfigWarning) as error:  # noqa: PT012  # needed to check missing_configs
-        test_provider_class.validate_config(config)
+        provider_test_class.validate_config(config)
 
         for missing_config in missing_configs:
             assert missing_config in error.missing_configs
@@ -500,9 +492,9 @@ def test_validate_config__missing_field(test_provider_class, config, missing_con
         ),
     ],
 )
-def test_validate_config__invalid_field(test_provider_class, config, bad_configs):
+def test_validate_config__invalid_field(provider_test_class, config, bad_configs):
     with pytest.raises(exceptions.ProviderInvalidConfigWarning) as error:  # noqa: PT012  # needed to check bad_configs
-        test_provider_class.validate_config(config)
+        provider_test_class.validate_config(config)
 
         for bad_config in bad_configs:
             assert bad_config in error.bad_configs

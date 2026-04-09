@@ -24,43 +24,50 @@ from celery_sqlalchemy_v2_scheduler.models import PeriodicTask
 
 from cata_log import database
 from cata_log.constants import STORAGE_PATH
-from cata_log.providers import AldiSued
 
 
-def test_Provider_insertion(LocalSession):
+def test_Provider_insertion(LocalSession, provider_test_class):
     with LocalSession() as db_session:
-        provider = database.Provider(class_id=AldiSued.id(), config={})
+        provider = database.Provider(
+            class_id=provider_test_class.id(),
+            config=dict(provider_test_class.default_config),
+        )
         db_session.add(provider)
         db_session.commit()
         db_session.refresh(provider)
 
         assert provider.id
-        assert provider.class_id == AldiSued.id()
-        assert provider.config == {}
+        assert provider.class_id == provider_test_class.id()
+        assert provider.config == provider_test_class.default_config
         assert provider.task_id
         periodic_task = db_session.get(PeriodicTask, provider.task_id)
         assert periodic_task
         assert periodic_task.task == "cata_log.tasks.fetch_provider"
         assert periodic_task.args == f"[{provider.id}]"
         assert periodic_task.enabled is True
-        assert periodic_task.crontab.minute == str(AldiSued.schedule._orig_minute)
-        assert periodic_task.crontab.hour == str(AldiSued.schedule._orig_hour)
+        assert periodic_task.crontab.minute == str(
+            provider_test_class.schedule._orig_minute
+        )
+        assert periodic_task.crontab.hour == str(
+            provider_test_class.schedule._orig_hour
+        )
         assert periodic_task.crontab.day_of_month == str(
-            AldiSued.schedule._orig_day_of_month
+            provider_test_class.schedule._orig_day_of_month
         )
         assert periodic_task.crontab.month_of_year == str(
-            AldiSued.schedule._orig_month_of_year
+            provider_test_class.schedule._orig_month_of_year
         )
         assert periodic_task.crontab.day_of_week == str(
-            AldiSued.schedule._orig_day_of_week
+            provider_test_class.schedule._orig_day_of_week
         )
         assert provider.created_at
         assert provider.updated_at
 
 
 def test_Provider_deletion(db_session, full_database, fake_provider):
-    assert len(db_session.query(database.Catalog).all()) == 3
-    assert len(db_session.query(PeriodicTask).all()) == 1
+    assert db_session.query(database.Catalog).all()
+    assert db_session.query(PeriodicTask).all()
+    assert db_session.query(database.Page).all()
 
     db_session.delete(fake_provider)
     db_session.commit()

@@ -21,6 +21,7 @@ import enum
 import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from types import MappingProxyType
 from typing import override
 
 import pytest
@@ -147,9 +148,10 @@ def fake_fs():
 
 
 @pytest.fixture
-def fake_provider(db_session):
+def fake_provider(db_session, provider_test_class):
     fake_provider = database.Provider(
-        class_id="rewe-deutschland", config={"markt_id": "rewe123"}
+        class_id=provider_test_class.id(),
+        config=dict(provider_test_class.default_config),
     )
     db_session.add(fake_provider)
     db_session.commit()
@@ -307,7 +309,7 @@ class SideEffects(enum.StrEnum):
 
 
 @pytest.fixture(scope="session")
-def test_provider_class(_session_faker):  # noqa: PT019 # simplifies things
+def provider_test_class(_session_faker):  # simplifies things
     class TestProvider(Provider):
         name = "test-provider"
         description = "A provider for testing"
@@ -344,6 +346,9 @@ def test_provider_class(_session_faker):  # noqa: PT019 # simplifies things
                 parse_as=float,
             ),
         )
+        default_config = MappingProxyType(
+            {config.name: "1" for config in configuration if config.default is None}
+        )
 
         @override
         def _get_page(self, page_number):
@@ -370,18 +375,9 @@ def test_provider_class(_session_faker):  # noqa: PT019 # simplifies things
 
 
 @pytest.fixture(scope="session")
-def test_preview_provider_class(test_provider_class):
-    class TestPreviewProvider(Preview, test_provider_class):
-        name = test_provider_class.name + "-preview"
+def preview_provider_test_class(provider_test_class):
+    class TestPreviewProvider(Preview, provider_test_class):
+        name = provider_test_class.name + "-preview"
         preview_timedelta = timedelta(days=7)
 
     return TestPreviewProvider
-
-
-@pytest.fixture(scope="session")
-def default_test_provider_config(test_provider_class):
-    return {
-        config.name: "1"
-        for config in test_provider_class.configuration
-        if config.default is None
-    }

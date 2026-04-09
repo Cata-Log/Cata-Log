@@ -656,22 +656,33 @@ def test_delete_provider__not_found(client):
 def test_patch_provider(LocalSession, fake_provider, client):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
-        json={"config": {"markt_id": "marktqwertz"}},
+        json={
+            "config": {
+                **fake_provider.config,
+                "optional_config": "some value",
+            }
+        },
     )
 
     assert response.status_code == 200
     data = response.json()
-    assert data["class_id"] == "rewe-deutschland"
-    assert data["config"] == {"markt_id": "marktqwertz"}
+    assert data["class_id"] == fake_provider.class_id
+    assert data["config"] == {**fake_provider.config, "optional_config": "some value"}
     with LocalSession() as db_session:
         provider = db_session.get(database.Provider, fake_provider.id)
+    assert provider.class_id == data["class_id"]
     assert provider.config == data["config"]
 
 
 def test_patch_provider__noauth(fake_provider, noauth_client):
     response = noauth_client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
-        json={"config": {"markt_id": "marktqwertz"}},
+        json={
+            "config": {
+                **fake_provider.config,
+                "optional_config": "config abc",
+            }
+        },
     )
 
     assert response.status_code == 401
@@ -680,7 +691,12 @@ def test_patch_provider__noauth(fake_provider, noauth_client):
 def test_patch_provider__bad_auth(fake_provider, bad_auth_client):
     response = bad_auth_client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
-        json={"config": {"markt_id": "marktqwertz"}},
+        json={
+            "config": {
+                **fake_provider.config,
+                "optional_config": "config abc",
+            }
+        },
     )
 
     assert response.status_code == 401
@@ -689,7 +705,12 @@ def test_patch_provider__bad_auth(fake_provider, bad_auth_client):
 def test_patch_provider__noauth__public_get(fake_provider, noauth_client, public_get):
     response = noauth_client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
-        json={"config": {"markt_id": "marktqwertz"}},
+        json={
+            "config": {
+                **fake_provider.config,
+                "optional_config": "config abc",
+            }
+        },
     )
 
     assert response.status_code == 401
@@ -717,16 +738,25 @@ def test_patch_provider__missing_config(fake_provider, client):
 def test_patch_provider__extra_config(fake_provider, client):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
-        json={"config": {"markt_id": "other_id", "extra": "random"}},
+        json={
+            "config": {
+                **fake_provider.config,
+                "optional_config": "config abc",
+                "extra": "random",
+            }
+        },
     )
 
     assert response.status_code == 200
     assert "extra" not in response.json()["config"]
-    assert response.json()["config"]["markt_id"] == "other_id"
+    assert response.json()["config"]["optional_config"] == "config abc"
 
 
 def test_patch_provider__duplicate(LocalSession, fake_provider, client):
-    provider = database.Provider(class_id=fake_provider.class_id, config={})
+    provider = database.Provider(
+        class_id=fake_provider.class_id,
+        config={**fake_provider.config, "optional_config": "test opt"},
+    )
     with LocalSession() as db_session:
         db_session.add(provider)
         db_session.flush()
@@ -739,42 +769,64 @@ def test_patch_provider__duplicate(LocalSession, fake_provider, client):
     assert response.status_code == 400
 
 
-def test_post_provider(LocalSession, client):
+def test_patch_provider__no_change(LocalSession, fake_provider, client):
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"config": fake_provider.config},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["config"] == fake_provider.config
+
+
+def test_post_provider(LocalSession, client, provider_test_class):
     response = client.post(
         url="/api/v1/providers",
-        json={"class_id": "rewe-deutschland", "config": {"markt_id": "1234"}},
+        json={
+            "class_id": provider_test_class.id(),
+            "config": dict(provider_test_class.default_config),
+        },
     )
 
     assert response.status_code == 201
     data = response.json()
-    assert data["class_id"] == "rewe-deutschland"
-    assert data["config"] == {"markt_id": "1234"}
+    assert data["class_id"] == provider_test_class.id()
+    assert data["config"] == provider_test_class.default_config
     with LocalSession() as db_session:
         assert db_session.get(database.Provider, data["id"])
 
 
-def test_post_provider__noauth(noauth_client):
+def test_post_provider__noauth(noauth_client, provider_test_class):
     response = noauth_client.post(
         url="/api/v1/providers",
-        json={"class_id": "rewe-deutschland", "config": {"markt_id": "1234"}},
+        json={
+            "class_id": provider_test_class.id(),
+            "config": dict(provider_test_class.default_config),
+        },
     )
 
     assert response.status_code == 401
 
 
-def test_post_provider__bad_auth(bad_auth_client):
+def test_post_provider__bad_auth(bad_auth_client, provider_test_class):
     response = bad_auth_client.post(
         url="/api/v1/providers",
-        json={"class_id": "rewe-deutschland", "config": {"markt_id": "1234"}},
+        json={
+            "class_id": provider_test_class.id(),
+            "config": dict(provider_test_class.default_config),
+        },
     )
 
     assert response.status_code == 401
 
 
-def test_post_provider__missing_config(LocalSession, client):
+def test_post_provider__missing_config(LocalSession, client, provider_test_class):
     response = client.post(
         url="/api/v1/providers",
-        json={"class_id": "rewe-deutschland", "config": {}},
+        json={
+            "class_id": provider_test_class.id(),
+            "config": {},
+        },
     )
 
     assert response.status_code == 400
@@ -782,27 +834,32 @@ def test_post_provider__missing_config(LocalSession, client):
         assert not db_session.query(database.Provider).all()
 
 
-def test_post_provider__noauth__public_get(noauth_client, public_get):
+def test_post_provider__noauth__public_get(
+    noauth_client, public_get, provider_test_class
+):
     response = noauth_client.post(
         url="/api/v1/providers",
-        json={"class_id": "rewe-deutschland", "config": {"markt_id": "1234"}},
+        json={
+            "class_id": provider_test_class.id(),
+            "config": dict(provider_test_class.default_config),
+        },
     )
 
     assert response.status_code == 401
 
 
-def test_post_provider__extra_config(client):
+def test_post_provider__extra_config(client, provider_test_class):
     response = client.post(
         url="/api/v1/providers",
         json={
-            "class_id": "rewe-deutschland",
-            "config": {"markt_id": "someID", "extra": "extradata"},
+            "class_id": provider_test_class.id(),
+            "config": {**provider_test_class.default_config, "extra": "extradata"},
         },
     )
 
     assert response.status_code == 201
     assert "extra" not in response.json()["config"]
-    assert response.json()["config"]["markt_id"] == "someID"
+    assert response.json()["config"] == provider_test_class.default_config
 
 
 def test_post_provider__bad_class_id(LocalSession, client):

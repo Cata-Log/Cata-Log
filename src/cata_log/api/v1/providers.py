@@ -249,6 +249,7 @@ async def patch_provider(
         provider.config == validated_config
         for provider in db_session.query(database.Provider)
         .filter(database.Provider.class_id == provider.class_id)
+        .filter(database.Provider.id != provider.id)
         .all()
     ):
         raise HTTPException(
