@@ -16,11 +16,21 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+from copy import copy, deepcopy
+from unittest.mock import MagicMock, patch
 from urllib.parse import urljoin
 
 import pytest
+from celery.app.task import Task
 
 from cata_log import database
+
+
+@pytest.fixture
+def mock_fetch_provider_task(monkeypatch):
+    mock_task = MagicMock(spec=Task)
+    monkeypatch.setattr("cata_log.api.v1.providers.fetch_provider", mock_task)
+    return mock_task
 
 
 def test_list_providers(full_database, client):
@@ -653,12 +663,14 @@ def test_delete_provider__not_found(client):
     assert response.json() == {"detail": "Provider not found"}
 
 
-def test_patch_provider(LocalSession, fake_provider, client):
+def test_patch_provider(LocalSession, fake_provider, client, mock_fetch_provider_task):
+    old_config = deepcopy(fake_provider.config)
+
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
             "config": {
-                **fake_provider.config,
+                **old_config,
                 "optional_config": "some value",
             }
         },
@@ -667,14 +679,15 @@ def test_patch_provider(LocalSession, fake_provider, client):
     assert response.status_code == 200
     data = response.json()
     assert data["class_id"] == fake_provider.class_id
-    assert data["config"] == {**fake_provider.config, "optional_config": "some value"}
+    assert data["config"] == {**old_config, "optional_config": "some value"}
     with LocalSession() as db_session:
         provider = db_session.get(database.Provider, fake_provider.id)
     assert provider.class_id == data["class_id"]
     assert provider.config == data["config"]
+    mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
 
-def test_patch_provider__noauth(fake_provider, noauth_client):
+def test_patch_provider__noauth(fake_provider, noauth_client, mock_fetch_provider_task):
     response = noauth_client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
@@ -686,9 +699,12 @@ def test_patch_provider__noauth(fake_provider, noauth_client):
     )
 
     assert response.status_code == 401
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__bad_auth(fake_provider, bad_auth_client):
+def test_patch_provider__bad_auth(
+    fake_provider, bad_auth_client, mock_fetch_provider_task
+):
     response = bad_auth_client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
@@ -700,9 +716,12 @@ def test_patch_provider__bad_auth(fake_provider, bad_auth_client):
     )
 
     assert response.status_code == 401
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__noauth__public_get(fake_provider, noauth_client, public_get):
+def test_patch_provider__noauth__public_get(
+    fake_provider, noauth_client, public_get, mock_fetch_provider_task
+):
     response = noauth_client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
@@ -714,9 +733,10 @@ def test_patch_provider__noauth__public_get(fake_provider, noauth_client, public
     )
 
     assert response.status_code == 401
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__not_found(client):
+def test_patch_provider__not_found(client, mock_fetch_provider_task):
     response = client.patch(
         "/api/v1/providers/230",
         json={"config": {"markt_id": "marktqwertz"}},
@@ -724,18 +744,22 @@ def test_patch_provider__not_found(client):
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Provider not found"}
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__missing_config(fake_provider, client):
+def test_patch_provider__missing_config(
+    fake_provider, client, mock_fetch_provider_task
+):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={"config": {}},
     )
 
     assert response.status_code == 400
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__extra_config(fake_provider, client):
+def test_patch_provider__extra_config(fake_provider, client, mock_fetch_provider_task):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
@@ -750,26 +774,34 @@ def test_patch_provider__extra_config(fake_provider, client):
     assert response.status_code == 200
     assert "extra" not in response.json()["config"]
     assert response.json()["config"]["optional_config"] == "config abc"
+    mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
 
-def test_patch_provider__duplicate(LocalSession, fake_provider, client):
-    provider = database.Provider(
+def test_patch_provider__duplicate(
+    db_session, fake_provider, client, mock_fetch_provider_task
+):
+    other_provider = database.Provider(
         class_id=fake_provider.class_id,
         config={**fake_provider.config, "optional_config": "test opt"},
     )
-    with LocalSession() as db_session:
-        db_session.add(provider)
-        db_session.flush()
+    db_session.add(other_provider)
+    db_session.flush()
+
+    assert len(db_session.query(database.Provider).all()) == 2
 
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
-        json={"config": provider.config},
+        json={"config": other_provider.config},
     )
 
     assert response.status_code == 400
+    assert fake_provider.config != other_provider.config
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__no_change(LocalSession, fake_provider, client):
+def test_patch_provider__no_change(
+    LocalSession, fake_provider, client, mock_fetch_provider_task
+):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={"config": fake_provider.config},
@@ -777,9 +809,12 @@ def test_patch_provider__no_change(LocalSession, fake_provider, client):
 
     assert response.status_code == 200
     assert response.json()["config"] == fake_provider.config
+    mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
 
-def test_post_provider(LocalSession, client, provider_test_class):
+def test_post_provider(
+    LocalSession, client, provider_test_class, mock_fetch_provider_task
+):
     response = client.post(
         url="/api/v1/providers",
         json={
@@ -791,12 +826,20 @@ def test_post_provider(LocalSession, client, provider_test_class):
     assert response.status_code == 201
     data = response.json()
     assert data["class_id"] == provider_test_class.id()
-    assert data["config"] == provider_test_class.default_config
+    assert data["config"] == provider_test_class.validate_config(
+        provider_test_class.default_config
+    )
     with LocalSession() as db_session:
-        assert db_session.get(database.Provider, data["id"])
+        new_provider = db_session.get(database.Provider, data["id"])
+        assert new_provider
+        assert new_provider.class_id == data["class_id"]
+        assert new_provider.config == data["config"]
+    mock_fetch_provider_task.delay.assert_called_once_with(data["id"])
 
 
-def test_post_provider__noauth(noauth_client, provider_test_class):
+def test_post_provider__noauth(
+    noauth_client, provider_test_class, mock_fetch_provider_task
+):
     response = noauth_client.post(
         url="/api/v1/providers",
         json={
@@ -806,9 +849,12 @@ def test_post_provider__noauth(noauth_client, provider_test_class):
     )
 
     assert response.status_code == 401
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_post_provider__bad_auth(bad_auth_client, provider_test_class):
+def test_post_provider__bad_auth(
+    bad_auth_client, provider_test_class, mock_fetch_provider_task
+):
     response = bad_auth_client.post(
         url="/api/v1/providers",
         json={
@@ -818,9 +864,12 @@ def test_post_provider__bad_auth(bad_auth_client, provider_test_class):
     )
 
     assert response.status_code == 401
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_post_provider__missing_config(LocalSession, client, provider_test_class):
+def test_post_provider__missing_config(
+    LocalSession, client, provider_test_class, mock_fetch_provider_task
+):
     response = client.post(
         url="/api/v1/providers",
         json={
@@ -832,10 +881,11 @@ def test_post_provider__missing_config(LocalSession, client, provider_test_class
     assert response.status_code == 400
     with LocalSession() as db_session:
         assert not db_session.query(database.Provider).all()
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
 def test_post_provider__noauth__public_get(
-    noauth_client, public_get, provider_test_class
+    noauth_client, public_get, provider_test_class, mock_fetch_provider_task
 ):
     response = noauth_client.post(
         url="/api/v1/providers",
@@ -846,9 +896,12 @@ def test_post_provider__noauth__public_get(
     )
 
     assert response.status_code == 401
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_post_provider__extra_config(client, provider_test_class):
+def test_post_provider__extra_config(
+    client, provider_test_class, mock_fetch_provider_task
+):
     response = client.post(
         url="/api/v1/providers",
         json={
@@ -859,10 +912,14 @@ def test_post_provider__extra_config(client, provider_test_class):
 
     assert response.status_code == 201
     assert "extra" not in response.json()["config"]
-    assert response.json()["config"] == provider_test_class.default_config
+    data = response.json()
+    assert data["config"] == provider_test_class.validate_config(
+        provider_test_class.default_config
+    )
+    mock_fetch_provider_task.delay.assert_called_once_with(data["id"])
 
 
-def test_post_provider__bad_class_id(LocalSession, client):
+def test_post_provider__bad_class_id(LocalSession, client, mock_fetch_provider_task):
     response = client.post(
         url="/api/v1/providers",
         json={"class_id": "lu9%z", "config": {}},
@@ -871,9 +928,12 @@ def test_post_provider__bad_class_id(LocalSession, client):
     assert response.status_code == 400
     with LocalSession() as db_session:
         assert not db_session.query(database.Provider).all()
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_post_provider__duplicate(LocalSession, fake_provider, client):
+def test_post_provider__duplicate(
+    LocalSession, fake_provider, client, mock_fetch_provider_task
+):
     response = client.post(
         url="/api/v1/providers",
         json={"class_id": fake_provider.class_id, "config": fake_provider.config},
@@ -882,35 +942,55 @@ def test_post_provider__duplicate(LocalSession, fake_provider, client):
     assert response.status_code == 400
     with LocalSession() as db_session:
         assert len(db_session.query(database.Provider).all()) == 1
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_update_provider__noauth(fake_provider, noauth_client):
+def test_update_provider(fake_provider, client, mock_fetch_provider_task):
+    response = client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/update",
+    )
+
+    assert response.status_code == 200
+    mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
+
+
+def test_update_provider__noauth(
+    fake_provider, noauth_client, mock_fetch_provider_task
+):
     response = noauth_client.post(
         url=f"/api/v1/providers/{fake_provider.id}/update",
     )
 
     assert response.status_code == 401
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_update_provider__bad_auth(fake_provider, bad_auth_client):
+def test_update_provider__bad_auth(
+    fake_provider, bad_auth_client, mock_fetch_provider_task
+):
     response = bad_auth_client.post(
         url=f"/api/v1/providers/{fake_provider.id}/update",
     )
 
     assert response.status_code == 401
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_update_provider__noauth__public_get(fake_provider, noauth_client, public_get):
+def test_update_provider__noauth__public_get(
+    fake_provider, noauth_client, public_get, mock_fetch_provider_task
+):
     response = noauth_client.post(
         url=f"/api/v1/providers/{fake_provider.id}/update",
     )
 
     assert response.status_code == 401
+    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_update_provider__not_found(client):
+def test_update_provider__not_found(client, mock_fetch_provider_task):
     response = client.post(
         url="/api/v1/providers/987/update",
     )
 
     assert response.status_code == 404
+    mock_fetch_provider_task.delay.assert_not_called()

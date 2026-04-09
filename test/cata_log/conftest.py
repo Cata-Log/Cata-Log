@@ -159,7 +159,7 @@ def fake_fs(monkeypatch):
 def fake_provider(db_session, provider_test_class):
     fake_provider = database.Provider(
         class_id=provider_test_class.id(),
-        config=dict(provider_test_class.default_config),
+        config=provider_test_class.validate_config(provider_test_class.default_config),
     )
     db_session.add(fake_provider)
     db_session.commit()
