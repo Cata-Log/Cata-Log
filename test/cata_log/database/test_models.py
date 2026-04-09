@@ -22,8 +22,9 @@ import pytest
 import sqlalchemy.exc
 from celery_sqlalchemy_v2_scheduler.models import PeriodicTask
 
-from cata_log import database
-from cata_log.constants import STORAGE_PATH
+from cata_log import database, exceptions
+from cata_log.constants import STORAGE_PATH, StatusEnum
+from test.cata_log.conftest import SideEffects
 
 
 def test_Provider_insertion(LocalSession, provider_test_class):
@@ -89,6 +90,67 @@ def test_Provider_unique_together_constraint(LocalSession, fake_provider):
 
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             db_session.flush()
+
+
+@pytest.mark.parametrize(
+    "side_effect",
+    [
+        SideEffects.DONOTHING,
+    ],
+)
+def test_Provider_fetch_catalog__success(
+    db_session, fake_fs, fake_provider, side_effect
+):
+    fake_provider.config = {**fake_provider.config, "side_effect": side_effect}
+    db_session.commit()
+
+    fake_provider.fetch_catalog(db_session)
+
+    db_session.refresh(fake_provider)
+    assert fake_provider.status == StatusEnum.HEALTHY
+    assert len(fake_provider.catalogs) == 1
+    assert len(fake_provider.catalogs[0].pages) == 10
+    for page in fake_provider.catalogs[0].pages:
+        with page.storage_path.open() as page_file:
+            assert page_file.read()
+
+
+@pytest.mark.parametrize(
+    "side_effect",
+    [
+        SideEffects.TRANSPORTERROR,
+    ],
+)
+def test_Provider_fetch_catalog__networkerror(db_session, fake_provider, side_effect):
+    fake_provider.config = {**fake_provider.config, "side_effect": side_effect}
+    db_session.commit()
+    with pytest.raises(exceptions.NetworkError):
+        fake_provider.fetch_catalog(db_session)
+
+
+@pytest.mark.parametrize(
+    ("side_effect", "expected_warning"),
+    [
+        (SideEffects.HTTP_400, exceptions.ProviderMisconfiguredOrBrokenWarning),
+        (SideEffects.HTTP_500, exceptions.ProviderMisconfiguredOrBrokenWarning),
+        (SideEffects.HTTP_404, exceptions.ProviderMisconfiguredOrBrokenWarning),
+        (SideEffects.KEYERROR, exceptions.ProviderBrokenWarning),
+        (SideEffects.VALUEERROR, exceptions.ProviderBrokenWarning),
+        (SideEffects.EXCEPTION, exceptions.ProviderBrokenWarning),
+        (SideEffects.CATALOGUNAVAILABLE, exceptions.CatalogUnavailableWarning),
+    ],
+)
+def test_Provider_fetch_catalog__warning(
+    db_session, fake_provider, side_effect, expected_warning
+):
+    fake_provider.config = {**fake_provider.config, "side_effect": side_effect}
+    db_session.commit()
+
+    fake_provider.fetch_catalog(db_session)
+
+    db_session.refresh(fake_provider)
+    assert fake_provider.status == expected_warning.provider_status
+    assert not fake_provider.catalogs
 
 
 def test_Catalog_insertion(LocalSession, fake_provider):

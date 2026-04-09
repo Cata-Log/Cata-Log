@@ -32,10 +32,11 @@ from pyfakefs.fake_filesystem_unittest import Patcher
 from sqlalchemy import StaticPool, create_engine, orm
 
 from cata_log import constants, database, exceptions
+from cata_log.exceptions import PagesExhausted
 from cata_log.providers import Provider
+from cata_log.providers.base import Preview
 from cata_log.providers.configuration import Configuration
 from cata_log.providers.regions import Germany
-from src.cata_log.providers.base import Preview
 
 
 @pytest.fixture
@@ -128,7 +129,7 @@ def client(fake_credentials_encoded, noauth_client):
 
 
 @pytest.fixture
-def fake_fs():
+def fake_fs(monkeypatch):
     """A mock Linux filesystem for realistic testing.
 
     Contains directories at the STORAGE_PATH and LOG_DIRECTORY_PATH.
@@ -138,8 +139,15 @@ def fake_fs():
             raise OSError("Generator could not create a fakefs!")
 
         patcher.fs.create_dir(constants.STORAGE_PATH)
+        monkeypatch.setattr(
+            "cata_log.constants.STORAGE_PATH", Path(str(constants.STORAGE_PATH))
+        )
         patcher.fs.create_dir(constants.LOG_DIRECTORY_PATH)
-        patcher.fs.add_real_directory(Path(constants.__file__).parent)
+        monkeypatch.setattr(
+            "cata_log.constants.LOG_DIRECTORY_PATH",
+            Path(str(constants.LOG_DIRECTORY_PATH)),
+        )
+        patcher.fs.add_real_directory(Path(constants.__file__).parent.parent.parent)
         patcher.fs.add_real_directory(
             Path(constants.__file__).parent, target_path="/opt/cata_log"
         )
@@ -229,8 +237,7 @@ def fake_latest_catalog(fake_catalog_preview):
 @pytest.fixture
 def fake_page_file(faker, fake_fs):
     storage_path = constants.STORAGE_PATH / "0.jpg"
-    with storage_path.open("wb") as fake_file:
-        fake_file.write(faker.text().encode())
+    storage_path.write_text(faker.text())
     return storage_path
 
 
@@ -353,6 +360,8 @@ def provider_test_class(_session_faker):  # simplifies things
         @override
         def _get_page(self, page_number):
             SideEffects.run(self._config["side_effect"])
+            if page_number >= 10:
+                raise PagesExhausted
             return _session_faker.text().encode()
 
         @override

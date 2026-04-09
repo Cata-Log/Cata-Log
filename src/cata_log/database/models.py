@@ -127,7 +127,7 @@ class Provider(ModelBase, TimestampMixin):
                     new_page = Page(
                         catalog_id=new_catalog.id,
                         number=page_number,
-                        storage_path=str(page_storage_path),
+                        storage_path=page_storage_path,
                         sha256=sha256(page_bytes).hexdigest(),
                     )
                     db_session.add(new_page)
