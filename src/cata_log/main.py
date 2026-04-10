@@ -21,7 +21,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.sql import text
 
-from cata_log import __version__, api, config, constants, web
+from cata_log import __version__, api, config, constants, opds, web
 from cata_log.database import engine
 from cata_log.logging_config import setup_logging
 from cata_log.security import verify_credentials
@@ -60,3 +60,4 @@ app.mount(
 )
 app.include_router(api.router)
 app.include_router(web.router)
+app.include_router(opds.router)

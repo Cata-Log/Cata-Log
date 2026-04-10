@@ -17,6 +17,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+import mimetypes
 from datetime import UTC, datetime
 from hashlib import sha256
 from io import BytesIO
@@ -26,6 +27,7 @@ from celery_sqlalchemy_v2_scheduler.models import (
     ModelBase,
     PeriodicTask,
 )
+from ebooklib import epub
 from PIL import Image
 from sqlalchemy import (
     JSON,
@@ -192,6 +194,60 @@ class Catalog(ModelBase, TimestampMixin):
         pdf_bytes_io.seek(0)
         return pdf_bytes_io.read()
 
+    def as_epub(self) -> bytes:
+        """Convert the catalog to a epub file.
+
+        Returns:
+            The epub file bytes.
+        """
+        provider_class = self.provider.get_provider_class()
+        book = epub.EpubBook()
+        book.set_title(
+            f"{self.provider.class_id.title()}, {self.valid_since.date()} - {self.valid_until.date()}"
+        )
+        book.set_direction("rtl" if provider_class.region.is_rtl else "ltr")
+        book.set_language(provider_class.region.language_code)
+        book.set_cover(
+            f"cover_{self.pages[0].file_name}",
+            self.pages[0].storage_path.read_bytes(),
+        )
+        book.add_author("Cata-Log")
+        book.add_metadata("DC", "description", provider_class.description)
+        book.add_metadata(
+            None,
+            "meta",
+            "",
+            {"valid_since": self.valid_since.isoformat(timespec="seconds")},
+        )
+        book.add_metadata(
+            None,
+            "meta",
+            "",
+            {"valid_until": self.valid_until.isoformat(timespec="seconds")},
+        )
+        for page in self.pages:
+            page_image = epub.EpubImage(
+                uid=str(page.id),
+                file_name=page.file_name,
+                content=page.storage_path.read_bytes(),
+            )
+            book.add_item(page_image)
+            page_chapter = epub.EpubHtml(
+                title=f"Page {page.number + 1}",
+                file_name=f"chap_{page.number + 1}.xhtml",
+                content=f'<img src="{page.file_name}"/>',
+            )
+            book.add_item(page_chapter)
+            book.spine.append(page_chapter)
+        book.toc = book.spine
+        book.add_item(epub.EpubNcx())
+        book.add_item(epub.EpubNav())
+
+        book_bytes_io = BytesIO()
+        epub.write_epub(book_bytes_io, book)
+        book_bytes_io.seek(0)
+        return book_bytes_io.read()
+
     @classmethod
     def cleanup(cls, db_session: orm.Session, deadline: datetime) -> None:
         """Cleanup catalogs created before a deadline.
@@ -234,3 +290,15 @@ class Page(ModelBase, TimestampMixin):
     )
     __tablename__ = "pages"
     __table_args__ = (UniqueConstraint("catalog_id", "number"),)
+
+    @property
+    def file_name(self) -> str:
+        """The name of the stored file."""
+        return self.storage_path.name
+
+    @property
+    def media_type(self) -> str:
+        """The mimetype of the stored file."""
+        return (
+            mimetypes.guess_file_type(self.file_name)[0] or "application/octet-stream"
+        )
