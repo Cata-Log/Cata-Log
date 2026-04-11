@@ -7,7 +7,7 @@
 {% block main_content %}
     <hblock>
     <h2>Latest Catalog of Provider {{ provider.id }}</h2>
-    <p>Valid {{ catalog.valid_since.date }} - {{ catalog.valid_until.date }}</p>
+    <p>Valid {{ catalog.valid_since.date() }} - {{ catalog.valid_until.date() }}</p>
     </hblock>
     <div class="grid">
         <button type="button" id="prev-button">&lt;</button>
