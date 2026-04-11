@@ -16,14 +16,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import UTC, datetime
-
 from fastapi import Response, status
 from fastapi.exceptions import HTTPException
 from fastapi.routing import APIRouter
 from sqlalchemy.orm import Session, selectinload
 
 from cata_log import database
+
+from .utils import AcquisitionLink, Entry, Metadata, OPDSCatalog, ThumbnailLink
 
 router = APIRouter(prefix="/opds", tags=["opds"])
 
@@ -44,37 +44,42 @@ def get_opds_catalog_overview(
         .order_by(database.Catalog.created_at.desc())
         .all()
     )
-    opds_xml = f"""<?xml version="1.0" encoding="utf-8"?>
-    <feed xmlns="http://www.w3.org/2005/Atom"
-          xmlns:opds="http://opds-spec.org/2010/catalog">
-      <title>Cata-Log Library</title>
-      <id>opds-root</id>
-      <updated>{datetime.now(tz=UTC).isoformat(timespec="seconds")}</updated>
-      """
+    opds = OPDSCatalog(title="Cata-Log Library")
     for catalog in catalogs:
         provider_class = catalog.provider.get_provider_class()
-        opds_xml += f"""
-        <entry>
-            <title>{catalog.provider.class_id.title()} {catalog.valid_since.date()} - {catalog.valid_until.date()}</title>
-            <id>{catalog.id}</id>
-            <summary>{provider_class.description}</summary>
-            <dc:language>{provider_class.region.language_code}</dc:language>
-            <dc:publisher>{catalog.provider.class_id.title()}</dc:publisher>
-            <dc:issued>{catalog.created_at.date().isoformat()}</dc:issued>
-            <updated>{catalog.updated_at.isoformat(timespec="seconds")}</updated>
-            <link rel="http://opds-spec.org/image/thumbnail"
-                  href="/api/v1/pages/{catalog.pages[0].id}/download"
-                  type="{catalog.pages[0].media_type}" />
-            <link href="/opds/{catalog.id}.epub"
-                rel="http://opds-spec.org/acquisition"
-                type="application/epub+zip"/>
-            <link href="/api/v1/catalogs/{catalog.id}/download"
-                rel="http://opds-spec.org/acquisition"
-                type="application/pdf"/>
-        </entry>
-        """
-    opds_xml += "</feed>"
-    return Response(content=opds_xml, media_type="application/atom+xml")
+        entry = Entry(
+            title=f"{catalog.provider.class_id.title()} {catalog.valid_since.date()} - {catalog.valid_until.date()}",
+            uid=str(catalog.id),
+        )
+        entry.metadata.extend(
+            [
+                Metadata(provider_class.description, "summary"),
+                Metadata(provider_class.region.language_code, "language", "dc"),
+                Metadata(catalog.provider.class_id.title(), "publisher", "dc"),
+                Metadata(catalog.created_at.date().isoformat(), "issued", "dc"),
+                Metadata(
+                    catalog.updated_at.isoformat(timespec="seconds"), "updated", "dc"
+                ),
+            ]
+        )
+        entry.links.extend(
+            [
+                ThumbnailLink(
+                    href="/api/v1/pages/{catalog.pages[0].id}/download",
+                    type=catalog.pages[0].media_type,
+                ),
+                AcquisitionLink(
+                    href=f"/api/v1/pages/{catalog.pages[0].id}/download",
+                    type="application/pdf",
+                ),
+                AcquisitionLink(
+                    href=f"/odps{catalog.id}.epub",
+                    type="application/epub+zip",
+                ),
+            ]
+        )
+        opds.entries.append(entry)
+    return Response(content=opds.write(), media_type="application/atom+xml")
 
 
 @router.get("/{catalog_id}.epub")

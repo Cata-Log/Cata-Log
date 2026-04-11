@@ -37,9 +37,7 @@ def test_get_opds_catalog_overview(client, fake_catalog, fake_page):
     assert response.headers["Content-Type"] == "application/atom+xml"
     content = response.content.decode()
     assert content
-    assert content.startswith("""<?xml version="1.0" encoding="utf-8"?>
-    <feed xmlns="http://www.w3.org/2005/Atom"
-          xmlns:opds="http://opds-spec.org/2010/catalog">""")
+    assert content.startswith('<?xml version="1.0" encoding="utf-8"?>')
     assert content.endswith("</feed>")
     assert "<entry>" in content
     assert "</entry>" in content
