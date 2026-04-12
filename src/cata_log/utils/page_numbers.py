@@ -58,10 +58,6 @@ class PageNumber:
         """
         if isinstance(other, int):
             return PageNumber(self._number + other + self._offset, self._offset)
-        if isinstance(other, PageNumber) and self._offset == other._offset:
-            return PageNumber(self._number + other._number + self._offset, self._offset)
-        if isinstance(other, DoublePageNumber):
-            return self + other.as_page_number()
         raise TypeError("Cannot add this object to this pagenumber.")
 
     def __sub__(self, other: object) -> PageNumber:
@@ -76,10 +72,6 @@ class PageNumber:
         """
         if isinstance(other, int):
             return PageNumber(self._number - other + self._offset, self._offset)
-        if isinstance(other, PageNumber) and self._offset == other._offset:
-            return PageNumber(self._number - other._number + self._offset, self._offset)
-        if isinstance(other, DoublePageNumber):
-            return self - other.as_page_number()
         raise TypeError("Cannot subtract this object from this pagenumber.")
 
     @override

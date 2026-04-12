@@ -77,26 +77,6 @@ def test_PageNumber___gt___smaller(page_number, greater_object):
         (page_numbers.PageNumber(3, 0), 0, page_numbers.PageNumber(3, 0)),
         (page_numbers.PageNumber(0, 0), 1, page_numbers.PageNumber(1, 0)),
         (page_numbers.PageNumber(1, 1), 2, page_numbers.PageNumber(3, 1)),
-        (
-            page_numbers.PageNumber(2, 0),
-            page_numbers.PageNumber(1, 0),
-            page_numbers.PageNumber(3, 0),
-        ),
-        (
-            page_numbers.PageNumber(3, 2),
-            page_numbers.PageNumber(2, 2),
-            page_numbers.PageNumber(3, 2),
-        ),
-        (
-            page_numbers.PageNumber(4, 0),
-            page_numbers.DoublePageNumber(1, 1, 0),
-            page_numbers.PageNumber(6, 0),
-        ),
-        (
-            page_numbers.PageNumber(1, 1),
-            page_numbers.DoublePageNumber(1, 1, 1),
-            page_numbers.PageNumber(3, 1),
-        ),
     ],
 )
 def test_PageNumber___add__(summand_1, summand_2, expected_sum):
@@ -109,36 +89,6 @@ def test_PageNumber___add__(summand_1, summand_2, expected_sum):
         (page_numbers.PageNumber(1, 0), 1, page_numbers.PageNumber(0, 0)),
         (page_numbers.PageNumber(4, 2), 2, page_numbers.PageNumber(2, 2)),
         (page_numbers.PageNumber(3, 2), 0, page_numbers.PageNumber(3, 2)),
-        (
-            page_numbers.PageNumber(2, 0),
-            page_numbers.PageNumber(1, 0),
-            page_numbers.PageNumber(1, 0),
-        ),
-        (
-            page_numbers.PageNumber(2, 1),
-            page_numbers.PageNumber(1, 1),
-            page_numbers.PageNumber(2, 1),
-        ),
-        (
-            page_numbers.PageNumber(4, 0),
-            page_numbers.PageNumber(2, 0),
-            page_numbers.PageNumber(2, 0),
-        ),
-        (
-            page_numbers.PageNumber(4, 0),
-            page_numbers.DoublePageNumber(1, 1, 0),
-            page_numbers.PageNumber(2, 0),
-        ),
-        (
-            page_numbers.PageNumber(3, 1),
-            page_numbers.DoublePageNumber(1, 1, 1),
-            page_numbers.PageNumber(1, 1),
-        ),
-        (
-            page_numbers.PageNumber(3, 2),
-            page_numbers.DoublePageNumber(2, 0, 2),
-            page_numbers.PageNumber(0, 2),
-        ),
     ],
 )
 def test_PageNumber___sub__(minuend, subtrahend, expected_difference):
@@ -266,31 +216,6 @@ def test_DoublePageNumber___gt___smaller(double_page_number, greater_object):
             2,
             page_numbers.DoublePageNumber(2, 0, 0),
         ),
-        (
-            page_numbers.DoublePageNumber(2, 0, 0),
-            page_numbers.PageNumber(4, 0),
-            page_numbers.DoublePageNumber(4, 0, 0),
-        ),
-        (
-            page_numbers.DoublePageNumber(3, 1, 1),
-            page_numbers.PageNumber(4, 1),
-            page_numbers.DoublePageNumber(5, 0, 1),
-        ),
-        (
-            page_numbers.DoublePageNumber(4, 0, 0),
-            page_numbers.DoublePageNumber(3, 1, 0),
-            page_numbers.DoublePageNumber(7, 0, 0),
-        ),
-        (
-            page_numbers.DoublePageNumber(1, 1, 1),
-            page_numbers.DoublePageNumber(1, 1, 1),
-            page_numbers.DoublePageNumber(2, 1, 1),
-        ),
-        (
-            page_numbers.DoublePageNumber(3, 0, 2),
-            page_numbers.DoublePageNumber(0, 0, 2),
-            page_numbers.DoublePageNumber(3, 0, 2),
-        ),
     ],
 )
 def test_DoublePageNumber___add__(summand_1, summand_2, expected_sum):
@@ -314,31 +239,6 @@ def test_DoublePageNumber___add__(summand_1, summand_2, expected_sum):
             page_numbers.DoublePageNumber(2, 1, 0),
             2,
             page_numbers.DoublePageNumber(1, 1, 0),
-        ),
-        (
-            page_numbers.DoublePageNumber(2, 0, 0),
-            page_numbers.PageNumber(1, 0),
-            page_numbers.DoublePageNumber(1, 1, 0),
-        ),
-        (
-            page_numbers.DoublePageNumber(3, 1, 1),
-            page_numbers.PageNumber(2, 1),
-            page_numbers.DoublePageNumber(3, 0, 1),
-        ),
-        (
-            page_numbers.DoublePageNumber(4, 0, 0),
-            page_numbers.DoublePageNumber(3, 0, 0),
-            page_numbers.DoublePageNumber(1, 1, 0),
-        ),
-        (
-            page_numbers.DoublePageNumber(1, 1, 1),
-            page_numbers.DoublePageNumber(1, 1, 1),
-            page_numbers.DoublePageNumber(0, 0, 1),
-        ),
-        (
-            page_numbers.DoublePageNumber(3, 0, 2),
-            page_numbers.DoublePageNumber(0, 0, 2),
-            page_numbers.DoublePageNumber(3, 0, 2),
         ),
     ],
 )
