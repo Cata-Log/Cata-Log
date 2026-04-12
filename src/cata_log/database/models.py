@@ -19,6 +19,7 @@
 import logging
 import mimetypes
 from datetime import UTC, datetime
+from functools import cached_property
 from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
@@ -296,7 +297,7 @@ class Page(ModelBase, TimestampMixin):
         """The name of the stored file."""
         return self.storage_path.name
 
-    @property
+    @cached_property
     def media_type(self) -> str:
         """The mimetype of the stored file."""
         return (

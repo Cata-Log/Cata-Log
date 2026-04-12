@@ -119,6 +119,7 @@ parametrize-values-type = "list"
   "TRY003",# error messages can be put directly
   "ARG005",# lambdas may have unused args
   "D",     # no docstrings in tests
+  "S",     # security is no concern in tests
 ]
 
 [lint.extend-per-file-ignores]
