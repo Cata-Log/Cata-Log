@@ -20,6 +20,7 @@ from fastapi import APIRouter, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import selectinload
 
 from cata_log import constants, database
 from cata_log.providers import Provider
@@ -50,6 +51,7 @@ def get_providers_webpage(request: Request) -> HTMLResponse:
 
 @router.get("/catalogs/provider/{provider_id}/latest/", response_class=HTMLResponse)
 def get_provider_catalog_webpage(request: Request, provider_id: int) -> HTMLResponse:
+    """Get the latest provider catalog web interface."""
     with database.DBSession() as db_session:
         provider = db_session.get(database.Provider, provider_id)
         if not provider:
@@ -59,14 +61,32 @@ def get_provider_catalog_webpage(request: Request, provider_id: int) -> HTMLResp
         catalog = (
             db_session.query(database.Catalog)
             .filter(database.Catalog.provider_id == provider.id)
+            .options(selectinload(database.Catalog.provider))
             .order_by(database.Catalog.created_at.desc())
             .first()
         )
     return templates.TemplateResponse(
         request,
+        name="latest-provider-catalog.html.jinja",
+        context={
+            "catalog": catalog,
+        },
+    )
+
+
+@router.get("/catalogs/{catalog_id}/", response_class=HTMLResponse)
+def get_catalog_webpage(request: Request, catalog_id: int) -> HTMLResponse:
+    """Get the catalog web interface."""
+    with database.DBSession() as db_session:
+        catalog = db_session.get(database.Catalog, catalog_id)
+        if not catalog:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+            )
+    return templates.TemplateResponse(
+        request,
         name="catalog.html.jinja",
         context={
-            "provider": provider,
             "catalog": catalog,
         },
     )

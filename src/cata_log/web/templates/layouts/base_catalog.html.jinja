@@ -1,0 +1,30 @@
+{% extends "layouts/base.html.jinja" %}
+
+{% block page_title %}
+    Catalog
+{% endblock page_title %}
+
+{% block main_content %}
+    <hblock>
+    <h2>
+
+        {% block catalog_title %}
+        {% endblock catalog_title %}
+
+    </h2>
+    <p>Valid {{ catalog.valid_since.date() }} - {{ catalog.valid_until.date() }}</p>
+    </hblock>
+    <div class="grid">
+        <button type="button" id="prev-button">&lt;</button>
+        <img id="page-image" src="" alt="" height="80vh" />
+        <button type="button" id="next-button">&gt;</button>
+    </div>
+    <div>
+        <small>Cached {{ catalog.created_at }}</small>
+    </div>
+{% endblock main_content %}
+
+{% block scripts %}
+    <span id="provider-id" data-id="{{ catalog.provider_id }}"></span>
+    <script src="/static/js/catalog-viewer.js"></script>
+{% endblock scripts %}

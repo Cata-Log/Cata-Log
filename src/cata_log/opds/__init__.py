@@ -75,6 +75,11 @@ def build_catalog_entry(catalog: database.Catalog) -> Entry:
                 href=f"/odps/{catalog.id}.epub",
                 media_type="application/epub+zip",
             ),
+            Link(
+                href=f"/catalogs/{catalog.id}/",
+                media_type="text/html",
+                rel=Link.Rel.ALTERNATE,
+            ),
         ]
     )
     if catalog.pages:
