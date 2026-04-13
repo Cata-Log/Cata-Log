@@ -40,7 +40,7 @@ def test_fetch_provider__success(db_session, fake_fs, fake_provider, side_effect
     assert len(fake_provider.catalogs) == 1
     assert len(fake_provider.catalogs[0].pages) == 10
     for page in fake_provider.catalogs[0].pages:
-        with page.storage_path.open() as page_file:
+        with page.file.path.open() as page_file:
             assert page_file.read()
 
 
@@ -94,11 +94,11 @@ def test_cleanup_catalogs(db_session, fake_catalog, fake_catalog_outdated):
     assert db_session.get(database.Catalog, fake_catalog.id)
 
 
-def test_cleanup_storage(faker, fake_fs, fake_page):
+def test_cleanup_storage(faker, fake_fs, fake_pagefile):
     (STORAGE_PATH / "unused_file").write_text(faker.text())
-    assert fake_page.storage_path.exists()
+    assert fake_pagefile.path.exists()
 
     tasks.cleanup_storage()
 
     assert not (STORAGE_PATH / "unused_file").exists()
-    assert fake_page.storage_path.exists()
+    assert fake_pagefile.path.exists()

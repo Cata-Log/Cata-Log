@@ -329,12 +329,12 @@ def test_get_catalog_epub(client, fake_catalog, fake_page, full_database):
     assert book.spine
     page_image = book.get_item_with_id(str(fake_page.id))
     assert page_image
-    assert page_image.file_name == fake_page.file_name
-    assert page_image.content == fake_page.storage_path.read_bytes()
+    assert page_image.file_name == fake_page.file.name
+    assert page_image.content == fake_page.file.path.read_bytes()
     page_chapter = book.get_item_with_href(f"chap_{fake_page.number + 1}.xhtml")
     assert page_chapter
     assert "img" in page_chapter.content.decode()
-    assert f'src="{fake_page.file_name}"' in page_chapter.content.decode()
+    assert f'src="{fake_page.file.name}"' in page_chapter.content.decode()
 
 
 def test_get_catalog_epub__noauth(noauth_client, fake_catalog, full_database):

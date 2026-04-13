@@ -437,7 +437,7 @@ def test_get_latest_provider_catalog_page__page_not_found(
 
 @pytest.mark.parametrize(("filename"), [None, "page_image.png"])
 def test_download_latest_provider_catalog_page(
-    full_database, fake_provider, fake_page, fake_page_file, client, filename
+    full_database, fake_provider, fake_page, fake_file, client, filename
 ):
     response = client.get(
         urljoin(
@@ -447,11 +447,11 @@ def test_download_latest_provider_catalog_page(
     )
 
     assert response.status_code == 200
-    assert response.content == fake_page_file.read_bytes()
+    assert response.content == fake_file.read_bytes()
     assert "content-disposition" in response.headers
     assert (
         response.headers["content-disposition"]
-        == f'attachment; filename="{filename or fake_page_file.name}"'
+        == f'attachment; filename="{filename or fake_file.name}"'
     )
 
 
@@ -476,18 +476,18 @@ def test_download_latest_provider_catalog_page__bad_auth(
 
 
 def test_download_latest_provider_catalog_page__noauth__public_get(
-    full_database, fake_provider, fake_page, fake_page_file, noauth_client, public_get
+    full_database, fake_provider, fake_page, fake_file, noauth_client, public_get
 ):
     response = noauth_client.get(
         f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/download",
     )
 
     assert response.status_code == 200
-    assert response.content == fake_page_file.read_bytes()
+    assert response.content == fake_file.read_bytes()
     assert "content-disposition" in response.headers
     assert (
         response.headers["content-disposition"]
-        == f'attachment; filename="{fake_page_file.name}"'
+        == f'attachment; filename="{fake_file.name}"'
     )
 
 
@@ -517,7 +517,7 @@ def test_download_latest_provider_catalog_page__page_not_found(
 
 @pytest.mark.parametrize(("filename"), [None, "page_image.png"])
 def test_embed_latest_provider_catalog_page(
-    full_database, fake_provider, fake_page, fake_page_file, client, filename
+    full_database, fake_provider, fake_page, fake_file, client, filename
 ):
     response = client.get(
         urljoin(
@@ -527,11 +527,11 @@ def test_embed_latest_provider_catalog_page(
     )
 
     assert response.status_code == 200
-    assert response.content == fake_page_file.read_bytes()
+    assert response.content == fake_file.read_bytes()
     assert "content-disposition" in response.headers
     assert (
         response.headers["content-disposition"]
-        == f'inline; filename="{filename or fake_page_file.name}"'
+        == f'inline; filename="{filename or fake_file.name}"'
     )
 
 
@@ -556,18 +556,18 @@ def test_embed_latest_provider_catalog_page__bad_auth(
 
 
 def test_embed_latest_provider_catalog_page__noauth__public_get(
-    full_database, fake_provider, fake_page, fake_page_file, noauth_client, public_get
+    full_database, fake_provider, fake_page, fake_file, noauth_client, public_get
 ):
     response = noauth_client.get(
         f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/embed",
     )
 
     assert response.status_code == 200
-    assert response.content == fake_page_file.read_bytes()
+    assert response.content == fake_file.read_bytes()
     assert "content-disposition" in response.headers
     assert (
         response.headers["content-disposition"]
-        == f'inline; filename="{fake_page_file.name}"'
+        == f'inline; filename="{fake_file.name}"'
     )
 
 

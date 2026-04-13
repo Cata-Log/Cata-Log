@@ -89,4 +89,4 @@ def cleanup_catalogs() -> None:
 def cleanup_storage() -> None:
     """Task to cleanup unused files from storage."""
     with database.DBSession() as db_session:
-        database.Page.cleanup(db_session)
+        database.PageFile.cleanup(db_session)

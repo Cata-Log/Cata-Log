@@ -190,19 +190,20 @@ async def download_catalog_page(
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
     """Download a single catalog page by its page number."""
-    page_storage_path = (
-        db_session.query(database.Page.storage_path)
+    page_path = (
+        db_session.query(database.PageFile.path)
+        .join(database.Page.file)
         .filter(database.Page.catalog_id == catalog_id)
         .filter(database.Page.number == page_number)
         .scalar()
     )
-    if not page_storage_path:
+    if not page_path:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
-    filename = filename or page_storage_path.name
+    filename = filename or page_path.name
     return FileResponse(
-        path=page_storage_path,
+        path=page_path,
         filename=filename,
         content_disposition_type="attachment",
     )
@@ -218,19 +219,20 @@ async def embed_catalog_page(
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
     """Embed a single catalog page by its page number."""
-    page_storage_path = (
-        db_session.query(database.Page.storage_path)
+    page_path = (
+        db_session.query(database.PageFile.path)
+        .join(database.Page.file)
         .filter(database.Page.catalog_id == catalog_id)
         .filter(database.Page.number == page_number)
         .scalar()
     )
-    if not page_storage_path:
+    if not page_path:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
-    filename = filename or page_storage_path.name
+    filename = filename or page_path.name
     return FileResponse(
-        path=page_storage_path,
+        path=page_path,
         filename=filename,
         content_disposition_type="inline",
     )

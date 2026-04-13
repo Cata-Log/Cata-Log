@@ -29,35 +29,42 @@ from cata_log.api.mixins import TimestampMixin
 router = APIRouter(prefix="/pages", tags=["pages"])
 
 
+class PageFile(BaseModel, TimestampMixin):
+    """Page file data model."""
+
+    id: int
+    path: Path
+    sha256: str
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    """Pydantic model configuration."""
+
+    @field_serializer("path")
+    def serialize_path(self, path: Path) -> str:
+        """Serialize path.
+
+        Args:
+            path: The Path instance to serialize.
+
+        Returns:
+            The str representation of the path.
+        """
+        return str(path)
+
+    @computed_field  # type: ignore[prop-decorator]  # as documented for this decorator
+    @property
+    def static_filename(self) -> str:
+        """Compute the static filename from the storage path."""
+        return Path(self.path).name
+
+
 class Page(BaseModel, TimestampMixin):
     """Page data model."""
 
     id: int
     number: int
     catalog_id: int
-    storage_path: Path
-    sha256: str
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    """Pydantic model configuration."""
-
-    @field_serializer("storage_path")
-    def serialize_storage_path(self, storage_path: Path) -> str:
-        """Serialize storage_path.
-
-        Args:
-            storage_path: The Path instance to serialize.
-
-        Returns:
-            The str representation of the storage_path.
-        """
-        return str(storage_path)
-
-    @computed_field  # type: ignore[prop-decorator]  # as documented for this decorator
-    @property
-    def static_filename(self) -> str:
-        """Compute the static filename from the storage path."""
-        return Path(self.storage_path).name
+    file: PageFile
 
 
 @router.get("", response_model=list[Page], operation_id="list-pages-v1")
@@ -93,18 +100,19 @@ async def download_page(
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
     """Download a single page."""
-    page_storage_path = (
-        db_session.query(database.Page.storage_path)
+    page_path = (
+        db_session.query(database.PageFile.path)
+        .join(database.Page.file)
         .filter(database.Page.id == page_id)
         .scalar()
     )
-    if not page_storage_path:
+    if not page_path:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
-    filename = filename or page_storage_path.name
+    filename = filename or page_path.name
     return FileResponse(
-        path=page_storage_path,
+        path=page_path,
         filename=filename,
         content_disposition_type="attachment",
     )
@@ -117,18 +125,19 @@ async def embed_page(
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
     """Embed a single page."""
-    page_storage_path = (
-        db_session.query(database.Page.storage_path)
+    page_path = (
+        db_session.query(database.PageFile.path)
+        .join(database.Page.file)
         .filter(database.Page.id == page_id)
         .scalar()
     )
-    if not page_storage_path:
+    if not page_path:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
         )
-    filename = filename or page_storage_path.name
+    filename = filename or page_path.name
     return FileResponse(
-        path=page_storage_path,
+        path=page_path,
         filename=filename,
         content_disposition_type="inline",
     )

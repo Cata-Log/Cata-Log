@@ -77,7 +77,7 @@ def build_catalog_entry(catalog: database.Catalog) -> opds.Entry:
         entry.links.append(
             opds.ThumbnailLink(
                 href=f"/api/v1/pages/{catalog.pages[0].id}/download",
-                media_type=catalog.pages[0].media_type,
+                media_type=catalog.pages[0].file.media_type,
             ),
         )
     return entry

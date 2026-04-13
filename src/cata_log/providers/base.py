@@ -356,7 +356,7 @@ class Provider(abc.ABC):
 
     @final
     @classmethod
-    def get_new_storage_path(cls) -> Path:
+    def get_new_path(cls) -> Path:
         """Get a new unique storage path for page data.
 
         Returns:

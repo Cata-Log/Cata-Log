@@ -17,11 +17,8 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-from celery.schedules import crontab
 
 from cata_log import exceptions
-from cata_log.providers import Provider
-from cata_log.providers.regions import Region
 from cata_log.utils.page_numbers import PageNumber
 from test.cata_log.conftest import SideEffects
 

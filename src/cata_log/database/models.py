@@ -118,22 +118,25 @@ class Provider(ModelBase, TimestampMixin):
                     page_number,
                     page_bytes,
                 ) in provider_fetcher.iter_catalog_pages():
-                    page_storage_path = provider_fetcher.get_new_storage_path()
-                    page_storage_path.write_bytes(page_bytes)
+                    page_path = provider_fetcher.get_new_path()
+                    pagefile = PageFile.get_or_create(
+                        db_session=db_session,
+                        page_bytes=page_bytes,
+                        path=page_path,
+                    )
                     logger.debug(
                         "Success saving page data to storage.",
                         extra={
                             "provider_id": self.id,
                             "catalog_id": new_catalog.id,
                             "page_nr": page_number,
-                            "storage_path": page_storage_path,
+                            "path": page_path,
                         },
                     )
                     new_page = Page(
                         catalog_id=new_catalog.id,
+                        file_id=pagefile.id,
                         number=page_number,
-                        storage_path=page_storage_path,
-                        sha256=sha256(page_bytes).hexdigest(),
                     )
                     db_session.add(new_page)
         except ProviderWarning as provider_warning:
@@ -186,7 +189,7 @@ class Catalog(ModelBase, TimestampMixin):
             The pdf file bytes.
         """
         pdf_bytes_io = BytesIO()
-        page_images = [Image.open(page.storage_path) for page in self.pages]
+        page_images = [Image.open(page.file.path) for page in self.pages]
         page_images[0].save(
             pdf_bytes_io,
             format="PDF",
@@ -211,8 +214,8 @@ class Catalog(ModelBase, TimestampMixin):
         book.set_direction("rtl" if provider_class.region.is_rtl else "ltr")
         book.set_language(provider_class.region.language_code)
         book.set_cover(
-            f"cover_{self.pages[0].file_name}",
-            self.pages[0].storage_path.read_bytes(),
+            f"cover_{self.pages[0].file.name}",
+            self.pages[0].file.path.read_bytes(),
         )
         book.add_author("Cata-Log")
         book.add_metadata("DC", "description", provider_class.description)
@@ -231,14 +234,14 @@ class Catalog(ModelBase, TimestampMixin):
         for page in self.pages:
             page_image = epub.EpubImage(
                 uid=str(page.id),
-                file_name=page.file_name,
-                content=page.storage_path.read_bytes(),
+                file_name=page.file.name,
+                content=page.file.path.read_bytes(),
             )
             book.add_item(page_image)
             page_chapter = epub.EpubHtml(
                 title=f"Page {page.number + 1}",
                 file_name=f"chap_{page.number + 1}.xhtml",
-                content=f'<img src="{page.file_name}"/>',
+                content=f'<img src="{page.file.name}"/>',
             )
             book.add_item(page_chapter)
             book.spine.append(page_chapter)
@@ -280,31 +283,46 @@ class Catalog(ModelBase, TimestampMixin):
         )
 
 
-class Page(ModelBase, TimestampMixin):
-    """ORM model for a catalog page."""
+class PageFile(ModelBase, TimestampMixin):
+    """ORM model for a catalog page file."""
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
-    number: orm.Mapped[int] = orm.mapped_column()
-    storage_path: orm.Mapped[Path] = orm.mapped_column(PathType, unique=True)
+    path: orm.Mapped[Path] = orm.mapped_column(PathType, unique=True)
     sha256: orm.Mapped[str] = orm.mapped_column()
-    catalog: orm.Mapped[Catalog] = orm.relationship(back_populates="pages")
-    catalog_id: orm.Mapped[int] = orm.mapped_column(
-        ForeignKey(Catalog.__tablename__ + ".id", ondelete="CASCADE"), nullable=False
+    pages: orm.Mapped[list[Page]] = orm.relationship(
+        back_populates="file", cascade="all, delete-orphan"
     )
-    __tablename__ = "pages"
-    __table_args__ = (UniqueConstraint("catalog_id", "number"),)
+    __tablename__ = "pagefiles"
 
     @property
-    def file_name(self) -> str:
+    def name(self) -> str:
         """The name of the stored file."""
-        return self.storage_path.name
+        return self.path.name
 
     @cached_property
     def media_type(self) -> str:
         """The mimetype of the stored file."""
-        return (
-            mimetypes.guess_file_type(self.file_name)[0] or "application/octet-stream"
-        )
+        return mimetypes.guess_file_type(self.name)[0] or "application/octet-stream"
+
+    @classmethod
+    def get_or_create(
+        cls, db_session: orm.Session, page_bytes: bytes, path: Path
+    ) -> PageFile:
+        """Get or create a pagefile.
+
+        Args:
+            db_session: A database session to use.
+            page_bytes: The content of the pagefile.
+            path: The path for the pagefile.
+        """
+        sha256_hash = sha256(page_bytes).hexdigest()
+        pagefile = db_session.query(cls).filter(cls.sha256 == sha256_hash).first()
+        if not pagefile:
+            pagefile = cls(sha256=sha256_hash, path=path)
+            db_session.add(pagefile)
+            db_session.flush()
+            path.write_bytes(page_bytes)
+        return pagefile
 
     @classmethod
     def cleanup(cls, db_session: orm.Session) -> None:
@@ -313,13 +331,26 @@ class Page(ModelBase, TimestampMixin):
         Args:
             db_session: A database session.
         """
-        used_storage_paths = set(
-            db_session.execute(select(cls.storage_path)).scalars().all()
-        )
+        used_paths = set(db_session.execute(select(cls.path)).scalars().all())
         for storage_filepath in constants.STORAGE_PATH.iterdir():
-            if (
-                storage_filepath.is_dir()
-                or storage_filepath.resolve() in used_storage_paths
-            ):
+            if storage_filepath.is_dir() or storage_filepath.resolve() in used_paths:
                 continue
             storage_filepath.unlink(missing_ok=True)
+
+
+class Page(ModelBase, TimestampMixin):
+    """ORM model for a catalog page."""
+
+    id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
+    number: orm.Mapped[int] = orm.mapped_column()
+    catalog_id: orm.Mapped[int] = orm.mapped_column(
+        ForeignKey(Catalog.__tablename__ + ".id", ondelete="CASCADE"), nullable=False
+    )
+    catalog: orm.Mapped[Catalog] = orm.relationship(back_populates="pages")
+    file_id: orm.Mapped[int] = orm.mapped_column(
+        ForeignKey(PageFile.__tablename__ + ".id", ondelete="RESTRICT"), nullable=False
+    )
+    file: orm.Mapped[PageFile] = orm.relationship(back_populates="pages")
+
+    __tablename__ = "pages"
+    __table_args__ = (UniqueConstraint("catalog_id", "number"),)

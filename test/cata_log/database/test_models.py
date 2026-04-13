@@ -111,7 +111,7 @@ def test_Provider_fetch_catalog__success(
     assert len(fake_provider.catalogs) == 1
     assert len(fake_provider.catalogs[0].pages) == 10
     for page in fake_provider.catalogs[0].pages:
-        with page.storage_path.open() as page_file:
+        with page.file.path.open() as page_file:
             assert page_file.read()
 
 
@@ -177,7 +177,7 @@ def test_Catalog_insertion(LocalSession, fake_provider):
         assert catalog.updated_at
 
 
-def test_Catalog_deletion(db_session, full_database, fake_catalog):
+def test_Catalog_deletion(db_session, fake_catalog, full_database):
     assert len(db_session.query(database.Catalog).all()) == 3
 
     db_session.delete(fake_catalog)
@@ -187,13 +187,29 @@ def test_Catalog_deletion(db_session, full_database, fake_catalog):
     assert not db_session.query(database.Page).all()
 
 
-def test_Page_insertion(faker, LocalSession, fake_catalog):
+def test_PageFile_insertion(faker, LocalSession):
+    with LocalSession() as db_session:
+        pagefile = database.PageFile(
+            path=STORAGE_PATH / "testfile.jpg",
+            sha256=faker.sha256(),
+        )
+        db_session.add(pagefile)
+        db_session.commit()
+        db_session.refresh(pagefile)
+
+        assert pagefile.id
+        assert pagefile.sha256
+        assert pagefile.path == STORAGE_PATH / "testfile.jpg"
+        assert pagefile.created_at
+        assert pagefile.updated_at
+
+
+def test_Page_insertion(LocalSession, fake_catalog, fake_pagefile):
     with LocalSession() as db_session:
         page = database.Page(
             number=4,
-            storage_path=STORAGE_PATH / "testfile.jpg",
             catalog_id=fake_catalog.id,
-            sha256=faker.sha256(),
+            file_id=fake_pagefile.id,
         )
         db_session.add(page)
         db_session.commit()
@@ -201,8 +217,9 @@ def test_Page_insertion(faker, LocalSession, fake_catalog):
 
         assert page.id
         assert page.number == 4
-        assert page.sha256
-        assert page.storage_path == STORAGE_PATH / "testfile.jpg"
+        assert page.file.id == fake_pagefile.id
+        assert len(fake_pagefile.pages) == 1
+        assert fake_pagefile.pages[0].id == page.id
         assert page.catalog.id == fake_catalog.id
         assert page.catalog.valid_since == fake_catalog.valid_since
         assert len(fake_catalog.pages) == 1
@@ -212,13 +229,13 @@ def test_Page_insertion(faker, LocalSession, fake_catalog):
         assert page.updated_at
 
 
-def test_Page_unique_together_constraint(faker, LocalSession, fake_page):
+def test_Page_unique_together_constraint(LocalSession, fake_pagefile, fake_page):
     with LocalSession() as db_session:
         db_session.add(
             database.Page(
                 number=fake_page.number,
                 catalog_id=fake_page.catalog_id,
-                storage_path=faker.file_path(),
+                file_id=fake_pagefile.id,
             )
         )
 
@@ -226,10 +243,10 @@ def test_Page_unique_together_constraint(faker, LocalSession, fake_page):
             db_session.flush()
 
 
-def test_Page_deletion(db_session, fake_page_file, fake_page):
-    assert fake_page_file.exists()
+def test_Page_deletion(db_session, fake_file, fake_page):
+    assert fake_file.exists()
 
     db_session.delete(fake_page)
     db_session.commit()
 
-    assert not fake_page_file.exists()
+    assert not fake_file.exists()

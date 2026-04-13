@@ -11,3 +11,6 @@
 ## To Fix
 
 - import src into dockerimage for consistency to tests OR remove src dir layer
+- cleanup files on page deletion
+- lxml and xml proper namespace declaration
+- optimize queries for page, selectinload file

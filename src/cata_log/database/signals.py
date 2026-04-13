@@ -39,17 +39,17 @@ from .utils import get_or_create_crontab_schedule
 logger = logging.getLogger(__name__)
 
 
-@event.listens_for(models.Page, "before_delete")
+@event.listens_for(models.PageFile, "before_delete")
 def before_page_delete(
     mapper: orm.Mapper,  # noqa: ARG001  # required for event decorator
     connection: Connection,  # noqa: ARG001  # required for event decorator
-    target: models.Page,
+    target: models.PageFile,
 ) -> None:
     """Event cleaning up a page file before deleting the page."""
-    target.storage_path.unlink(missing_ok=True)
+    target.path.unlink(missing_ok=True)
     logger.debug(
         "Success cleaning up page file of a deleted page.",
-        extra={"page_id": target.id, "page_storage_path": target.storage_path},
+        extra={"pagefile_id": target.id, "pagefile_path": target.path},
     )
 
 

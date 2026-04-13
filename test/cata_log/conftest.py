@@ -235,19 +235,25 @@ def fake_latest_catalog(fake_catalog_preview):
 
 
 @pytest.fixture
-def fake_page_file(faker, fake_fs):
-    storage_path = constants.STORAGE_PATH / "0.jpg"
-    storage_path.write_text(faker.text())
-    return storage_path
+def fake_file(faker, fake_fs):
+    path = constants.STORAGE_PATH / "0.jpg"
+    path.write_text(faker.text())
+    return path
 
 
 @pytest.fixture
-def fake_page(faker, db_session, fake_catalog_preview, fake_page_file):
+def fake_pagefile(faker, db_session, fake_file):
+    fake_pagefile = database.PageFile(path=str(fake_file), sha256=faker.sha256())
+    db_session.add(fake_pagefile)
+    db_session.commit()
+    db_session.refresh(fake_pagefile)
+    return fake_pagefile
+
+
+@pytest.fixture
+def fake_page(db_session, fake_catalog_preview, fake_pagefile):
     fake_page = database.Page(
-        number=0,
-        catalog_id=fake_catalog_preview.id,
-        storage_path=str(fake_page_file),
-        sha256=faker.sha256(),
+        number=0, catalog_id=fake_catalog_preview.id, file_id=fake_pagefile.id
     )
     db_session.add(fake_page)
     db_session.commit()
