@@ -19,6 +19,7 @@
 from datetime import UTC, datetime
 from urllib.parse import urljoin
 
+import opds
 from fastapi import Response, status
 from fastapi.exceptions import HTTPException
 from fastapi.requests import Request
@@ -28,63 +29,53 @@ from sqlalchemy.orm import Session, selectinload
 
 from cata_log import database
 
-from .utils import (
-    AcquisitionLink,
-    AcquistionFeedLink,
-    Author,
-    Entry,
-    Link,
-    Metadata,
-    NavigationFeedLink,
-    OPDSCatalog,
-    ThumbnailLink,
-)
-
 router = APIRouter(prefix="/opds", tags=["opds"])
 
 __all__ = ["router"]
 
 
-def build_catalog_entry(catalog: database.Catalog) -> Entry:
+def build_catalog_entry(catalog: database.Catalog) -> opds.Entry:
     """OPDS entry for this catalog.
 
     Returns:
         An OPDS entry instance with this catalogs metadata.
     """
     provider_class = catalog.provider.get_provider_class()
-    entry = Entry(
+    entry = opds.Entry(
         title=f"{catalog.provider.class_id.title()} {catalog.valid_since.date()} - {catalog.valid_until.date()}",
         uid=str(catalog.id),
     )
     entry.metadata.extend(
         [
-            Metadata(provider_class.description, "summary"),
-            Metadata(provider_class.region.language_code, "language", "dc"),
-            Metadata(catalog.provider.class_id.title(), "publisher", "dc"),
-            Metadata(catalog.created_at.date().isoformat(), "issued", "dc"),
-            Metadata(catalog.updated_at.isoformat(timespec="seconds"), "updated", "dc"),
+            opds.Metadata(provider_class.description, "summary"),
+            opds.Metadata(provider_class.region.language_code, "language", "dc"),
+            opds.Metadata(catalog.provider.class_id.title(), "publisher", "dc"),
+            opds.Metadata(catalog.created_at.date().isoformat(), "issued", "dc"),
+            opds.Metadata(
+                catalog.updated_at.isoformat(timespec="seconds"), "updated", "dc"
+            ),
         ]
     )
     entry.links.extend(
         [
-            AcquisitionLink(
+            opds.AcquisitionLink(
                 href=f"/api/v1/catalogs/{catalog.id}/download",
                 media_type="application/pdf",
             ),
-            AcquisitionLink(
+            opds.AcquisitionLink(
                 href=f"/odps/{catalog.id}.epub",
                 media_type="application/epub+zip",
             ),
-            Link(
+            opds.Link(
                 href=f"/catalogs/{catalog.id}/",
                 media_type="text/html",
-                rel=Link.Rel.ALTERNATE,
+                rel=opds.Link.Rel.ALTERNATE,
             ),
         ]
     )
     if catalog.pages:
         entry.links.append(
-            ThumbnailLink(
+            opds.ThumbnailLink(
                 href=f"/api/v1/pages/{catalog.pages[0].id}/download",
                 media_type=catalog.pages[0].media_type,
             ),
@@ -95,46 +86,48 @@ def build_catalog_entry(catalog: database.Catalog) -> Entry:
 @router.get("/")
 def get_opds_catalog_overview(request: Request) -> Response:
     """Get the odps overview."""
-    opds = OPDSCatalog(title="Cata-Log Library")
-    author = Author()
+    opds_catalog = opds.OPDSCatalog(title="Cata-Log Library")
+    author = opds.Author()
     author.metadata.extend(
         [
-            Metadata(name="name", value="Cata-Log"),
-            Metadata(name="uri", value=urljoin(request.url.scheme, request.url.netloc)),
+            opds.Metadata(name="name", value="Cata-Log"),
+            opds.Metadata(
+                name="uri", value=urljoin(request.url.scheme, request.url.netloc)
+            ),
         ]
     )
-    opds.metadata.append(author)
-    opds.links.extend(
+    opds_catalog.metadata.append(author)
+    opds_catalog.links.extend(
         [
-            NavigationFeedLink(href="/opds/", rel=Link.Rel.START),
-            NavigationFeedLink(href="/opds/", rel=Link.Rel.SELF),
+            opds.NavigationFeedLink(href="/opds/", rel=opds.Link.Rel.START),
+            opds.NavigationFeedLink(href="/opds/", rel=opds.Link.Rel.SELF),
         ]
     )
-    latest_entry = Entry(title="Latest", uid="latest")
+    latest_entry = opds.Entry(title="Latest", uid="latest")
     latest_entry.links.append(
-        AcquistionFeedLink(href="/opds/latest/", rel=Link.Rel.SORT_NEW)
+        opds.AcquistionFeedLink(href="/opds/latest/", rel=opds.Link.Rel.SORT_NEW)
     )
-    all_entry = Entry(title="All", uid="all")
+    all_entry = opds.Entry(title="All", uid="all")
     all_entry.links.append(
-        AcquistionFeedLink(href="/opds/all/", rel=Link.Rel.SUBSECTION)
+        opds.AcquistionFeedLink(href="/opds/all/", rel=opds.Link.Rel.SUBSECTION)
     )
-    current_entry = Entry(title="Current", uid="current")
+    current_entry = opds.Entry(title="Current", uid="current")
     current_entry.links.append(
-        AcquistionFeedLink(href="/opds/current/", rel=Link.Rel.SUBSECTION)
+        opds.AcquistionFeedLink(href="/opds/current/", rel=opds.Link.Rel.SUBSECTION)
     )
-    previews_entry = Entry(title="Previews", uid="latest")
+    previews_entry = opds.Entry(title="Previews", uid="latest")
     previews_entry.links.append(
-        AcquistionFeedLink(href="/opds/previews/", rel=Link.Rel.SUBSECTION)
+        opds.AcquistionFeedLink(href="/opds/previews/", rel=opds.Link.Rel.SUBSECTION)
     )
-    outdated_entry = Entry(title="Outdated", uid="outdated")
+    outdated_entry = opds.Entry(title="Outdated", uid="outdated")
     outdated_entry.links.append(
-        AcquistionFeedLink(href="/opds/outdated/", rel=Link.Rel.SUBSECTION)
+        opds.AcquistionFeedLink(href="/opds/outdated/", rel=opds.Link.Rel.SUBSECTION)
     )
-    providers_entry = Entry(title="Provider Overview", uid="latest")
+    providers_entry = opds.Entry(title="Provider Overview", uid="latest")
     providers_entry.links.append(
-        NavigationFeedLink(href="/opds/providers/", rel=Link.Rel.SUBSECTION)
+        opds.NavigationFeedLink(href="/opds/providers/", rel=opds.Link.Rel.SUBSECTION)
     )
-    opds.entries.extend(
+    opds_catalog.entries.extend(
         [
             latest_entry,
             all_entry,
@@ -144,7 +137,7 @@ def get_opds_catalog_overview(request: Request) -> Response:
             providers_entry,
         ]
     )
-    return Response(content=opds.write(), media_type="application/atom+xml")
+    return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
 @router.get("/latest/")
@@ -168,24 +161,26 @@ def get_opds_catalog_latest(
         .filter(subquery.c.rn == 1)
         .all()
     )
-    opds = OPDSCatalog(title="Latest Catalogs")
-    author = Author()
+    opds_catalog = opds.OPDSCatalog(title="Latest Catalogs")
+    author = opds.Author()
     author.metadata.extend(
         [
-            Metadata(name="name", value="Cata-Log"),
-            Metadata(name="uri", value=urljoin(request.url.scheme, request.url.netloc)),
+            opds.Metadata(name="name", value="Cata-Log"),
+            opds.Metadata(
+                name="uri", value=urljoin(request.url.scheme, request.url.netloc)
+            ),
         ]
     )
-    opds.metadata.append(author)
-    opds.links.extend(
+    opds_catalog.metadata.append(author)
+    opds_catalog.links.extend(
         [
-            NavigationFeedLink(href="/opds/", rel=Link.Rel.START),
-            AcquistionFeedLink(href="/opds/latest/", rel=Link.Rel.SELF),
+            opds.NavigationFeedLink(href="/opds/", rel=opds.Link.Rel.START),
+            opds.AcquistionFeedLink(href="/opds/latest/", rel=opds.Link.Rel.SELF),
         ]
     )
     for catalog in catalogs:
-        opds.entries.append(build_catalog_entry(catalog))
-    return Response(content=opds.write(), media_type="application/atom+xml")
+        opds_catalog.entries.append(build_catalog_entry(catalog))
+    return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
 @router.get("/all/")
@@ -200,24 +195,26 @@ def get_opds_catalog_all(
         .options(selectinload(database.Catalog.provider))
         .all()
     )
-    opds = OPDSCatalog(title="All Catalogs")
-    author = Author()
+    opds_catalog = opds.OPDSCatalog(title="All Catalogs")
+    author = opds.Author()
     author.metadata.extend(
         [
-            Metadata(name="name", value="Cata-Log"),
-            Metadata(name="uri", value=urljoin(request.url.scheme, request.url.netloc)),
+            opds.Metadata(name="name", value="Cata-Log"),
+            opds.Metadata(
+                name="uri", value=urljoin(request.url.scheme, request.url.netloc)
+            ),
         ]
     )
-    opds.metadata.append(author)
-    opds.links.extend(
+    opds_catalog.metadata.append(author)
+    opds_catalog.links.extend(
         [
-            NavigationFeedLink(href="/opds/", rel=Link.Rel.START),
-            AcquistionFeedLink(href="/opds/all/", rel=Link.Rel.SELF),
+            opds.NavigationFeedLink(href="/opds/", rel=opds.Link.Rel.START),
+            opds.AcquistionFeedLink(href="/opds/all/", rel=opds.Link.Rel.SELF),
         ]
     )
     for catalog in catalogs:
-        opds.entries.append(build_catalog_entry(catalog))
-    return Response(content=opds.write(), media_type="application/atom+xml")
+        opds_catalog.entries.append(build_catalog_entry(catalog))
+    return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
 @router.get("/previews/")
@@ -233,24 +230,26 @@ def get_opds_catalog_previews(
         .options(selectinload(database.Catalog.provider))
         .all()
     )
-    opds = OPDSCatalog(title="Preview Catalogs")
-    author = Author()
+    opds_catalog = opds.OPDSCatalog(title="Preview Catalogs")
+    author = opds.Author()
     author.metadata.extend(
         [
-            Metadata(name="name", value="Cata-Log"),
-            Metadata(name="uri", value=urljoin(request.url.scheme, request.url.netloc)),
+            opds.Metadata(name="name", value="Cata-Log"),
+            opds.Metadata(
+                name="uri", value=urljoin(request.url.scheme, request.url.netloc)
+            ),
         ]
     )
-    opds.metadata.append(author)
-    opds.links.extend(
+    opds_catalog.metadata.append(author)
+    opds_catalog.links.extend(
         [
-            NavigationFeedLink(href="/opds/", rel=Link.Rel.START),
-            AcquistionFeedLink(href="/opds/previews/", rel=Link.Rel.SELF),
+            opds.NavigationFeedLink(href="/opds/", rel=opds.Link.Rel.START),
+            opds.AcquistionFeedLink(href="/opds/previews/", rel=opds.Link.Rel.SELF),
         ]
     )
     for catalog in catalogs:
-        opds.entries.append(build_catalog_entry(catalog))
-    return Response(content=opds.write(), media_type="application/atom+xml")
+        opds_catalog.entries.append(build_catalog_entry(catalog))
+    return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
 @router.get("/outdated/")
@@ -266,24 +265,26 @@ def get_opds_catalog_outdated(
         .options(selectinload(database.Catalog.provider))
         .all()
     )
-    opds = OPDSCatalog(title="Outdated Catalogs")
-    author = Author()
+    opds_catalog = opds.OPDSCatalog(title="Outdated Catalogs")
+    author = opds.Author()
     author.metadata.extend(
         [
-            Metadata(name="name", value="Cata-Log"),
-            Metadata(name="uri", value=urljoin(request.url.scheme, request.url.netloc)),
+            opds.Metadata(name="name", value="Cata-Log"),
+            opds.Metadata(
+                name="uri", value=urljoin(request.url.scheme, request.url.netloc)
+            ),
         ]
     )
-    opds.metadata.append(author)
-    opds.links.extend(
+    opds_catalog.metadata.append(author)
+    opds_catalog.links.extend(
         [
-            NavigationFeedLink(href="/opds/", rel=Link.Rel.START),
-            AcquistionFeedLink(href="/opds/outdated/", rel=Link.Rel.SELF),
+            opds.NavigationFeedLink(href="/opds/", rel=opds.Link.Rel.START),
+            opds.AcquistionFeedLink(href="/opds/outdated/", rel=opds.Link.Rel.SELF),
         ]
     )
     for catalog in catalogs:
-        opds.entries.append(build_catalog_entry(catalog))
-    return Response(content=opds.write(), media_type="application/atom+xml")
+        opds_catalog.entries.append(build_catalog_entry(catalog))
+    return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
 @router.get("/current/")
@@ -301,24 +302,26 @@ def get_opds_catalog_current(
         .options(selectinload(database.Catalog.provider))
         .all()
     )
-    opds = OPDSCatalog(title="Current Catalogs")
-    author = Author()
+    opds_catalog = opds.OPDSCatalog(title="Current Catalogs")
+    author = opds.Author()
     author.metadata.extend(
         [
-            Metadata(name="name", value="Cata-Log"),
-            Metadata(name="uri", value=urljoin(request.url.scheme, request.url.netloc)),
+            opds.Metadata(name="name", value="Cata-Log"),
+            opds.Metadata(
+                name="uri", value=urljoin(request.url.scheme, request.url.netloc)
+            ),
         ]
     )
-    opds.metadata.append(author)
-    opds.links.extend(
+    opds_catalog.metadata.append(author)
+    opds_catalog.links.extend(
         [
-            NavigationFeedLink(href="/opds/", rel=Link.Rel.START),
-            AcquistionFeedLink(href="/opds/current/", rel=Link.Rel.SELF),
+            opds.NavigationFeedLink(href="/opds/", rel=opds.Link.Rel.START),
+            opds.AcquistionFeedLink(href="/opds/current/", rel=opds.Link.Rel.SELF),
         ]
     )
     for catalog in catalogs:
-        opds.entries.append(build_catalog_entry(catalog))
-    return Response(content=opds.write(), media_type="application/atom+xml")
+        opds_catalog.entries.append(build_catalog_entry(catalog))
+    return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
 @router.get("/providers/")
@@ -330,30 +333,32 @@ def get_opds_catalog_providers(
     providers = (
         db_session.query(database.Provider).order_by(database.Provider.class_id).all()
     )
-    opds = OPDSCatalog(title="Catalog Providers Library")
-    author = Author()
+    opds_catalog = opds.OPDSCatalog(title="Catalog Providers Library")
+    author = opds.Author()
     author.metadata.extend(
         [
-            Metadata(name="name", value="Cata-Log"),
-            Metadata(name="uri", value=urljoin(request.url.scheme, request.url.netloc)),
+            opds.Metadata(name="name", value="Cata-Log"),
+            opds.Metadata(
+                name="uri", value=urljoin(request.url.scheme, request.url.netloc)
+            ),
         ]
     )
-    opds.metadata.append(author)
-    opds.links.extend(
+    opds_catalog.metadata.append(author)
+    opds_catalog.links.extend(
         [
-            NavigationFeedLink(href="/opds/", rel=Link.Rel.START),
-            NavigationFeedLink(href="/opds/providers/", rel=Link.Rel.SELF),
+            opds.NavigationFeedLink(href="/opds/", rel=opds.Link.Rel.START),
+            opds.NavigationFeedLink(href="/opds/providers/", rel=opds.Link.Rel.SELF),
         ]
     )
     for provider in providers:
-        entry = Entry(title=provider.class_id.title(), uid=str(provider.id))
+        entry = opds.Entry(title=provider.class_id.title(), uid=str(provider.id))
         entry.links.append(
-            AcquistionFeedLink(
-                href=f"/opds/providers/{provider.id}/", rel=Link.Rel.SUBSECTION
+            opds.AcquistionFeedLink(
+                href=f"/opds/providers/{provider.id}/", rel=opds.Link.Rel.SUBSECTION
             )
         )
-        opds.entries.append(entry)
-    return Response(content=opds.write(), media_type="application/atom+xml")
+        opds_catalog.entries.append(entry)
+    return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
 @router.get("/providers/{provider_id}/")
@@ -370,27 +375,29 @@ def get_opds_catalog_provider(
         .order_by(database.Catalog.created_at.desc())
         .all()
     )
-    opds = OPDSCatalog(title="Provider Catalogs")
-    author = Author()
+    opds_catalog = opds.OPDSCatalog(title="Provider Catalogs")
+    author = opds.Author()
     author.metadata.extend(
         [
-            Metadata(name="name", value="Cata-Log"),
-            Metadata(name="uri", value=urljoin(request.url.scheme, request.url.netloc)),
+            opds.Metadata(name="name", value="Cata-Log"),
+            opds.Metadata(
+                name="uri", value=urljoin(request.url.scheme, request.url.netloc)
+            ),
         ]
     )
-    opds.metadata.append(author)
-    opds.links.extend(
+    opds_catalog.metadata.append(author)
+    opds_catalog.links.extend(
         [
-            NavigationFeedLink(href="/opds/", rel=Link.Rel.START),
-            NavigationFeedLink(href="/opds/providers/", rel=Link.Rel.UP),
-            AcquistionFeedLink(
-                href=f"/opds/providers/{provider_id}/", rel=Link.Rel.SELF
+            opds.NavigationFeedLink(href="/opds/", rel=opds.Link.Rel.START),
+            opds.NavigationFeedLink(href="/opds/providers/", rel=opds.Link.Rel.UP),
+            opds.AcquistionFeedLink(
+                href=f"/opds/providers/{provider_id}/", rel=opds.Link.Rel.SELF
             ),
         ]
     )
     for catalog in catalogs:
-        opds.entries.append(build_catalog_entry(catalog))
-    return Response(content=opds.write(), media_type="application/atom+xml")
+        opds_catalog.entries.append(build_catalog_entry(catalog))
+    return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
 @router.get("/{catalog_id}.epub")
