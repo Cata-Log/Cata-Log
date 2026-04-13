@@ -38,7 +38,9 @@ from sqlalchemy import (
     orm,
 )
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.sql import select
 
+from cata_log import constants
 from cata_log.constants import StatusEnum
 from cata_log.exceptions import (
     NetworkError,
@@ -303,3 +305,21 @@ class Page(ModelBase, TimestampMixin):
         return (
             mimetypes.guess_file_type(self.file_name)[0] or "application/octet-stream"
         )
+
+    @classmethod
+    def cleanup(cls, db_session: orm.Session) -> None:
+        """Cleanup unused page files.
+
+        Args:
+            db_session: A database session.
+        """
+        used_storage_paths = set(
+            db_session.execute(select(cls.storage_path)).scalars().all()
+        )
+        for storage_filepath in constants.STORAGE_PATH.iterdir():
+            if (
+                storage_filepath.is_dir()
+                or storage_filepath.resolve() in used_storage_paths
+            ):
+                continue
+            storage_filepath.unlink(missing_ok=True)
