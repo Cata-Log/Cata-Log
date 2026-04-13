@@ -53,18 +53,17 @@ def get_providers_webpage(request: Request) -> HTMLResponse:
 def get_provider_catalog_webpage(request: Request, provider_id: int) -> HTMLResponse:
     """Get the latest provider catalog web interface."""
     with database.DBSession() as db_session:
-        provider = db_session.get(database.Provider, provider_id)
-        if not provider:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
-            )
         catalog = (
             db_session.query(database.Catalog)
-            .filter(database.Catalog.provider_id == provider.id)
+            .filter(database.Catalog.provider_id == provider_id)
             .options(selectinload(database.Catalog.provider))
             .order_by(database.Catalog.created_at.desc())
             .first()
         )
+        if not catalog:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+            )
     return templates.TemplateResponse(
         request,
         name="latest-provider-catalog.html.jinja",
