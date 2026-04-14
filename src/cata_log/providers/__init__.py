@@ -19,7 +19,7 @@
 from .action import Action
 from .aldi import AldiSued, AldiSuedPreview, AldiSuedPreview2
 from .base import Provider
-from .edeka import EdekaBasissortiment, EdekaMarkt
+from .edeka import EdekaMarkt
 from .hofer import Hofer, HoferPreview
 from .kaufland import KauflandWoche, KauflandWochePreview
 from .kik import Kik
@@ -40,7 +40,6 @@ __all__ = [
     "AldiSued",
     "AldiSuedPreview",
     "AldiSuedPreview2",
-    "EdekaBasissortiment",
     "EdekaMarkt",
     "Hofer",
     "HoferPreview",

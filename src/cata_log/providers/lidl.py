@@ -35,7 +35,15 @@ class LidlDeutschland(Provider):
     url = "https://www.lidl.de/c/online-prospekte/s10005610"
     region = Germany
     configuration = (
-        Configuration(name="region_id", helptext="ID der Lidl Region", default="0"),
+        Configuration(
+            name="region_id",
+            helptext="""ID der Lidl Region.
+            Öffne lidl.de und wähle deine Filiale.
+            Öffne den Web-Inspektor und suche im Webspeicher nach einem Cookie namens 'wh'.
+            Der Wert dieses Cookies ist eine Zahl, die Region-ID.
+            """,
+            default="0",
+        ),
     )
     first_page_number = 0
 

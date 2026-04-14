@@ -27,19 +27,39 @@ from .configuration import Configuration
 from .regions import Germany
 
 
-class EdekaBasissortiment(Provider):
-    """Provider class for Edeka Basissortiment catalog."""
+class EdekaMarkt(Provider):
+    """Provider class for Edeka Marktangebote catalog."""
 
-    name = "edeka-basissortiment"
-    description = "Edeka Basis Angebote"
+    name = "edeka-markt"
+    description = "Edeka Markt Angebote"
     url = "https://www.edeka-wochenangebote.de/"
     configuration = (
-        Configuration(name="region", helptext="Name der Region"),
-        Configuration(name="edeka_region", helptext="Name der Edeka Region"),
+        Configuration(
+            name="region",
+            helptext="""Name der Region.
+            Öffne edeka.de und öffne den Onlinekatalog deines Marktes.
+            Öffne den Web-Inspektor und gehe auf den Netzwerk-Tab.
+            Lade die Seite neu.
+            Suche die bk_1.jpg Datei und ihre URL.
+            Diese ist wie folgt aufgebaut: https://blaetterkatalog.edeka.de/{region}/{edeka_markt}/blaetterkatalog/thumbnails/bk_0.jpg
+            Die beiden Platzhalter stehen für Region und Marktnamen.
+            """,
+        ),
+        Configuration(
+            name="edeka_markt",
+            helptext="""Name des Edeka Marktes.
+            Öffne edeka.de und öffne den Onlinekatalog deines Marktes.
+            Öffne den Web-Inspektor und gehe auf den Netzwerk-Tab.
+            Lade die Seite neu.
+            Suche die bk_1.jpg Datei und ihre URL.
+            Diese ist wie folgt aufgebaut: https://blaetterkatalog.edeka.de/{region}/{edeka_markt}/blaetterkatalog/thumbnails/bk_0.jpg
+            Die beiden Platzhalter stehen für Region und Marktnamen.
+            """,
+        ),
     )
     region = Germany
 
-    url_format = "https://blaetterkatalog.edeka.de/{region}/EDEKA_CENTER_GRUND_SORTIMENT_{edeka_region}/blaetterkatalog/normal/bk_{page_number}.jpg"
+    url_format = "https://blaetterkatalog.edeka.de/{region}/{edeka_markt}/blaetterkatalog/normal/bk_{page_number}.jpg"
 
     @override
     def _get_catalog_data(self) -> None:
@@ -64,15 +84,3 @@ class EdekaBasissortiment(Provider):
     @override
     def _get_valid_until(self) -> datetime:
         return self._get_valid_since() + timedelta(days=7)
-
-
-class EdekaMarkt(EdekaBasissortiment):
-    """Provider class for Edeka Marktangebote catalog."""
-
-    name = "edeka-markt"
-    description = "Edeka Markt Angebote"
-    configuration = (
-        Configuration(name="region", helptext="Name der Edeka Region"),
-        Configuration(name="edeka_markt", helptext="Name des Edeka Marktes"),
-    )
-    url_format = "https://blaetterkatalog.edeka.de/{region}/{edeka_markt}/blaetterkatalog/normal/bk_{page_number}.jpg"

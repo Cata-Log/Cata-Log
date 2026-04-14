@@ -24,7 +24,7 @@ from cata_log import constants
 def get_calendar_week_number(
     dt: datetime.datetime,
     week_startpoint: constants.WeekCountingStartpoints = constants.WeekCountingStartpoints.MONDAY,
-) -> int:
+) -> tuple[int, int]:
     """Get the calendar week number of a datetime.
 
     Args:

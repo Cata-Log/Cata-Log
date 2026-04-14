@@ -38,7 +38,17 @@ class Rewe(Provider):
     description = "Rewe Katalog"
     url = "https://www.rewe.de/angebote/"
     region = Germany
-    configuration = (Configuration(name="markt_id", helptext="ID des Rewe Markts"),)
+    configuration = (
+        Configuration(
+            name="markt_id",
+            helptext="""ID des Rewe Markts.
+        Öffne rewe.de und wähle deine Filiale.
+        Öffne den Web-Inspektor und suche im Webspeicher nach einem Cookie namens 'wksMarketsCookie'.
+        Der Cookie ist URL-encoded, normalerweise gibt es eine Option in dekodiert anzuzeigen.
+        Im Cookie ist ein Eintrag '"wwIdent":'. Die folgende Zahl (ohne ") ist die Markt-ID.
+        """,
+        ),
+    )
     first_page_number = 0
 
     overview_url_format = "https://view.publitas.com/rewe-markt/rewe_{year}_wk{week_number:02}_{markt_id}/spreads.json"

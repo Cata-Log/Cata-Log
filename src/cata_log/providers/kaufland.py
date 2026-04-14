@@ -33,13 +33,22 @@ class KauflandWoche(Provider):
     name = "kaufland"
     description = "Kaufland Angebote"
     configuration = (
-        Configuration(name="region_id", helptext="ID der Kaufland-Region", default="0"),
+        Configuration(
+            name="filial_id",
+            helptext="""ID der Kaufland-Filiale.
+            Öffne filiale.kaufland.de und wähle deine Filiale aus.
+            Öffne den Web-Inspektor und suche im Webspeicher nach einem Cookie namens 'x-aem-variant.
+            Der Wert des Cookies beginnt mit DE.
+            Die Zahl danach ist die Filial-ID.
+            """,
+            default="0",
+        ),
     )
     url = "https://filiale.kaufland.de/prospekte.html"
     region = Germany
     first_page_number = 0
 
-    overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={region_id}&client_locale=kaufland/{language_code_lower}-{language_code_upper}"
+    overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={filial_id}&client_locale=kaufland/{language_code_lower}-{language_code_upper}"
 
     @override
     def _get_catalog_data(self) -> None:
