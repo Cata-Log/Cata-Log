@@ -17,7 +17,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from .action import Action
-from .aldi import AldiSued, AldiSuedPreview, AldiSuedPreview2
+from .aldi import AldiSued, AldiSuedPrepreview, AldiSuedPreview
 from .base import Provider
 from .edeka import EdekaMarkt
 from .hofer import Hofer, HoferPreview
@@ -25,8 +25,8 @@ from .kaufland import KauflandWoche, KauflandWochePreview
 from .kik import Kik
 from .lidl import (
     LidlDeutschland,
+    LidlDeutschlandPrepreview,
     LidlDeutschlandPreview,
-    LidlDeutschlandPreview2,
     LidlItalia,
 )
 from .metro import MetroWochenangebote, MetroWochenangebotePreview
@@ -38,8 +38,8 @@ from .rossmann import RossmannAngebote
 __all__ = [
     "Action",
     "AldiSued",
+    "AldiSuedPrepreview",
     "AldiSuedPreview",
-    "AldiSuedPreview2",
     "EdekaMarkt",
     "Hofer",
     "HoferPreview",
@@ -47,8 +47,8 @@ __all__ = [
     "KauflandWochePreview",
     "Kik",
     "LidlDeutschland",
+    "LidlDeutschlandPrepreview",
     "LidlDeutschlandPreview",
-    "LidlDeutschlandPreview2",
     "LidlItalia",
     "MetroWochenangebote",
     "MetroWochenangebotePreview",

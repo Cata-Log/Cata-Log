@@ -89,10 +89,10 @@ class AldiSuedPreview(Preview, AldiSued):
     preview_timedelta = timedelta(days=7)
 
 
-class AldiSuedPreview2(Preview, AldiSued):
+class AldiSuedPrepreview(Preview, AldiSued):
     """Provider class for Aldi-Süd preview catalog for the second-next week."""
 
-    name = "aldi-sued-preview2"
+    name = "aldi-sued-prepreview"
     description = AldiSued.description + " für übernächste Woche"
     overview_url_format = (
         "https://prospekt.aldi-sued.de/kw{week_number:02}-{year}-vop/spreads.json"

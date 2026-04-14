@@ -104,10 +104,10 @@ class LidlDeutschlandPreview(Preview, LidlDeutschland):
             raise CatalogUnavailableWarning from index_error
 
 
-class LidlDeutschlandPreview2(LidlDeutschlandPreview):
+class LidlDeutschlandPrepreview(LidlDeutschlandPreview):
     """Provider class for Lidl preview catalog for second-next week."""
 
-    name = "lidl-preview2"
+    name = "lidl-prepreview"
     description = LidlDeutschland.description + " übernächste Woche"
     flyer_index = 2
     preview_timedelta = timedelta(days=14)

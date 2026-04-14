@@ -76,10 +76,10 @@ class NormaPreview(Preview, Norma):
     preview_timedelta = timedelta(days=7)
 
 
-class NormaPreview2(NormaPreview):
+class NormaPrepreview(NormaPreview):
     """Provider class for Norma preview catalog for second-next week."""
 
-    name = "norma-preview2"
+    name = "norma-prepreview"
     description = Norma.description + " übernächste Woche"
     preview_timedelta = timedelta(days=14)
 
