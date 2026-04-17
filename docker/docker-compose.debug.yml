@@ -6,6 +6,7 @@ services:
       - /path/to/cata-log/storage:/mnt/storage
       - /path/to/cata-log/db:/mnt/db
       - /path/to/cata-log/log:/var/log/cata-log
+      - /path/to/cata-log/plugins:/mnt/plugins
     ports:
       - 2424:8000
     environment:

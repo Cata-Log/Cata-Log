@@ -12,7 +12,8 @@ ARG BUILD_PYTHON_APK_DEPENDENCIES=""
 
 ARG STORAGE_PATH=/mnt/storage/  # must match STORAGE_PATH in constants
 ARG LOG_PATH=/var/log/cata-log/  # must match LOG_DIRECTORY_PATH in constants
-ARG DATABASE_PATH=/mnt/db  # must match DATABASE_URL in constants
+ARG DATABASE_PATH=/mnt/db  # must match DATABASE_PATH in constants
+ARG PLUGIN_PATH=/mnt/plugins  # must match PLUGIN_PATH in constants
 
 ##    stage 1    ##
 ## convert pyproject.toml to requirements file for python dependencies ##
@@ -80,6 +81,7 @@ ARG S6_OVERLAY_PATH=/etc/s6-overlay/
 ARG STORAGE_PATH
 ARG DATABASE_PATH
 ARG LOG_PATH
+ARG PLUGIN_PATH
 
 WORKDIR ${SRC_PATH}
 
@@ -88,7 +90,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=${SRC_PATH} \
     PYTHONUNBUFFERED=1
 
-VOLUME ${STORAGE_PATH} ${LOG_PATH} ${DATABASE_PATH}
+VOLUME ${STORAGE_PATH} ${LOG_PATH} ${DATABASE_PATH} ${PLUGIN_PATH}
 
 # setup s6-overlay
 COPY --from=s6-overlay-prestage /s6-overlay/ /

@@ -32,6 +32,7 @@ from .lidl import (
 from .metro import MetroWochenangebote, MetroWochenangebotePreview
 from .netto import Netto, NettoPreview
 from .norma import Norma
+from .plugins import load_plugins
 from .rewe import Rewe, RewePreview
 from .rossmann import RossmannAngebote
 
@@ -60,3 +61,5 @@ __all__ = [
     "RewePreview",
     "RossmannAngebote",
 ]
+
+load_plugins()
