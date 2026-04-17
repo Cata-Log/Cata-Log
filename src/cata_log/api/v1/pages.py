@@ -20,7 +20,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, ConfigDict, computed_field, field_serializer
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 from sqlalchemy.orm import Session
 
 from cata_log import database
@@ -33,27 +33,15 @@ class PageFile(BaseModel, TimestampMixin):
     """Page file data model."""
 
     id: int
-    path: Path
     sha256: str
+    path: Path = Field(exclude=True)
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
     """Pydantic model configuration."""
 
-    @field_serializer("path")
-    def serialize_path(self, path: Path) -> str:
-        """Serialize path.
-
-        Args:
-            path: The Path instance to serialize.
-
-        Returns:
-            The str representation of the path.
-        """
-        return str(path)
-
     @computed_field  # type: ignore[prop-decorator]  # as documented for this decorator
     @property
-    def static_filename(self) -> str:
+    def name(self) -> str:
         """Compute the static filename from the storage path."""
         return Path(self.path).name
 
