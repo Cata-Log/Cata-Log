@@ -19,19 +19,14 @@
 from fastapi import Depends, FastAPI, status
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.sql import text
 
 from cata_log import __version__, api, config, constants, opds, web
-from cata_log.database import engine
 from cata_log.logging_config import setup_logging
 from cata_log.security import verify_credentials
 
 setup_logging()
-config.Settings.check()
 
-with engine.connect() as db_connection:
-    db_connection.execute(text("PRAGMA journaling = WAL"))
-    db_connection.commit()
+config.Settings.check()
 
 
 app = FastAPI(

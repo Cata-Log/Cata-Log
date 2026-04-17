@@ -25,9 +25,12 @@ from celery_sqlalchemy_v2_scheduler.models import (
 from sqlalchemy import (
     Connection,
     delete,
+    engine,
     event,
     orm,
 )
+from sqlalchemy.engine.interfaces import DBAPIConnection
+from sqlalchemy.pool.base import _ConnectionRecord
 
 from cata_log.exceptions import (
     ProviderUnknownClassWarning,
@@ -39,18 +42,43 @@ from .utils import get_or_create_crontab_schedule
 logger = logging.getLogger(__name__)
 
 
-@event.listens_for(models.PageFile, "before_delete")
-def before_page_delete(
+@event.listens_for(engine.Engine, "connect")
+def set_sqlite_pragma(
+    dbapi_connection: DBAPIConnection,
+    connection_record: _ConnectionRecord,  # noqa: ARG001  # required for event decorator
+) -> None:
+    """Event setting pragmas on all engines after connecting to db."""
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL;")
+    cursor.execute("PRAGMA foreign_keys=ON;")
+    cursor.close()
+
+
+@event.listens_for(models.PageFile, "after_delete")
+def after_pagefile_delete(
     mapper: orm.Mapper,  # noqa: ARG001  # required for event decorator
     connection: Connection,  # noqa: ARG001  # required for event decorator
     target: models.PageFile,
 ) -> None:
-    """Event cleaning up a page file before deleting the page."""
+    """Event cleaning up a page file after deleting the file from db."""
     target.path.unlink(missing_ok=True)
     logger.debug(
         "Success cleaning up page file of a deleted page.",
         extra={"pagefile_id": target.id, "pagefile_path": target.path},
     )
+
+
+@event.listens_for(models.Page, "after_delete")
+def after_page_delete(
+    mapper: orm.Mapper,  # noqa: ARG001  # required for event decorator
+    connection: Connection,
+    target: models.Page,
+) -> None:
+    """Event cleaning up an orphaned page file after deleting the page."""
+    if len(target.file.pages) == 1:
+        connection.execute(
+            delete(models.PageFile).where(models.PageFile.id == target.file_id)
+        )
 
 
 @event.listens_for(models.Provider, "after_insert")
@@ -92,13 +120,13 @@ def after_provider_insert(
     )
 
 
-@event.listens_for(models.Provider, "before_delete")
-def before_provider_delete(
+@event.listens_for(models.Provider, "after_delete")
+def after_provider_delete(
     mapper: orm.Mapper,  # noqa: ARG001  # required for event decorator
     connection: Connection,
     target: models.Provider,
 ) -> None:
-    """Event cleaning up a providers task before deleting the provider."""
+    """Event cleaning up a providers task after deleting the provider."""
     connection.execute(delete(PeriodicTask).where(PeriodicTask.id == target.task_id))
     logger.debug(
         "Success cleaning up periodictask of a deleted provider.",

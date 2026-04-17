@@ -21,6 +21,7 @@ from datetime import UTC, datetime
 import pytest
 import sqlalchemy.exc
 from celery_sqlalchemy_v2_scheduler.models import PeriodicTask
+from sqlalchemy.sql import text
 
 from cata_log import database, exceptions
 from cata_log.constants import STORAGE_PATH, StatusEnum
@@ -204,6 +205,28 @@ def test_PageFile_insertion(faker, LocalSession):
         assert pagefile.updated_at
 
 
+def test_PageFile_deletion(db_session, fake_file, fake_pagefile):
+    assert fake_file.exists()
+
+    db_session.delete(fake_pagefile)
+    db_session.commit()
+
+    assert not fake_file.exists()
+
+
+def test_PageFile_deletion__restricted(db_session, fake_file, fake_pagefile, fake_page):
+    assert fake_file.exists()
+    assert len(fake_pagefile.pages)
+
+    db_session.delete(fake_pagefile)
+    with pytest.raises(
+        sqlalchemy.exc.IntegrityError, match="FOREIGN KEY constraint failed"
+    ):
+        db_session.commit()
+
+    assert fake_file.exists()
+
+
 def test_Page_insertion(LocalSession, fake_catalog, fake_pagefile):
     with LocalSession() as db_session:
         page = database.Page(
@@ -243,10 +266,33 @@ def test_Page_unique_together_constraint(LocalSession, fake_pagefile, fake_page)
             db_session.flush()
 
 
-def test_Page_deletion(db_session, fake_file, fake_page):
-    assert fake_file.exists()
+def test_Page_deletion(db_session, fake_pagefile, fake_page):
+    pagefile_id = fake_pagefile.id
+
+    assert len(fake_pagefile.pages) == 1
 
     db_session.delete(fake_page)
     db_session.commit()
 
-    assert not fake_file.exists()
+    assert not db_session.get(database.PageFile, pagefile_id)
+
+
+def test_Page_deletion__remaining_pagefile_pages(
+    faker, db_session, fake_pagefile, fake_page
+):
+    other_page = database.Page(
+        number=faker.random.randint(0, 10),
+        catalog_id=fake_page.catalog_id,
+        file_id=fake_pagefile.id,
+    )
+    db_session.add(other_page)
+    db_session.commit()
+    pagefile_id = fake_pagefile.id
+
+    assert len(fake_pagefile.pages) == 2
+
+    db_session.delete(fake_page)
+    db_session.commit()
+
+    assert db_session.get(database.PageFile, pagefile_id)
+    assert len(fake_pagefile.pages) == 1
