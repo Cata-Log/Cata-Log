@@ -777,6 +777,21 @@ def test_patch_provider__extra_config(fake_provider, client, mock_fetch_provider
     mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
 
+def test_patch_provider__bad_class_id(
+    db_session, fake_provider, client, mock_fetch_provider_task
+):
+    fake_provider.class_id = "no-class"
+    db_session.commit()
+
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"config": {}},
+    )
+
+    assert response.status_code == 400
+    mock_fetch_provider_task.delay.assert_not_called()
+
+
 def test_patch_provider__duplicate(
     db_session, fake_provider, client, mock_fetch_provider_task
 ):

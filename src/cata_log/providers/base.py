@@ -296,7 +296,7 @@ class Provider(abc.ABC):
         """
         provider_class = cls._registry.get(class_id)
         if not provider_class:
-            raise ProviderUnknownClassWarning(class_id=class_id)
+            raise ProviderUnknownClassWarning
         return provider_class
 
     @final

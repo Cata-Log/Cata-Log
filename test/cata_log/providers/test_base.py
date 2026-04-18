@@ -432,11 +432,11 @@ def test_validate_config__success(provider_test_class, config):
     ],
 )
 def test_validate_config__missing_field(provider_test_class, config, missing_configs):
-    with pytest.raises(exceptions.ProviderIncompleteConfigWarning) as error:  # noqa: PT012  # needed to check missing_configs
+    with pytest.raises(exceptions.ProviderIncompleteConfigWarning) as exc_info:
         provider_test_class.validate_config(config)
 
-        for missing_config in missing_configs:
-            assert missing_config in error.missing_configs
+    for missing_config in missing_configs:
+        assert missing_config in exc_info.value.bad_configurations
 
 
 @pytest.mark.parametrize(
@@ -468,8 +468,8 @@ def test_validate_config__missing_field(provider_test_class, config, missing_con
     ],
 )
 def test_validate_config__invalid_field(provider_test_class, config, bad_configs):
-    with pytest.raises(exceptions.ProviderInvalidConfigWarning) as error:  # noqa: PT012  # needed to check bad_configs
+    with pytest.raises(exceptions.ProviderInvalidConfigWarning) as exc_info:
         provider_test_class.validate_config(config)
 
-        for bad_config in bad_configs:
-            assert bad_config in error.bad_configs
+    for bad_config in bad_configs:
+        assert bad_config in exc_info.value.bad_configurations

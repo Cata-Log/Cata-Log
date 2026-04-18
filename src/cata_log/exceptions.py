@@ -17,7 +17,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from collections.abc import Sequence
-from typing import override
+from typing import Any, override
 
 from cata_log.constants import StatusEnum
 
@@ -51,32 +51,40 @@ class ProviderMisconfiguredWarning(ProviderWarning):
 
     provider_status = StatusEnum.MISCONFIGURED
 
+    @override
+    def __init__(
+        self, *args: Any, bad_configurations: Sequence[str] | None = None
+    ) -> None:
+        self.bad_configurations = bad_configurations
+        super().__init__(*args)
+
 
 class ProviderIncompleteConfigWarning(ProviderMisconfiguredWarning):
     """An error indicating that the provider config is incomplete."""
 
     @override
-    def __init__(self, missing_configs: Sequence[str]) -> None:
-        self.missing_configs = missing_configs
-        super().__init__("Provider configuration is incomplete.")
+    def __init__(self, missing_configs: Sequence[str] | None = None) -> None:
+        super().__init__(
+            "Provider configuration is incomplete.", bad_configurations=missing_configs
+        )
 
 
 class ProviderInvalidConfigWarning(ProviderMisconfiguredWarning):
     """An error indicating that a provider config is invalid."""
 
     @override
-    def __init__(self, bad_configs: Sequence[str]) -> None:
-        self.bad_configs = bad_configs
-        super().__init__("Provider configuration is invalid.")
+    def __init__(self, bad_configs: Sequence[str] | None = None) -> None:
+        super().__init__(
+            "Provider configuration is invalid.", bad_configurations=bad_configs
+        )
 
 
 class ProviderUnknownClassWarning(ProviderMisconfiguredWarning):
     """An error indicating that the provider class-id is unknown."""
 
     @override
-    def __init__(self, class_id: str) -> None:
-        self.class_id = class_id
-        super().__init__("Provider type is unknown.")
+    def __init__(self) -> None:
+        super().__init__("Provider type is unknown.", bad_configurations=["class_id"])
 
 
 class ProviderMisconfiguredOrBrokenWarning(ProviderWarning):

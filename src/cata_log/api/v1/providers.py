@@ -152,7 +152,7 @@ async def post_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "error": "The given provider type is unknown",
-                "class_id": unknown_class_warning.class_id,
+                "class_id": new_provider.class_id,
             },
         ) from unknown_class_warning
     try:
@@ -162,7 +162,7 @@ async def post_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "error": "The given provider configuration is incomplete",
-                "missing_configurations": incomplete_warning.missing_configs,
+                "missing_configurations": incomplete_warning.bad_configurations,
             },
         ) from incomplete_warning
     except ProviderInvalidConfigWarning as invalid_warning:
@@ -170,7 +170,7 @@ async def post_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "error": "The given provider configuration is invalid",
-                "missing_configurations": invalid_warning.bad_configs,
+                "missing_configurations": invalid_warning.bad_configurations,
             },
         ) from invalid_warning
     if any(
@@ -224,7 +224,7 @@ async def patch_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "error": "The given provider type is unknown",
-                "class_id": unknown_class_warning.class_id,
+                "class_id": provider.class_id,
             },
         ) from unknown_class_warning
     try:
@@ -234,7 +234,7 @@ async def patch_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "error": "The given provider configuration is incomplete",
-                "missing_configurations": incomplete_warning.missing_configs,
+                "missing_configurations": incomplete_warning.bad_configurations,
             },
         ) from incomplete_warning
     except ProviderInvalidConfigWarning as invalid_warning:
@@ -242,7 +242,7 @@ async def patch_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "error": "The given provider configuration is invalid",
-                "invalid_configurations": invalid_warning.bad_configs,
+                "invalid_configurations": invalid_warning.bad_configurations,
             },
         ) from invalid_warning
     if any(
