@@ -253,7 +253,20 @@ Now to check your code into the main repository, a few more steps have to be tak
 
         pytest test
 
-2. Lint the code you created, please run
+2. Test the provider manually by using it as a plugin.
+To turn your provider file into a viable plugin, replace all imports from . into imports from cata_log.providers
+
+    .. code-block:: python
+
+        from .base import Provider
+        vvvvvvvvvvvvvvvvvvvvvvvvvv
+        from cata_log.providers.base import Provider
+
+With that file follow :doc:`the guide for plugins <plugins>` to run it in a Cata-Log instance.
+
+After you're done testing, you can restore the original import paths.
+
+3. Lint the code you created, please run
 
     .. code-block:: console
 
@@ -264,4 +277,4 @@ Now to check your code into the main repository, a few more steps have to be tak
     If there's something you are not sure how to fix, just leave it as is.
     It can be taken care of in reviewing the merge request.
 
-3. Commit and make a merge request using the *New Provider* template. Done!
+4. Commit and make a merge request using the *New Provider* template. Done!

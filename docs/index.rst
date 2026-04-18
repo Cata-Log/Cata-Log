@@ -18,7 +18,9 @@ Welcome to the documentation of Cata-Log, the central self-hostable hub for all 
    installation
    configuration
    troubleshooting
+   plugins
    how-to-add-provider
+   how-to-add-plugin
    how-to-add-region
    changelog
    contact
