@@ -28,6 +28,11 @@ from cata_log.constants import STORAGE_PATH, StatusEnum
 from test.cata_log.conftest import SideEffects
 
 
+def test_sqlite_pragmas(LocalSession):
+    with LocalSession() as db_session:
+        assert db_session.execute(text("PRAGMA foreign_keys;")).scalar() == 1
+
+
 def test_Provider_insertion(LocalSession, provider_test_class):
     with LocalSession() as db_session:
         provider = database.Provider(
