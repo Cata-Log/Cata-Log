@@ -34,55 +34,6 @@ router = APIRouter(prefix="/opds", tags=["opds"])
 __all__ = ["router"]
 
 
-def build_catalog_entry(catalog: database.Catalog) -> opds.Entry:
-    """OPDS entry for this catalog.
-
-    Returns:
-        An OPDS entry instance with this catalogs metadata.
-    """
-    provider_class = catalog.provider.get_provider_class()
-    entry = opds.Entry(
-        title=f"{catalog.provider.class_id.title()} {catalog.valid_since.date()} - {catalog.valid_until.date()}",
-        uid=str(catalog.id),
-    )
-    entry.metadata.extend(
-        [
-            opds.Metadata(provider_class.description, "summary"),
-            opds.Metadata(provider_class.region.language_code, "language", "dc"),
-            opds.Metadata(catalog.provider.class_id.title(), "publisher", "dc"),
-            opds.Metadata(catalog.created_at.date().isoformat(), "issued", "dc"),
-            opds.Metadata(
-                catalog.updated_at.isoformat(timespec="seconds"), "updated", "dc"
-            ),
-        ]
-    )
-    entry.links.extend(
-        [
-            opds.AcquisitionLink(
-                href=f"/api/v1/catalogs/{catalog.id}/download",
-                media_type="application/pdf",
-            ),
-            opds.AcquisitionLink(
-                href=f"/odps/{catalog.id}.epub",
-                media_type="application/epub+zip",
-            ),
-            opds.Link(
-                href=f"/catalogs/{catalog.id}/",
-                media_type="text/html",
-                rel=opds.Link.Rel.ALTERNATE,
-            ),
-        ]
-    )
-    if catalog.pages:
-        entry.links.append(
-            opds.ThumbnailLink(
-                href=f"/api/v1/pages/{catalog.pages[0].id}/download",
-                media_type=catalog.pages[0].file.media_type,
-            ),
-        )
-    return entry
-
-
 @router.get("/")
 def get_opds_catalog_overview(request: Request) -> Response:
     """Get the odps overview."""
@@ -179,7 +130,7 @@ def get_opds_catalog_latest(
         ]
     )
     for catalog in catalogs:
-        opds_catalog.entries.append(build_catalog_entry(catalog))
+        opds_catalog.entries.append(catalog.as_opds_entry())
     return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
@@ -213,7 +164,7 @@ def get_opds_catalog_all(
         ]
     )
     for catalog in catalogs:
-        opds_catalog.entries.append(build_catalog_entry(catalog))
+        opds_catalog.entries.append(catalog.as_opds_entry())
     return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
@@ -248,7 +199,7 @@ def get_opds_catalog_previews(
         ]
     )
     for catalog in catalogs:
-        opds_catalog.entries.append(build_catalog_entry(catalog))
+        opds_catalog.entries.append(catalog.as_opds_entry())
     return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
@@ -283,7 +234,7 @@ def get_opds_catalog_outdated(
         ]
     )
     for catalog in catalogs:
-        opds_catalog.entries.append(build_catalog_entry(catalog))
+        opds_catalog.entries.append(catalog.as_opds_entry())
     return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
@@ -320,7 +271,7 @@ def get_opds_catalog_current(
         ]
     )
     for catalog in catalogs:
-        opds_catalog.entries.append(build_catalog_entry(catalog))
+        opds_catalog.entries.append(catalog.as_opds_entry())
     return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 
@@ -396,7 +347,7 @@ def get_opds_catalog_provider(
         ]
     )
     for catalog in catalogs:
-        opds_catalog.entries.append(build_catalog_entry(catalog))
+        opds_catalog.entries.append(catalog.as_opds_entry())
     return Response(content=opds_catalog.write(), media_type="application/atom+xml")
 
 

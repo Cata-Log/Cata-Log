@@ -24,6 +24,7 @@ from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
 
+import opds
 from celery_sqlalchemy_v2_scheduler.models import (
     ModelBase,
     PeriodicTask,
@@ -199,6 +200,54 @@ class Catalog(ModelBase, TimestampMixin):
         )
         pdf_bytes_io.seek(0)
         return pdf_bytes_io.read()
+
+    def as_opds_entry(self) -> opds.Entry:
+        """Create an OPDS entry for this catalog.
+
+        Returns:
+            An OPDS entry instance with this catalogs metadata.
+        """
+        provider_class = self.provider.get_provider_class()
+        entry = opds.Entry(
+            title=f"{self.provider.class_id.title()} {self.valid_since.date()} - {self.valid_until.date()}",
+            uid=str(self.id),
+        )
+        entry.metadata.extend(
+            [
+                opds.Metadata(provider_class.description, "summary"),
+                opds.Metadata(provider_class.region.language_code, "language", "dc"),
+                opds.Metadata(self.provider.class_id.title(), "publisher", "dc"),
+                opds.Metadata(self.created_at.date().isoformat(), "issued", "dc"),
+                opds.Metadata(
+                    self.updated_at.isoformat(timespec="seconds"), "updated", "dc"
+                ),
+            ]
+        )
+        entry.links.extend(
+            [
+                opds.AcquisitionLink(
+                    href=f"/api/v1/catalogs/{self.id}/download",
+                    media_type="application/pdf",
+                ),
+                opds.AcquisitionLink(
+                    href=f"/odps/{self.id}.epub",
+                    media_type="application/epub+zip",
+                ),
+                opds.Link(
+                    href=f"/catalogs/{self.id}/",
+                    media_type="text/html",
+                    rel=opds.Link.Rel.ALTERNATE,
+                ),
+            ]
+        )
+        if self.pages:
+            entry.links.append(
+                opds.ThumbnailLink(
+                    href=f"/api/v1/pages/{self.pages[0].id}/download",
+                    media_type=self.pages[0].file.media_type,
+                ),
+            )
+        return entry
 
     def as_epub(self) -> bytes:
         """Convert the catalog to a epub file.
