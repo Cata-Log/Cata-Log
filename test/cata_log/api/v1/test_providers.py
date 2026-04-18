@@ -45,12 +45,16 @@ def test_list_providers__noauth(full_database, noauth_client):
     response = noauth_client.get("/api/v1/providers")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_providers__bad_auth(full_database, bad_auth_client):
     response = bad_auth_client.get("/api/v1/providers")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_providers__noauth__public_get(full_database, noauth_client, public_get):
@@ -75,12 +79,16 @@ def test_list_available_providers__noauth(noauth_client):
     response = noauth_client.get("/api/v1/providers/available")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_available_providers__bad_auth(bad_auth_client):
     response = bad_auth_client.get("/api/v1/providers/available")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_available_providers__noauth__public_get(noauth_client, public_get):
@@ -105,6 +113,8 @@ def test_list_provider_catalogs__noauth(full_database, fake_provider, noauth_cli
     response = noauth_client.get(f"/api/v1/providers/{fake_provider.id}/catalogs")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_provider_catalogs__bad_auth(
@@ -113,6 +123,8 @@ def test_list_provider_catalogs__bad_auth(
     response = bad_auth_client.get(f"/api/v1/providers/{fake_provider.id}/catalogs")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_provider_catalogs__noauth__public_get(
@@ -147,6 +159,8 @@ def test_list_provider_current_catalog__noauth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_provider_current_catalog__bad_auth(
@@ -157,6 +171,8 @@ def test_list_provider_current_catalog__bad_auth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_provider_current_catalog__noauth__public_get(
@@ -193,6 +209,8 @@ def test_list_provider_previews_catalogs__noauth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_provider_previews_catalogs__bad_auth(
@@ -203,6 +221,8 @@ def test_list_provider_previews_catalogs__bad_auth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_provider_previews_catalogs__noauth__public_get(
@@ -239,6 +259,8 @@ def test_list_provider_outdated_catalogs__noauth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_provider_outdated_catalogs__bad_auth(
@@ -249,6 +271,8 @@ def test_list_provider_outdated_catalogs__bad_auth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_provider_outdated_catalogs__noauth__public_get(
@@ -283,6 +307,8 @@ def test_get_latest_provider_catalog__noauth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_latest_provider_catalog__bad_auth(
@@ -293,6 +319,8 @@ def test_get_latest_provider_catalog__bad_auth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_latest_provider_catalog__noauth__public_get(
@@ -335,6 +363,8 @@ def test_list_latest_provider_catalog_pages__noauth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_latest_provider_catalog_pages__bad_auth(
@@ -345,6 +375,8 @@ def test_list_latest_provider_catalog_pages__bad_auth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_latest_provider_catalog_pages__noauth__public_get(
@@ -389,6 +421,8 @@ def test_get_latest_provider_catalog_page__noauth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_latest_provider_catalog_page__bad_auth(
@@ -399,6 +433,8 @@ def test_get_latest_provider_catalog_page__bad_auth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_latest_provider_catalog_page__noauth__public_get(
@@ -435,6 +471,39 @@ def test_get_latest_provider_catalog_page__page_not_found(
     assert data["detail"] == "Page not found"
 
 
+def test_download_latest_provider_catalog__noauth(
+    full_database, fake_provider, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/download",
+    )
+
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_download_latest_provider_catalog__bad_auth(
+    full_database, fake_provider, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/download",
+    )
+
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_download_latest_provider_catalog__not_found(full_database, client):
+    response = client.get(
+        "/api/v1/providers/1034/catalogs/latest/download",
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Catalog not found"
+
+
 @pytest.mark.parametrize(("filename"), [None, "page_image.png"])
 def test_download_latest_provider_catalog_page(
     full_database, fake_provider, fake_page, fake_file, client, filename
@@ -463,6 +532,8 @@ def test_download_latest_provider_catalog_page__noauth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_download_latest_provider_catalog_page__bad_auth(
@@ -473,6 +544,8 @@ def test_download_latest_provider_catalog_page__bad_auth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_download_latest_provider_catalog_page__noauth__public_get(
@@ -543,6 +616,8 @@ def test_embed_latest_provider_catalog_page__noauth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_embed_latest_provider_catalog_page__bad_auth(
@@ -553,6 +628,8 @@ def test_embed_latest_provider_catalog_page__bad_auth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_embed_latest_provider_catalog_page__noauth__public_get(
@@ -605,12 +682,16 @@ def test_get_provider__noauth(fake_provider, noauth_client):
     response = noauth_client.get(f"/api/v1/providers/{fake_provider.id}")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_provider__bad_auth(fake_provider, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/providers/{fake_provider.id}")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_provider__noauth__public_get(fake_provider, noauth_client, public_get):
@@ -640,12 +721,16 @@ def test_delete_provider__noauth(LocalSession, fake_provider, noauth_client):
     response = noauth_client.delete(f"/api/v1/providers/{fake_provider.id}")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_delete_provider__bad_auth(LocalSession, fake_provider, bad_auth_client):
     response = bad_auth_client.delete(f"/api/v1/providers/{fake_provider.id}")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_delete_provider__noauth__public_get(
@@ -654,6 +739,8 @@ def test_delete_provider__noauth__public_get(
     response = noauth_client.delete(f"/api/v1/providers/{fake_provider.id}")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_delete_provider__not_found(client):
@@ -699,6 +786,8 @@ def test_patch_provider__noauth(fake_provider, noauth_client, mock_fetch_provide
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
     mock_fetch_provider_task.delay.assert_not_called()
 
 
@@ -716,6 +805,8 @@ def test_patch_provider__bad_auth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
     mock_fetch_provider_task.delay.assert_not_called()
 
 
@@ -733,6 +824,8 @@ def test_patch_provider__noauth__public_get(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
     mock_fetch_provider_task.delay.assert_not_called()
 
 
@@ -753,6 +846,23 @@ def test_patch_provider__missing_config(
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={"config": {}},
+    )
+
+    assert response.status_code == 400
+    mock_fetch_provider_task.delay.assert_not_called()
+
+
+def test_patch_provider__missing_config(
+    fake_provider, client, mock_fetch_provider_task
+):
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={
+            "config": {
+                **fake_provider.config,
+                "optional_typed_config": "noint",
+            },
+        },
     )
 
     assert response.status_code == 400
@@ -864,6 +974,8 @@ def test_post_provider__noauth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
     mock_fetch_provider_task.delay.assert_not_called()
 
 
@@ -879,6 +991,28 @@ def test_post_provider__bad_auth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+    mock_fetch_provider_task.delay.assert_not_called()
+
+
+def test_post_provider__bad_config(
+    LocalSession, client, provider_test_class, mock_fetch_provider_task
+):
+    response = client.post(
+        url="/api/v1/providers",
+        json={
+            "class_id": provider_test_class.id(),
+            "config": {
+                **provider_test_class.default_config,
+                "optional_typed_config": "noint",
+            },
+        },
+    )
+
+    assert response.status_code == 400
+    with LocalSession() as db_session:
+        assert not db_session.query(database.Provider).all()
     mock_fetch_provider_task.delay.assert_not_called()
 
 
@@ -911,6 +1045,8 @@ def test_post_provider__noauth__public_get(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
     mock_fetch_provider_task.delay.assert_not_called()
 
 
@@ -977,6 +1113,8 @@ def test_update_provider__noauth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
     mock_fetch_provider_task.delay.assert_not_called()
 
 
@@ -988,6 +1126,8 @@ def test_update_provider__bad_auth(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
     mock_fetch_provider_task.delay.assert_not_called()
 
 
@@ -999,6 +1139,8 @@ def test_update_provider__noauth__public_get(
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
     mock_fetch_provider_task.delay.assert_not_called()
 
 

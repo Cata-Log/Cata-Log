@@ -353,3 +353,10 @@ def test_get_opds_catalog___bad_auth(bad_auth_client, fake_catalog, full_databas
     assert response.headers
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_opds_catalog_provider__not_found(client, full_database):
+    response = client.get("/opds/215.epub")
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json()["detail"] == "Catalog not found"

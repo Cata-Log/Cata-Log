@@ -71,6 +71,24 @@ def test_Provider_insertion(LocalSession, provider_test_class):
         assert provider.updated_at
 
 
+def test_Provider_insertion__bad_class_id(LocalSession):
+    with LocalSession() as db_session:
+        provider = database.Provider(
+            class_id="unknown1234",
+            config={},
+        )
+        db_session.add(provider)
+        db_session.commit()
+        db_session.refresh(provider)
+
+        assert provider.id
+        assert provider.class_id == "unknown1234"
+        assert provider.config == {}
+        assert not provider.task_id
+        assert provider.created_at
+        assert provider.updated_at
+
+
 def test_Provider_deletion(db_session, full_database, fake_provider):
     assert db_session.query(database.Catalog).all()
     assert db_session.query(PeriodicTask).all()

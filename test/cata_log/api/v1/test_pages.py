@@ -38,12 +38,16 @@ def test_list_pages__noauth(full_database, noauth_client):
     response = noauth_client.get("/api/v1/pages")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_pages__bad_auth(full_database, bad_auth_client):
     response = bad_auth_client.get("/api/v1/pages")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_pages__noauth__public_get(
@@ -72,12 +76,16 @@ def test_get_page__noauth(fake_page, noauth_client):
     response = noauth_client.get(f"/api/v1/pages/{fake_page.id}")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_page__bad_auth(fake_page, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/pages/{fake_page.id}")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_page__noauth__public_get(fake_page, noauth_client, public_get):
@@ -117,12 +125,16 @@ def test_download_page__noauth(fake_page, noauth_client):
     response = noauth_client.get(f"/api/v1/pages/{fake_page.id}/download")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_download_page__bad_auth(fake_page, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/pages/{fake_page.id}/download")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_download_page__noauth__public_get(
@@ -170,12 +182,16 @@ def test_embed_page__noauth(fake_page, noauth_client):
     response = noauth_client.get(f"/api/v1/pages/{fake_page.id}/embed")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_embed_page__bad_auth(fake_page, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/pages/{fake_page.id}/embed")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_embed_page(fake_page, fake_file, noauth_client, public_get):

@@ -34,12 +34,16 @@ def test_list_catalogs__noauth(full_database, noauth_client):
     response = noauth_client.get("/api/v1/catalogs")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_catalogs__bad_auth(full_database, bad_auth_client):
     response = bad_auth_client.get("/api/v1/catalogs")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_catalogs__noauth__public_get(full_database, noauth_client, public_get):
@@ -62,12 +66,16 @@ def test_list_previews_catalogs__noauth(full_database, noauth_client):
     response = noauth_client.get("/api/v1/catalogs/previews")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_previews_catalogs__bad_auth(full_database, bad_auth_client):
     response = bad_auth_client.get("/api/v1/catalogs/previews")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_previews_catalogs__noauth__public_get(
@@ -96,12 +104,16 @@ def test_list_current_catalogs__noauth(full_database, noauth_client):
     response = noauth_client.get("/api/v1/catalogs/current")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_current_catalogs__bad_auth(full_database, bad_auth_client):
     response = bad_auth_client.get("/api/v1/catalogs/current")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_current_catalogs__noauth__public_get(
@@ -130,12 +142,16 @@ def test_list_outdated_catalogs__noauth(full_database, noauth_client):
     response = noauth_client.get("/api/v1/catalogs/outdated")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_outdated_catalogs__bad_auth(full_database, bad_auth_client):
     response = bad_auth_client.get("/api/v1/catalogs/outdated")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_list_outdated_catalogs__noauth__public_get(
@@ -162,12 +178,16 @@ def test_get_catalog__noauth(fake_catalog, noauth_client):
     response = noauth_client.get(f"/api/v1/catalogs/{fake_catalog.id}")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_catalog__bad_auth(fake_catalog, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/catalogs/{fake_catalog.id}")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_catalog__noauth__public_get(fake_catalog, noauth_client, public_get):
@@ -201,6 +221,8 @@ def test_get_catalog_page__noauth(fake_catalog, fake_page, noauth_client):
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_catalog_page__bad_auth(fake_catalog, fake_page, bad_auth_client):
@@ -209,6 +231,8 @@ def test_get_catalog_page__bad_auth(fake_catalog, fake_page, bad_auth_client):
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_catalog_page__noauth__public_get(
@@ -236,12 +260,16 @@ def test_get_catalog_pages__noauth(fake_catalog, noauth_client):
     response = noauth_client.get(f"/api/v1/catalogs/{fake_catalog.id}/pages")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_catalog_pages__bad_auth(fake_catalog, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/catalogs/{fake_catalog.id}/pages")
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_get_catalog_pages__noauth__public_get(
@@ -269,6 +297,37 @@ def test_get_catalog_page__page_not_found(client):
     assert response.json() == {"detail": "Page not found"}
 
 
+def test_download_latest_provider_catalog__noauth(
+    full_database, fake_provider, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/catalogs/{fake_provider.id}/download",
+    )
+
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_download_catalog__bad_auth(full_database, fake_provider, bad_auth_client):
+    response = bad_auth_client.get(
+        f"/api/v1/catalogs/{fake_provider.id}/download",
+    )
+
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_download_catalog__not_found(full_database, client):
+    response = client.get(
+        "/api/v1/catalogs/546/download",
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Catalog not found"
+
+
 @pytest.mark.parametrize(("filename"), [None, "page_image.png"])
 def test_download_catalog_page(fake_catalog, fake_page, fake_file, client, filename):
     response = client.get(
@@ -293,6 +352,8 @@ def test_download_catalog_page__noauth(fake_catalog, fake_page, noauth_client):
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_download_catalog_page__bad_auth(fake_catalog, fake_page, bad_auth_client):
@@ -301,6 +362,8 @@ def test_download_catalog_page__bad_auth(fake_catalog, fake_page, bad_auth_clien
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_download_catalog_page__noauth__public_get(
@@ -357,6 +420,8 @@ def test_embed_catalog_page__noauth(fake_catalog, fake_page, noauth_client):
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_embed_catalog_page__bad_auth(fake_catalog, fake_page, bad_auth_client):
@@ -365,6 +430,8 @@ def test_embed_catalog_page__bad_auth(fake_catalog, fake_page, bad_auth_client):
     )
 
     assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_embed_catalog_page(
