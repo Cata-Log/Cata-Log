@@ -33,13 +33,7 @@ def test_verify_credentials__post__success(faker, fake_credentials):
 def test_verify_credentials__get__bad_auth(faker, fake_credentials):
     with pytest.raises(
         HTTPException,
-        check=lambda e: (
-            (e.status_code == codes.UNAUTHORIZED)
-            and e.headers is not None
-            and ("WWW-Authenticate" in e.headers)
-            and (e.headers["WWW-Authenticate"] == "Basic")
-        ),
-    ):
+    ) as exc_info:
         verify_credentials(
             request=Request(
                 method="GET",
@@ -50,17 +44,14 @@ def test_verify_credentials__get__bad_auth(faker, fake_credentials):
             ),
         )
 
+    assert exc_info.value.status_code == codes.UNAUTHORIZED
+    assert exc_info.value.headers is not None
+    assert "WWW-Authenticate" in exc_info.value.headers
+    assert exc_info.value.headers["WWW-Authenticate"] == "Basic"
+
 
 def test_verify_credentials__post__bad_auth(faker, fake_credentials):
-    with pytest.raises(
-        HTTPException,
-        check=lambda e: (
-            (e.status_code == codes.UNAUTHORIZED)
-            and e.headers is not None
-            and ("WWW-Authenticate" in e.headers)
-            and (e.headers["WWW-Authenticate"] == "Basic")
-        ),
-    ):
+    with pytest.raises(HTTPException) as exc_info:
         verify_credentials(
             request=Request(
                 method="POST",
@@ -70,6 +61,11 @@ def test_verify_credentials__post__bad_auth(faker, fake_credentials):
                 username=faker.user_name(), password=faker.password()
             ),
         )
+
+    assert exc_info.value.status_code == codes.UNAUTHORIZED
+    assert exc_info.value.headers is not None
+    assert "WWW-Authenticate" in exc_info.value.headers
+    assert exc_info.value.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_verify_credentials__get__bad_auth__public_get(
@@ -89,15 +85,7 @@ def test_verify_credentials__get__bad_auth__public_get(
 def test_verify_credentials__post__bad_auth__public_get(
     faker, fake_credentials, public_get
 ):
-    with pytest.raises(
-        HTTPException,
-        check=lambda e: (
-            (e.status_code == codes.UNAUTHORIZED)
-            and e.headers is not None
-            and ("WWW-Authenticate" in e.headers)
-            and (e.headers["WWW-Authenticate"] == "Basic")
-        ),
-    ):
+    with pytest.raises(HTTPException) as exc_info:
         verify_credentials(
             request=Request(
                 method="POST",
@@ -107,6 +95,11 @@ def test_verify_credentials__post__bad_auth__public_get(
                 username=faker.user_name(), password=faker.password()
             ),
         )
+
+    assert exc_info.value.status_code == codes.UNAUTHORIZED
+    assert exc_info.value.headers is not None
+    assert "WWW-Authenticate" in exc_info.value.headers
+    assert exc_info.value.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_verify_credentials__get__noauth__public_get(
@@ -124,15 +117,7 @@ def test_verify_credentials__get__noauth__public_get(
 def test_verify_credentials__post__noauth__public_get(
     faker, fake_credentials, public_get
 ):
-    with pytest.raises(
-        HTTPException,
-        check=lambda e: (
-            (e.status_code == codes.UNAUTHORIZED)
-            and e.headers is not None
-            and ("WWW-Authenticate" in e.headers)
-            and (e.headers["WWW-Authenticate"] == "Basic")
-        ),
-    ):
+    with pytest.raises(HTTPException) as exc_info:
         verify_credentials(
             request=Request(
                 method="POST",
@@ -141,17 +126,14 @@ def test_verify_credentials__post__noauth__public_get(
             credentials=None,
         )
 
+    assert exc_info.value.status_code == codes.UNAUTHORIZED
+    assert exc_info.value.headers is not None
+    assert "WWW-Authenticate" in exc_info.value.headers
+    assert exc_info.value.headers["WWW-Authenticate"] == "Basic"
+
 
 def test_verify_credentials__get__no_password(faker, fake_username):
-    with pytest.raises(
-        HTTPException,
-        check=lambda e: (
-            (e.status_code == codes.UNAUTHORIZED)
-            and e.headers is not None
-            and ("WWW-Authenticate" in e.headers)
-            and (e.headers["WWW-Authenticate"] == "Basic")
-        ),
-    ):
+    with pytest.raises(HTTPException) as exc_info:
         verify_credentials(
             request=Request(
                 method="GET",
@@ -160,17 +142,14 @@ def test_verify_credentials__get__no_password(faker, fake_username):
             credentials=HTTPBasicCredentials(username=fake_username, password=""),
         )
 
+    assert exc_info.value.status_code == codes.UNAUTHORIZED
+    assert exc_info.value.headers is not None
+    assert "WWW-Authenticate" in exc_info.value.headers
+    assert exc_info.value.headers["WWW-Authenticate"] == "Basic"
+
 
 def test_verify_credentials__post__no_password(faker, fake_username):
-    with pytest.raises(
-        HTTPException,
-        check=lambda e: (
-            (e.status_code == codes.UNAUTHORIZED)
-            and e.headers is not None
-            and ("WWW-Authenticate" in e.headers)
-            and (e.headers["WWW-Authenticate"] == "Basic")
-        ),
-    ):
+    with pytest.raises(HTTPException) as exc_info:
         verify_credentials(
             request=Request(
                 method="POST",
@@ -178,6 +157,10 @@ def test_verify_credentials__post__no_password(faker, fake_username):
             ),
             credentials=HTTPBasicCredentials(username=fake_username, password=""),
         )
+    assert exc_info.value.status_code == codes.UNAUTHORIZED
+    assert exc_info.value.headers is not None
+    assert "WWW-Authenticate" in exc_info.value.headers
+    assert exc_info.value.headers["WWW-Authenticate"] == "Basic"
 
 
 def test_verify_credentials__get__no_password__public_get(
@@ -195,15 +178,7 @@ def test_verify_credentials__get__no_password__public_get(
 def test_verify_credentials__post__no_password__public_get(
     faker, fake_username, public_get
 ):
-    with pytest.raises(
-        HTTPException,
-        check=lambda e: (
-            (e.status_code == codes.UNAUTHORIZED)
-            and e.headers is not None
-            and ("WWW-Authenticate" in e.headers)
-            and (e.headers["WWW-Authenticate"] == "Basic")
-        ),
-    ):
+    with pytest.raises(HTTPException) as exc_info:
         verify_credentials(
             request=Request(
                 method="POST",
@@ -211,3 +186,8 @@ def test_verify_credentials__post__no_password__public_get(
             ),
             credentials=HTTPBasicCredentials(username=fake_username, password=""),
         )
+
+    assert exc_info.value.status_code == codes.UNAUTHORIZED
+    assert exc_info.value.headers is not None
+    assert "WWW-Authenticate" in exc_info.value.headers
+    assert exc_info.value.headers["WWW-Authenticate"] == "Basic"
