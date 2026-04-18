@@ -23,7 +23,7 @@ from cata_log.constants import PLUGINS_PATH
 
 def load_plugins() -> None:
     """Load all provider plugins."""
-    for file in PLUGINS_PATH.glob("*.py"):
+    for file in PLUGINS_PATH.glob("**/**.py"):
         module_name = file.stem
         spec = importlib.util.spec_from_file_location(module_name, file)
         if spec is not None:
