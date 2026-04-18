@@ -14,6 +14,8 @@ from cata_log.utils import page_numbers
         (page_numbers.PageNumber(1, 1), page_numbers.DoublePageNumber(0, 0, 1)),
         (page_numbers.PageNumber(3, 2), page_numbers.DoublePageNumber(1, 0, 2)),
         (page_numbers.PageNumber(2, 1), page_numbers.PageNumber(2, 1)),
+        (page_numbers.PageNumber(4, 2), 4.0),
+        (page_numbers.PageNumber(1, 1), 1.0),
     ],
 )
 def test_PageNumber___eq___equal(page_number, equal_object):
@@ -32,6 +34,8 @@ def test_PageNumber___eq___equal(page_number, equal_object):
         (page_numbers.PageNumber(3, 2), page_numbers.DoublePageNumber(1, 1, 2)),
         (page_numbers.PageNumber(2, 1), [2, 1]),
         (page_numbers.PageNumber(2, 1), (2, 1)),
+        (page_numbers.PageNumber(2, 1), 4.6),
+        (page_numbers.PageNumber(4, 1), 0.3),
     ],
 )
 def test_PageNumber___eq___unequal(page_number, unequal_object):
@@ -49,6 +53,8 @@ def test_PageNumber___eq___unequal(page_number, unequal_object):
         (page_numbers.PageNumber(2, 1), page_numbers.DoublePageNumber(0, 0, 1)),
         (page_numbers.PageNumber(4, 2), page_numbers.DoublePageNumber(1, 0, 2)),
         (page_numbers.PageNumber(2, 1), page_numbers.PageNumber(1, 1)),
+        (page_numbers.PageNumber(3, 2), 1.0),
+        (page_numbers.PageNumber(2, 1), 0.3),
     ],
 )
 def test_PageNumber___gt___greater(page_number, smaller_object):
@@ -65,6 +71,8 @@ def test_PageNumber___gt___greater(page_number, smaller_object):
         (page_numbers.PageNumber(4, 0), page_numbers.DoublePageNumber(3, 1, 0)),
         (page_numbers.PageNumber(1, 1), page_numbers.DoublePageNumber(1, 1, 2)),
         (page_numbers.PageNumber(3, 2), page_numbers.DoublePageNumber(2, 0, 2)),
+        (page_numbers.PageNumber(2, 1), 3.0),
+        (page_numbers.PageNumber(4, 2), 5.0),
     ],
 )
 def test_PageNumber___gt___smaller(page_number, greater_object):
@@ -115,6 +123,8 @@ def test_PageNumber___sub__(minuend, subtrahend, expected_difference):
             page_numbers.DoublePageNumber(1, 0, 2),
         ),
         (page_numbers.DoublePageNumber(3, 1, 1), page_numbers.PageNumber(7, 1)),
+        (page_numbers.DoublePageNumber(2, 0, 1), 4.0),
+        (page_numbers.DoublePageNumber(3, 1, 0), 6.0),
     ],
 )
 def test_DoublePageNumber___eq___equal(double_page_number, equal_object):
@@ -142,6 +152,8 @@ def test_DoublePageNumber___eq___equal(double_page_number, equal_object):
         ),
         (page_numbers.DoublePageNumber(2, 1, 1), [2, 1]),
         (page_numbers.DoublePageNumber(2, 1, 1), (2, 1)),
+        (page_numbers.DoublePageNumber(1, 0, 0), 7.3),
+        (page_numbers.DoublePageNumber(2, 1, 0), 2.6),
     ],
 )
 def test_DoublePageNumber___eq___unequal(double_page_number, unequal_object):
@@ -192,6 +204,8 @@ def test_DoublePageNumber___gt___greater(double_page_number, smaller_object):
             page_numbers.DoublePageNumber(3, 0, 2),
             page_numbers.DoublePageNumber(5, 1, 2),
         ),
+        (page_numbers.DoublePageNumber(1, 1, 0), 3.6),
+        (page_numbers.DoublePageNumber(3, 1, 0), 8.2),
     ],
 )
 def test_DoublePageNumber___gt___smaller(double_page_number, greater_object):

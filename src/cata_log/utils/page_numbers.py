@@ -111,7 +111,7 @@ class PageNumber:
             return other._number == self._number
         if isinstance(other, DoublePageNumber):
             return self == other.as_page_number()
-        if isinstance(other, int):
+        if isinstance(other, (int, float)):
             return int(self) == other
         return NotImplemented
 
@@ -125,7 +125,7 @@ class PageNumber:
             return self._number > other._number
         if isinstance(other, DoublePageNumber):
             return self > other.as_page_number()
-        if isinstance(other, int):
+        if isinstance(other, (int, float)):
             return int(self) > other
         return NotImplemented
 
