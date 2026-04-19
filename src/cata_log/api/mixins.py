@@ -16,7 +16,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import datetime
+from datetime import UTC, datetime
+
+from pydantic import field_validator
 
 
 class TimestampMixin:
@@ -24,3 +26,33 @@ class TimestampMixin:
 
     created_at: datetime
     updated_at: datetime
+
+    @field_validator("created_at")
+    @classmethod
+    def attach_created_at_timezone(cls, value: datetime) -> datetime:
+        """Add UTC timezone to created_at field.
+
+        Args:
+            value: The datetime to make aware.
+
+        Returns:
+            The aware datetime.
+        """
+        if value.tzinfo is None:
+            return value.astimezone(UTC)
+        return value
+
+    @field_validator("updated_at")
+    @classmethod
+    def attach_updated_at_timezone(cls, value: datetime) -> datetime:
+        """Add UTC timezone to a naive updated_at field.
+
+        Args:
+            value: The datetime to make aware.
+
+        Returns:
+            The aware datetime.
+        """
+        if value.tzinfo is None:
+            return value.astimezone(UTC)
+        return value
