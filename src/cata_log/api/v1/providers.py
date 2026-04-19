@@ -47,6 +47,11 @@ class Provider(BaseModel, TimestampMixin):
     class_id: str
     config: dict[str, str]
     status: constants.StatusEnum
+
+
+class FullProvider(Provider):
+    """Full provider data model."""
+
     catalogs: list[Catalog]
 
 
@@ -263,7 +268,9 @@ async def patch_provider(
     return provider
 
 
-@router.get("/{provider_id}", response_model=Provider, operation_id="get-provider-v1")
+@router.get(
+    "/{provider_id}", response_model=FullProvider, operation_id="get-provider-v1"
+)
 async def get_provider(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> database.Provider:

@@ -38,6 +38,11 @@ class Catalog(BaseModel, TimestampMixin):
     provider_id: int
     valid_since: datetime
     valid_until: datetime
+
+
+class FullCatalog(Catalog):
+    """Full catalog data model."""
+
     pages: list[Page]
 
 
@@ -104,7 +109,7 @@ async def list_outdated_catalogs(
     )
 
 
-@router.get("/{catalog_id}", response_model=Catalog, operation_id="get-catalog-v1")
+@router.get("/{catalog_id}", response_model=FullCatalog, operation_id="get-catalog-v1")
 async def get_catalog(
     catalog_id: int, db_session: Session = database.depends_db_session
 ) -> database.Catalog:
