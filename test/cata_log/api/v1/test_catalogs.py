@@ -52,6 +52,44 @@ def test_list_catalogs__noauth__public_get(full_database, noauth_client, public_
     assert response.status_code == 200
 
 
+def test_list_latest_catalogs(full_database, fake_latest_catalog, client):
+    response = client.get("/api/v1/catalogs/latest")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]
+    assert data[0]["id"] == fake_latest_catalog.id
+
+
+def test_list_latest_catalogs__noauth(full_database, noauth_client):
+    response = noauth_client.get("/api/v1/catalogs/latest")
+
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_latest_catalogs__bad_auth(full_database, bad_auth_client):
+    response = bad_auth_client.get("/api/v1/catalogs/latest")
+
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_latest_catalogs__noauth__public_get(
+    full_database, fake_latest_catalog, noauth_client, public_get
+):
+    response = noauth_client.get("/api/v1/catalogs/latest")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]
+    assert data[0]["id"] == fake_latest_catalog.id
+
+
 def test_list_previews_catalogs(full_database, fake_catalog_preview, client):
     response = client.get("/api/v1/catalogs/previews")
 

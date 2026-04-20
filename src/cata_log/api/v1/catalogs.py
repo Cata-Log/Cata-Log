@@ -22,6 +22,7 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse, Response
 from pydantic import AwareDatetime, BaseModel
 from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.sql import func
 
 from cata_log import database
 from cata_log.api.mixins import AwareTimestampsMixin
@@ -55,6 +56,30 @@ async def list_catalogs(
         db_session.query(database.Catalog)
         .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
+        .all()
+    )
+
+
+@router.get(
+    "/latest", response_model=list[Catalog], operation_id="list-latest-catalogs-v1"
+)
+async def list_latest_catalogs(
+    db_session: Session = database.depends_db_session,
+) -> list[database.Catalog]:
+    """List the latest catalog for every provider."""
+    subquery = db_session.query(
+        database.Catalog.id.label("id"),
+        func.row_number()
+        .over(
+            partition_by=database.Catalog.provider_id,
+            order_by=database.Catalog.created_at.desc(),
+        )
+        .label("rn"),
+    ).subquery()
+    return (
+        db_session.query(database.Catalog)
+        .join(subquery, database.Catalog.id == subquery.c.id)
+        .filter(subquery.c.rn == 1)
         .all()
     )
 
