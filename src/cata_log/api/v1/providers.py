@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session, selectinload
 from starlette.responses import JSONResponse
 
 from cata_log import constants, database
-from cata_log.api.mixins import TimestampMixin
+from cata_log.api.mixins import AwareTimestampsMixin
 from cata_log.exceptions import (
     ProviderIncompleteConfigWarning,
     ProviderInvalidConfigWarning,
@@ -40,7 +40,7 @@ from .pages import Page
 router = APIRouter(prefix="/providers", tags=["providers"])
 
 
-class Provider(BaseModel, TimestampMixin):
+class Provider(AwareTimestampsMixin, BaseModel):
     """Provider data model."""
 
     id: int

@@ -20,54 +20,24 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse, Response
-from pydantic import BaseModel, field_validator
+from pydantic import AwareDatetime, BaseModel
 from sqlalchemy.orm import Session, selectinload
 
 from cata_log import database
-from cata_log.api.mixins import TimestampMixin
+from cata_log.api.mixins import AwareTimestampsMixin
 
 from .pages import Page
 
 router = APIRouter(prefix="/catalogs", tags=["catalogs"])
 
 
-class Catalog(BaseModel, TimestampMixin):
+class Catalog(AwareTimestampsMixin, BaseModel):
     """Catalog data model."""
 
     id: int
     provider_id: int
-    valid_since: datetime
-    valid_until: datetime
-
-    @field_validator("valid_since")
-    @classmethod
-    def attach_valid_since_timezone(cls, value: datetime) -> datetime:
-        """Add UTC timezone to valid_since field.
-
-        Args:
-            value: The datetime to make aware.
-
-        Returns:
-            The aware datetime.
-        """
-        if value.tzinfo is None:
-            return value.astimezone(UTC)
-        return value
-
-    @field_validator("valid_until")
-    @classmethod
-    def attach_valid_until_timezone(cls, value: datetime) -> datetime:
-        """Add UTC timezone to a naive valid_until field.
-
-        Args:
-            value: The datetime to make aware.
-
-        Returns:
-            The aware datetime.
-        """
-        if value.tzinfo is None:
-            return value.astimezone(UTC)
-        return value
+    valid_since: AwareDatetime
+    valid_until: AwareDatetime
 
 
 class FullCatalog(Catalog):

@@ -24,12 +24,12 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 from sqlalchemy.orm import Session
 
 from cata_log import database
-from cata_log.api.mixins import TimestampMixin
+from cata_log.api.mixins import AwareTimestampsMixin
 
 router = APIRouter(prefix="/pages", tags=["pages"])
 
 
-class PageFile(BaseModel, TimestampMixin):
+class PageFile(AwareTimestampsMixin, BaseModel):
     """Page file data model."""
 
     id: int
@@ -46,7 +46,7 @@ class PageFile(BaseModel, TimestampMixin):
         return Path(self.path).name
 
 
-class Page(BaseModel, TimestampMixin):
+class Page(AwareTimestampsMixin, BaseModel):
     """Page data model."""
 
     id: int

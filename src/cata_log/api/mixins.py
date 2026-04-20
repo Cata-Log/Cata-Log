@@ -17,42 +17,29 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import UTC, datetime
+from typing import Any
 
-from pydantic import field_validator
+from pydantic import AwareDatetime, field_validator
 
 
-class TimestampMixin:
-    """Mixin for api data with database timestamps."""
+class AwareDatetimesMixin:
+    """Mixin for aware datetimes."""
 
-    created_at: datetime
-    updated_at: datetime
-
-    @field_validator("created_at")
+    @field_validator("*", mode="before")
     @classmethod
-    def attach_created_at_timezone(cls, value: datetime) -> datetime:
-        """Add UTC timezone to created_at field.
-
-        Args:
-            value: The datetime to make aware.
+    def make_datetimes_aware(cls, value: Any) -> Any:  # noqa: ANN401 # no reason to be precise here
+        """Add a timezone to naive datetime values.
 
         Returns:
             The aware datetime.
         """
-        if value.tzinfo is None:
+        if isinstance(value, datetime) and value.tzinfo is None:
             return value.astimezone(UTC)
         return value
 
-    @field_validator("updated_at")
-    @classmethod
-    def attach_updated_at_timezone(cls, value: datetime) -> datetime:
-        """Add UTC timezone to a naive updated_at field.
 
-        Args:
-            value: The datetime to make aware.
+class AwareTimestampsMixin(AwareDatetimesMixin):
+    """Mixin for api data with aware datetimes and database timestamps."""
 
-        Returns:
-            The aware datetime.
-        """
-        if value.tzinfo is None:
-            return value.astimezone(UTC)
-        return value
+    created_at: AwareDatetime
+    updated_at: AwareDatetime
