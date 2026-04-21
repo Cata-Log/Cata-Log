@@ -5,7 +5,7 @@ from fastapi import Depends, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from cata_log.config import Settings
+from cata_log.settings import Settings
 
 http_basic_security = HTTPBasic(auto_error=False)
 

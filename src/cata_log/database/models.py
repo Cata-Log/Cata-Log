@@ -60,7 +60,7 @@ class Provider(ModelBase, TimestampMixin):
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     class_id: orm.Mapped[str] = orm.mapped_column()
-    config: orm.Mapped[dict[str, str]] = orm.mapped_column(JSON)
+    configuration: orm.Mapped[dict[str, str]] = orm.mapped_column(JSON)
     task: orm.Mapped[PeriodicTask] = orm.relationship()
     task_id: orm.Mapped[int] = orm.mapped_column(
         ForeignKey(PeriodicTask.__tablename__ + ".id", ondelete="CASCADE"),
@@ -75,7 +75,7 @@ class Provider(ModelBase, TimestampMixin):
         server_default=StatusEnum.HEALTHY.value,
     )
     __tablename__ = "providers"
-    __table_args__ = (UniqueConstraint("class_id", "config"),)
+    __table_args__ = (UniqueConstraint("class_id", "configuration"),)
 
     def get_provider_class(self) -> type[ProviderType]:
         """Get the class for this provider.
@@ -91,7 +91,7 @@ class Provider(ModelBase, TimestampMixin):
         Returns:
             The provider instance.
         """
-        return self.get_provider_class()(self.config)
+        return self.get_provider_class()(self.configuration)
 
     def fetch_catalog(self, db_session: orm.Session) -> None:
         """Fetch this provider's catalog and save it to storage and db."""

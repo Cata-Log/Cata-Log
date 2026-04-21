@@ -54,7 +54,7 @@ class LidlDeutschland(Provider):
     def _get_catalog_data(self) -> None:
         overview_response = self._client.get(
             self.overview_url_template.format(
-                **self._config,
+                **self._configuration,
                 language_code_lower=self.region.language_code.lower(),
                 language_code_upper=self.region.language_code.upper(),
             )

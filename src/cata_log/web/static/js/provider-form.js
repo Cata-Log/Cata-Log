@@ -8,7 +8,7 @@ document.getElementById("provider-form").addEventListener("submit", (event) => {
     }),
     body: JSON.stringify({
       class_id: form.get("class_id"),
-      config: JSON.parse(form.get("config")),
+      configuration: JSON.parse(form.get("configuration")),
     }),
   });
   fetch(request).then((response) => {

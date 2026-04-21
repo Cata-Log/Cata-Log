@@ -28,20 +28,20 @@ import httpx
 from celery.schedules import crontab
 from fake_useragent import UserAgent
 
-from cata_log.config import Settings
 from cata_log.constants import STORAGE_PATH
 from cata_log.exceptions import (
     CatalogUnavailableWarning,
     NetworkError,
     PagesExhausted,
     ProviderBrokenWarning,
-    ProviderIncompleteConfigWarning,
-    ProviderInvalidConfigWarning,
+    ProviderIncompleteConfigurationWarning,
+    ProviderInvalidConfigurationWarning,
     ProviderMisconfiguredOrBrokenWarning,
     ProviderRegistrationWarning,
     ProviderUnknownClassWarning,
     ProviderWarning,
 )
+from cata_log.settings import Settings
 from cata_log.utils.page_numbers import PageNumber, page_numbering
 
 from .configuration import Configuration
@@ -78,7 +78,7 @@ class Provider(abc.ABC):
         """
         self._logger = logging.getLogger(self.__class__.__name__)
 
-        self._config = self.validate_config(configuration)
+        self._configuration = self.validate_configuration(configuration)
         self._relevant_datetime = self.get_relevant_datetime()
         self._client = httpx.Client(
             follow_redirects=True,
@@ -321,38 +321,44 @@ class Provider(abc.ABC):
 
     @final
     @classmethod
-    def validate_config(cls, config_dict: dict[str, str]) -> dict[str, str]:
+    def validate_configuration(
+        cls, configuration_dict: dict[str, str]
+    ) -> dict[str, str]:
         """Validate a given configuration and return the validated version.
 
         Args:
-            config_dict: The configuration dictionary to validate.
+            configuration_dict: The configuration dictionary to validate.
 
         Returns:
             The validated configuration.
 
         Raises:
-            ProviderConfigIncompleteWarning: If the given configuration is incomplete.
-            ProviderBadConfigWarning: If the given configuration is invalid.
+            ProviderConfigurationIncompleteWarning: If the given configuration is incomplete.
+            ProviderBadConfigurationWarning: If the given configuration is invalid.
         """
-        validated_config: dict[str, str] = {}
-        missing_configs: list[str] = []
-        bad_configs: list[str] = []
+        validated_configuration: dict[str, str] = {}
+        missing_configurations: list[str] = []
+        bad_configurations: list[str] = []
         for config in cls.configuration:
-            config_value = config_dict.get(config.name, config.default)
+            config_value = configuration_dict.get(config.name, config.default)
             if config_value is None:
-                missing_configs.append(config.name)
+                missing_configurations.append(config.name)
             else:
                 try:
                     config.parse_as(config_value)
                 except ValueError, TypeError:
-                    bad_configs.append(config.name)
+                    bad_configurations.append(config.name)
                 else:
-                    validated_config[config.name] = config_value
-        if missing_configs:
-            raise ProviderIncompleteConfigWarning(missing_configs=missing_configs)
-        if bad_configs:
-            raise ProviderInvalidConfigWarning(bad_configs=bad_configs)
-        return validated_config
+                    validated_configuration[config.name] = config_value
+        if missing_configurations:
+            raise ProviderIncompleteConfigurationWarning(
+                missing_configurations=missing_configurations
+            )
+        if bad_configurations:
+            raise ProviderInvalidConfigurationWarning(
+                bad_configurations=bad_configurations
+            )
+        return validated_configuration
 
     @final
     @classmethod

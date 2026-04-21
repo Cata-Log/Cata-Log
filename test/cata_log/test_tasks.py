@@ -30,7 +30,10 @@ def test_fetch_provider__no_provider(db_session):
 def test_fetch_provider__success(db_session, fake_fs, fake_provider, side_effect):
 
     db_session.refresh(fake_provider)
-    fake_provider.config = {**fake_provider.config, "side_effect": side_effect}
+    fake_provider.configuration = {
+        **fake_provider.configuration,
+        "side_effect": side_effect,
+    }
     db_session.commit()
 
     tasks.fetch_provider(fake_provider.id)
@@ -51,7 +54,10 @@ def test_fetch_provider__success(db_session, fake_fs, fake_provider, side_effect
     ],
 )
 def test_fetch_provider__networkerror(db_session, fake_provider, side_effect):
-    fake_provider.config = {**fake_provider.config, "side_effect": side_effect}
+    fake_provider.configuration = {
+        **fake_provider.configuration,
+        "side_effect": side_effect,
+    }
     db_session.commit()
     with pytest.raises(exceptions.NetworkError):
         tasks.fetch_provider(fake_provider.id)
@@ -72,7 +78,10 @@ def test_fetch_provider__networkerror(db_session, fake_provider, side_effect):
 def test_fetch_provider__warning(
     db_session, fake_provider, side_effect, expected_warning
 ):
-    fake_provider.config = {**fake_provider.config, "side_effect": side_effect}
+    fake_provider.configuration = {
+        **fake_provider.configuration,
+        "side_effect": side_effect,
+    }
     db_session.commit()
 
     tasks.fetch_provider(fake_provider.id)

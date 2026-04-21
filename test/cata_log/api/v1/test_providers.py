@@ -751,13 +751,13 @@ def test_delete_provider__not_found(client):
 
 
 def test_patch_provider(LocalSession, fake_provider, client, mock_fetch_provider_task):
-    old_config = deepcopy(fake_provider.config)
+    old_configuration = deepcopy(fake_provider.configuration)
 
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
-            "config": {
-                **old_config,
+            "configuration": {
+                **old_configuration,
                 "optional_config": "some value",
             }
         },
@@ -766,11 +766,14 @@ def test_patch_provider(LocalSession, fake_provider, client, mock_fetch_provider
     assert response.status_code == 200
     data = response.json()
     assert data["class_id"] == fake_provider.class_id
-    assert data["config"] == {**old_config, "optional_config": "some value"}
+    assert data["configuration"] == {
+        **old_configuration,
+        "optional_config": "some value",
+    }
     with LocalSession() as db_session:
         provider = db_session.get(database.Provider, fake_provider.id)
     assert provider.class_id == data["class_id"]
-    assert provider.config == data["config"]
+    assert provider.configuration == data["configuration"]
     mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
 
@@ -778,8 +781,8 @@ def test_patch_provider__noauth(fake_provider, noauth_client, mock_fetch_provide
     response = noauth_client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
-            "config": {
-                **fake_provider.config,
+            "configuration": {
+                **fake_provider.configuration,
                 "optional_config": "config abc",
             }
         },
@@ -797,8 +800,8 @@ def test_patch_provider__bad_auth(
     response = bad_auth_client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
-            "config": {
-                **fake_provider.config,
+            "configuration": {
+                **fake_provider.configuration,
                 "optional_config": "config abc",
             }
         },
@@ -816,8 +819,8 @@ def test_patch_provider__noauth__public_get(
     response = noauth_client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
-            "config": {
-                **fake_provider.config,
+            "configuration": {
+                **fake_provider.configuration,
                 "optional_config": "config abc",
             }
         },
@@ -832,7 +835,7 @@ def test_patch_provider__noauth__public_get(
 def test_patch_provider__not_found(client, mock_fetch_provider_task):
     response = client.patch(
         "/api/v1/providers/230",
-        json={"config": {"markt_id": "marktqwertz"}},
+        json={"configuration": {"markt_id": "marktqwertz"}},
     )
 
     assert response.status_code == 404
@@ -845,7 +848,7 @@ def test_patch_provider__missing_config(
 ):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
-        json={"config": {}},
+        json={"configuration": {}},
     )
 
     assert response.status_code == 400
@@ -873,8 +876,8 @@ def test_patch_provider__extra_config(fake_provider, client, mock_fetch_provider
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
-            "config": {
-                **fake_provider.config,
+            "configuration": {
+                **fake_provider.configuration,
                 "optional_config": "config abc",
                 "extra": "random",
             }
@@ -882,8 +885,8 @@ def test_patch_provider__extra_config(fake_provider, client, mock_fetch_provider
     )
 
     assert response.status_code == 200
-    assert "extra" not in response.json()["config"]
-    assert response.json()["config"]["optional_config"] == "config abc"
+    assert "extra" not in response.json()["configuration"]
+    assert response.json()["configuration"]["optional_config"] == "config abc"
     mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
 
@@ -907,7 +910,7 @@ def test_patch_provider__duplicate(
 ):
     other_provider = database.Provider(
         class_id=fake_provider.class_id,
-        config={**fake_provider.config, "optional_config": "test opt"},
+        configuration={**fake_provider.configuration, "optional_config": "test opt"},
     )
     db_session.add(other_provider)
     db_session.flush()
@@ -916,11 +919,11 @@ def test_patch_provider__duplicate(
 
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
-        json={"config": other_provider.config},
+        json={"configuration": other_provider.configuration},
     )
 
     assert response.status_code == 400
-    assert fake_provider.config != other_provider.config
+    assert fake_provider.configuration != other_provider.configuration
     mock_fetch_provider_task.delay.assert_not_called()
 
 
@@ -929,11 +932,11 @@ def test_patch_provider__no_change(
 ):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
-        json={"config": fake_provider.config},
+        json={"configuration": fake_provider.configuration},
     )
 
     assert response.status_code == 200
-    assert response.json()["config"] == fake_provider.config
+    assert response.json()["configuration"] == fake_provider.configuration
     mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
 
@@ -944,21 +947,21 @@ def test_post_provider(
         url="/api/v1/providers",
         json={
             "class_id": provider_test_class.id(),
-            "config": dict(provider_test_class.default_config),
+            "configuration": dict(provider_test_class.default_configuration),
         },
     )
 
     assert response.status_code == 201
     data = response.json()
     assert data["class_id"] == provider_test_class.id()
-    assert data["config"] == provider_test_class.validate_config(
-        provider_test_class.default_config
+    assert data["configuration"] == provider_test_class.validate_configuration(
+        provider_test_class.default_configuration
     )
     with LocalSession() as db_session:
         new_provider = db_session.get(database.Provider, data["id"])
         assert new_provider
         assert new_provider.class_id == data["class_id"]
-        assert new_provider.config == data["config"]
+        assert new_provider.configuration == data["configuration"]
     mock_fetch_provider_task.delay.assert_called_once_with(data["id"])
 
 
@@ -969,7 +972,7 @@ def test_post_provider__noauth(
         url="/api/v1/providers",
         json={
             "class_id": provider_test_class.id(),
-            "config": dict(provider_test_class.default_config),
+            "configuration": dict(provider_test_class.default_configuration),
         },
     )
 
@@ -986,7 +989,7 @@ def test_post_provider__bad_auth(
         url="/api/v1/providers",
         json={
             "class_id": provider_test_class.id(),
-            "config": dict(provider_test_class.default_config),
+            "configuration": dict(provider_test_class.default_configuration),
         },
     )
 
@@ -1023,7 +1026,7 @@ def test_post_provider__missing_config(
         url="/api/v1/providers",
         json={
             "class_id": provider_test_class.id(),
-            "config": {},
+            "configuration": {},
         },
     )
 
@@ -1040,7 +1043,7 @@ def test_post_provider__noauth__public_get(
         url="/api/v1/providers",
         json={
             "class_id": provider_test_class.id(),
-            "config": dict(provider_test_class.default_config),
+            "configuration": dict(provider_test_class.default_configuration),
         },
     )
 
@@ -1057,15 +1060,18 @@ def test_post_provider__extra_config(
         url="/api/v1/providers",
         json={
             "class_id": provider_test_class.id(),
-            "config": {**provider_test_class.default_config, "extra": "extradata"},
+            "configuration": {
+                **provider_test_class.default_configuration,
+                "extra": "extradata",
+            },
         },
     )
 
     assert response.status_code == 201
-    assert "extra" not in response.json()["config"]
+    assert "extra" not in response.json()["configuration"]
     data = response.json()
-    assert data["config"] == provider_test_class.validate_config(
-        provider_test_class.default_config
+    assert data["configuration"] == provider_test_class.validate_configuration(
+        provider_test_class.default_configuration
     )
     mock_fetch_provider_task.delay.assert_called_once_with(data["id"])
 
@@ -1073,7 +1079,7 @@ def test_post_provider__extra_config(
 def test_post_provider__bad_class_id(LocalSession, client, mock_fetch_provider_task):
     response = client.post(
         url="/api/v1/providers",
-        json={"class_id": "lu9%z", "config": {}},
+        json={"class_id": "lu9%z", "configuration": {}},
     )
 
     assert response.status_code == 400
@@ -1087,7 +1093,10 @@ def test_post_provider__duplicate(
 ):
     response = client.post(
         url="/api/v1/providers",
-        json={"class_id": fake_provider.class_id, "config": fake_provider.config},
+        json={
+            "class_id": fake_provider.class_id,
+            "configuration": fake_provider.configuration,
+        },
     )
 
     assert response.status_code == 400

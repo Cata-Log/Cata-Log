@@ -20,13 +20,14 @@ from fastapi import Depends, FastAPI, status
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from cata_log import __version__, api, config, constants, opds, web
-from cata_log.logging_config import setup_logging
+from cata_log import __version__, api, constants, opds, settings, web
+from cata_log.logging import setup_logging
 from cata_log.security import verify_credentials
 
 setup_logging()
+settings.Settings.check()
 
-config.Settings.check()
+settings.Settings.check()
 
 
 app = FastAPI(

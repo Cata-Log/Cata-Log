@@ -24,9 +24,9 @@ from celery import Celery
 from celery.schedules import crontab
 
 from cata_log import database
-from cata_log.config import Settings
 from cata_log.constants import BROKER_URL, DATABASE_URL
 from cata_log.exceptions import NetworkError
+from cata_log.settings import Settings
 
 app = Celery()
 

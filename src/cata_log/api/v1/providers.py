@@ -26,8 +26,8 @@ from starlette.responses import JSONResponse
 from cata_log import constants, database
 from cata_log.api.mixins import AwareTimestampsMixin
 from cata_log.exceptions import (
-    ProviderIncompleteConfigWarning,
-    ProviderInvalidConfigWarning,
+    ProviderIncompleteConfigurationWarning,
+    ProviderInvalidConfigurationWarning,
     ProviderUnknownClassWarning,
 )
 from cata_log.providers import Provider as ProviderType
@@ -45,7 +45,7 @@ class Provider(AwareTimestampsMixin, BaseModel):
 
     id: int
     class_id: str
-    config: dict[str, str]
+    configuration: dict[str, str]
     status: constants.StatusEnum
 
 
@@ -58,14 +58,14 @@ class FullProvider(Provider):
 class ProviderUpdate(BaseModel):
     """Provider update data model."""
 
-    config: dict[str, str]
+    configuration: dict[str, str]
 
 
 class NewProvider(BaseModel):
     """Provider creation data model."""
 
     class_id: str
-    config: dict[str, str]
+    configuration: dict[str, str]
 
 
 class RegionInfo(BaseModel):
@@ -161,8 +161,10 @@ async def post_provider(
             },
         ) from unknown_class_warning
     try:
-        validated_config = provider_class.validate_config(new_provider.config)
-    except ProviderIncompleteConfigWarning as incomplete_warning:
+        validated_configuration = provider_class.validate_configuration(
+            new_provider.configuration
+        )
+    except ProviderIncompleteConfigurationWarning as incomplete_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -170,7 +172,7 @@ async def post_provider(
                 "missing_configurations": incomplete_warning.bad_configurations,
             },
         ) from incomplete_warning
-    except ProviderInvalidConfigWarning as invalid_warning:
+    except ProviderInvalidConfigurationWarning as invalid_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -179,7 +181,7 @@ async def post_provider(
             },
         ) from invalid_warning
     if any(
-        provider.config == validated_config
+        provider.configuration == validated_configuration
         for provider in db_session.query(database.Provider)
         .filter(database.Provider.class_id == new_provider.class_id)
         .all()
@@ -189,7 +191,8 @@ async def post_provider(
             detail="The given provider configuration already exists",
         )
     provider = database.Provider(
-        **new_provider.model_dump(exclude={"config"}), config=validated_config
+        **new_provider.model_dump(exclude={"configuration"}),
+        configuration=validated_configuration,
     )
     db_session.add(provider)
     db_session.commit()
@@ -233,8 +236,10 @@ async def patch_provider(
             },
         ) from unknown_class_warning
     try:
-        validated_config = provider_class.validate_config(provider_update.config)
-    except ProviderIncompleteConfigWarning as incomplete_warning:
+        validated_configuration = provider_class.validate_configuration(
+            provider_update.configuration
+        )
+    except ProviderIncompleteConfigurationWarning as incomplete_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -242,7 +247,7 @@ async def patch_provider(
                 "missing_configurations": incomplete_warning.bad_configurations,
             },
         ) from incomplete_warning
-    except ProviderInvalidConfigWarning as invalid_warning:
+    except ProviderInvalidConfigurationWarning as invalid_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -251,7 +256,7 @@ async def patch_provider(
             },
         ) from invalid_warning
     if any(
-        provider.config == validated_config
+        provider.configuration == validated_configuration
         for provider in db_session.query(database.Provider)
         .filter(database.Provider.class_id == provider.class_id)
         .filter(database.Provider.id != provider.id)
@@ -261,7 +266,7 @@ async def patch_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The given provider configuration already exists",
         )
-    provider.config = validated_config
+    provider.configuration = validated_configuration
     db_session.commit()
     db_session.refresh(provider)
     fetch_provider.delay(provider.id)

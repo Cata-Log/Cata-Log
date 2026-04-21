@@ -17,11 +17,11 @@
     </nav>
 
 
-    {% if provider.config %}
+    {% if provider.configuration %}
         <div>
             <h6>Configuration</h6>
             <ul>
-                {% for config_key, config_value in provider.config.items() %}
+                {% for config_key, config_value in provider.configuration.items() %}
                     <li>
                         <strong>{{ config_key }}</strong>: {{ config_value }}
                     </li>

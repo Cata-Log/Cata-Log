@@ -2,8 +2,8 @@ import os
 
 import pytest
 
-from cata_log.config import Settings
 from cata_log.exceptions import ApplicationMisconfiguredError
+from cata_log.settings import Settings
 
 
 @pytest.fixture

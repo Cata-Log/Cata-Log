@@ -68,7 +68,7 @@ class EdekaMarkt(Provider):
     @override
     def _get_page(self, page_number: PageNumber) -> bytes:
         response = self._client.get(
-            self.url_format.format(**self._config, page_number=page_number),
+            self.url_format.format(**self._configuration, page_number=page_number),
         )
         return response.content
 

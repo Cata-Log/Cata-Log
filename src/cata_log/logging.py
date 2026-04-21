@@ -1,7 +1,7 @@
 import logging.config
 
-from cata_log.config import Settings
 from cata_log.constants import LOG_DIRECTORY_PATH
+from cata_log.settings import Settings
 
 COMMON_FILEHANDLER_CONFIG = {
     "level": "DEBUG",

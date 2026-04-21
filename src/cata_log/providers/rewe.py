@@ -60,7 +60,7 @@ class Rewe(Provider):
             self.overview_url_format.format(
                 week_number=dates.get_calendar_week_number(self._relevant_datetime),
                 year=self._relevant_datetime.year,
-                **self._config,
+                **self._configuration,
             )
         ).json()
 

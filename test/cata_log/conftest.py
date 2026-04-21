@@ -159,7 +159,9 @@ def fake_fs(monkeypatch):
 def fake_provider(db_session, provider_test_class):
     fake_provider = database.Provider(
         class_id=provider_test_class.id(),
-        config=provider_test_class.validate_config(provider_test_class.default_config),
+        configuration=provider_test_class.validate_configuration(
+            provider_test_class.default_configuration
+        ),
     )
     db_session.add(fake_provider)
     db_session.commit()
@@ -359,31 +361,31 @@ def provider_test_class(_session_faker):  # simplifies things
                 parse_as=float,
             ),
         )
-        default_config = MappingProxyType(
+        default_configuration = MappingProxyType(
             {config.name: "1" for config in configuration if config.default is None}
         )
 
         @override
         def _get_page(self, page_number):
-            SideEffects.run(self._config["side_effect"])
+            SideEffects.run(self._configuration["side_effect"])
             if page_number >= 10:
                 raise PagesExhausted
             return _session_faker.text().encode()
 
         @override
         def _get_catalog_data(self):
-            if self._config["pass_get_catalog_data"]:
+            if self._configuration["pass_get_catalog_data"]:
                 return
-            SideEffects.run(self._config["side_effect"])
+            SideEffects.run(self._configuration["side_effect"])
 
         @override
         def _get_valid_since(self):
-            SideEffects.run(self._config["side_effect"])
+            SideEffects.run(self._configuration["side_effect"])
             return _session_faker.date_time()
 
         @override
         def _get_valid_until(self):
-            SideEffects.run(self._config["side_effect"])
+            SideEffects.run(self._configuration["side_effect"])
             return self._get_valid_since() + _session_faker.time_delta()
 
     return TestProvider

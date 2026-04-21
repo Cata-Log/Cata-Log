@@ -37,7 +37,7 @@ def test_Provider_insertion(LocalSession, provider_test_class):
     with LocalSession() as db_session:
         provider = database.Provider(
             class_id=provider_test_class.id(),
-            config=dict(provider_test_class.default_config),
+            configuration=dict(provider_test_class.default_configuration),
         )
         db_session.add(provider)
         db_session.commit()
@@ -45,7 +45,7 @@ def test_Provider_insertion(LocalSession, provider_test_class):
 
         assert provider.id
         assert provider.class_id == provider_test_class.id()
-        assert provider.config == provider_test_class.default_config
+        assert provider.configuration == provider_test_class.default_configuration
         assert provider.task_id
         periodic_task = db_session.get(PeriodicTask, provider.task_id)
         assert periodic_task
@@ -75,7 +75,7 @@ def test_Provider_insertion__bad_class_id(LocalSession):
     with LocalSession() as db_session:
         provider = database.Provider(
             class_id="unknown1234",
-            config={},
+            configuration={},
         )
         db_session.add(provider)
         db_session.commit()
@@ -83,7 +83,7 @@ def test_Provider_insertion__bad_class_id(LocalSession):
 
         assert provider.id
         assert provider.class_id == "unknown1234"
-        assert provider.config == {}
+        assert provider.configuration == {}
         assert not provider.task_id
         assert provider.created_at
         assert provider.updated_at
@@ -108,7 +108,7 @@ def test_Provider_unique_together_constraint(LocalSession, fake_provider):
         db_session.add(
             database.Provider(
                 class_id=fake_provider.class_id,
-                config=fake_provider.config,
+                configuration=fake_provider.configuration,
             )
         )
 
@@ -125,7 +125,10 @@ def test_Provider_unique_together_constraint(LocalSession, fake_provider):
 def test_Provider_fetch_catalog__success(
     db_session, fake_fs, fake_provider, side_effect
 ):
-    fake_provider.config = {**fake_provider.config, "side_effect": side_effect}
+    fake_provider.configuration = {
+        **fake_provider.configuration,
+        "side_effect": side_effect,
+    }
     db_session.commit()
 
     fake_provider.fetch_catalog(db_session)
@@ -146,7 +149,10 @@ def test_Provider_fetch_catalog__success(
     ],
 )
 def test_Provider_fetch_catalog__networkerror(db_session, fake_provider, side_effect):
-    fake_provider.config = {**fake_provider.config, "side_effect": side_effect}
+    fake_provider.configuration = {
+        **fake_provider.configuration,
+        "side_effect": side_effect,
+    }
     db_session.commit()
     with pytest.raises(exceptions.NetworkError):
         fake_provider.fetch_catalog(db_session)
@@ -167,7 +173,10 @@ def test_Provider_fetch_catalog__networkerror(db_session, fake_provider, side_ef
 def test_Provider_fetch_catalog__warning(
     db_session, fake_provider, side_effect, expected_warning
 ):
-    fake_provider.config = {**fake_provider.config, "side_effect": side_effect}
+    fake_provider.configuration = {
+        **fake_provider.configuration,
+        "side_effect": side_effect,
+    }
     db_session.commit()
 
     fake_provider.fetch_catalog(db_session)
@@ -193,7 +202,7 @@ def test_Catalog_insertion(LocalSession, fake_provider):
         assert catalog.valid_until
         assert catalog.provider.id == fake_provider.id
         assert catalog.provider.class_id == fake_provider.class_id
-        assert catalog.provider.config == fake_provider.config
+        assert catalog.provider.configuration == fake_provider.configuration
         assert len(fake_provider.catalogs) == 1
         assert fake_provider.catalogs[0].id == catalog.id
         assert fake_provider.catalogs[0].valid_since == catalog.valid_since
