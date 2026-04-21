@@ -855,14 +855,12 @@ def test_patch_provider__missing_config(
     mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__missing_config(
-    fake_provider, client, mock_fetch_provider_task
-):
+def test_patch_provider__bad_config(fake_provider, client, mock_fetch_provider_task):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
-            "config": {
-                **fake_provider.config,
+            "configuration": {
+                **fake_provider.configuration,
                 "optional_typed_config": "noint",
             },
         },
@@ -898,7 +896,7 @@ def test_patch_provider__bad_class_id(
 
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
-        json={"config": {}},
+        json={"configuration": {}},
     )
 
     assert response.status_code == 400
@@ -927,9 +925,7 @@ def test_patch_provider__duplicate(
     mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__no_change(
-    LocalSession, fake_provider, client, mock_fetch_provider_task
-):
+def test_patch_provider__no_change(fake_provider, client, mock_fetch_provider_task):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={"configuration": fake_provider.configuration},
@@ -1006,8 +1002,8 @@ def test_post_provider__bad_config(
         url="/api/v1/providers",
         json={
             "class_id": provider_test_class.id(),
-            "config": {
-                **provider_test_class.default_config,
+            "configuration": {
+                **provider_test_class.default_configuration,
                 "optional_typed_config": "noint",
             },
         },

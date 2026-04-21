@@ -113,7 +113,10 @@ def public_get():
 def noauth_client(fake_fs, fake_credentials):
     from cata_log.main import app  # noqa: PLC0415
 
-    return TestClient(app)
+    with TestClient(app) as noauth_client:
+        yield noauth_client
+
+    del app
 
 
 @pytest.fixture
