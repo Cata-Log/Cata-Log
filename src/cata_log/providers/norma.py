@@ -30,6 +30,7 @@ from .regions import Germany
 class Norma(Provider):
     """Provider class for Norma catalog."""
 
+    uid = "norma-de"
     name = "Norma"
     description = "Norma Angebote"
     region = Germany
@@ -71,6 +72,7 @@ class Norma(Provider):
 class NormaPreview(Preview, Norma):
     """Provider class for Norma preview catalog for next week."""
 
+    uid = Norma.uid + "-preview"
     name = Norma.name + "-Vorschau"
     description = Norma.description + " nächste Woche"
     preview_timedelta = timedelta(days=7)
@@ -79,6 +81,7 @@ class NormaPreview(Preview, Norma):
 class NormaPrepreview(NormaPreview):
     """Provider class for Norma preview catalog for second-next week."""
 
+    uid = NormaPreview.uid + "-2"
     name = Norma.name + "-Vorvorschau"
     description = Norma.description + " übernächste Woche"
     preview_timedelta = timedelta(days=14)
@@ -87,6 +90,7 @@ class NormaPrepreview(NormaPreview):
 class NormaRetrospect(NormaPreview):
     """Provider class for Norma retrospect catalog for last week."""
 
+    uid = Norma.uid + "-retrospect"
     name = Norma.name + "-Rückschau"
     description = Norma.description + " letzte Woche"
     preview_timedelta = -timedelta(days=7)
@@ -95,6 +99,7 @@ class NormaRetrospect(NormaPreview):
 class NormaRetrospect2(NormaPreview):
     """Provider class for Norma retrospect catalog for second-last week."""
 
+    uid = NormaRetrospect.uid + "-2"
     name = Norma.name + "-Rückrückschau"
     description = Norma.description + " vorletzte Woche"
     preview_timedelta = -timedelta(days=14)

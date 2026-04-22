@@ -765,14 +765,14 @@ def test_patch_provider(LocalSession, fake_provider, client, mock_fetch_provider
 
     assert response.status_code == 200
     data = response.json()
-    assert data["class_id"] == fake_provider.class_id
+    assert data["class_uid"] == fake_provider.class_uid
     assert data["configuration"] == {
         **old_configuration,
         "optional_config": "some value",
     }
     with LocalSession() as db_session:
         provider = db_session.get(database.Provider, fake_provider.id)
-    assert provider.class_id == data["class_id"]
+    assert provider.class_uid == data["class_uid"]
     assert provider.configuration == data["configuration"]
     mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
@@ -888,10 +888,10 @@ def test_patch_provider__extra_config(fake_provider, client, mock_fetch_provider
     mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
 
-def test_patch_provider__bad_class_id(
+def test_patch_provider__bad_class_uid(
     db_session, fake_provider, client, mock_fetch_provider_task
 ):
-    fake_provider.class_id = "no-class"
+    fake_provider.class_uid = "no-class"
     db_session.commit()
 
     response = client.patch(
@@ -907,7 +907,7 @@ def test_patch_provider__duplicate(
     db_session, fake_provider, client, mock_fetch_provider_task
 ):
     other_provider = database.Provider(
-        class_id=fake_provider.class_id,
+        class_uid=fake_provider.class_uid,
         configuration={**fake_provider.configuration, "optional_config": "test opt"},
     )
     db_session.add(other_provider)
@@ -942,21 +942,21 @@ def test_post_provider(
     response = client.post(
         url="/api/v1/providers",
         json={
-            "class_id": provider_test_class.id(),
+            "class_uid": provider_test_class.uid,
             "configuration": dict(provider_test_class.default_configuration),
         },
     )
 
     assert response.status_code == 201
     data = response.json()
-    assert data["class_id"] == provider_test_class.id()
+    assert data["class_uid"] == provider_test_class.uid
     assert data["configuration"] == provider_test_class.validate_configuration(
         provider_test_class.default_configuration
     )
     with LocalSession() as db_session:
         new_provider = db_session.get(database.Provider, data["id"])
         assert new_provider
-        assert new_provider.class_id == data["class_id"]
+        assert new_provider.class_uid == data["class_uid"]
         assert new_provider.configuration == data["configuration"]
     mock_fetch_provider_task.delay.assert_called_once_with(data["id"])
 
@@ -967,7 +967,7 @@ def test_post_provider__noauth(
     response = noauth_client.post(
         url="/api/v1/providers",
         json={
-            "class_id": provider_test_class.id(),
+            "class_uid": provider_test_class.uid,
             "configuration": dict(provider_test_class.default_configuration),
         },
     )
@@ -984,7 +984,7 @@ def test_post_provider__bad_auth(
     response = bad_auth_client.post(
         url="/api/v1/providers",
         json={
-            "class_id": provider_test_class.id(),
+            "class_uid": provider_test_class.uid,
             "configuration": dict(provider_test_class.default_configuration),
         },
     )
@@ -1001,7 +1001,7 @@ def test_post_provider__bad_config(
     response = client.post(
         url="/api/v1/providers",
         json={
-            "class_id": provider_test_class.id(),
+            "class_uid": provider_test_class.uid,
             "configuration": {
                 **provider_test_class.default_configuration,
                 "optional_typed_config": "noint",
@@ -1021,7 +1021,7 @@ def test_post_provider__missing_config(
     response = client.post(
         url="/api/v1/providers",
         json={
-            "class_id": provider_test_class.id(),
+            "class_uid": provider_test_class.uid,
             "configuration": {},
         },
     )
@@ -1038,7 +1038,7 @@ def test_post_provider__noauth__public_get(
     response = noauth_client.post(
         url="/api/v1/providers",
         json={
-            "class_id": provider_test_class.id(),
+            "class_uid": provider_test_class.uid,
             "configuration": dict(provider_test_class.default_configuration),
         },
     )
@@ -1055,7 +1055,7 @@ def test_post_provider__extra_config(
     response = client.post(
         url="/api/v1/providers",
         json={
-            "class_id": provider_test_class.id(),
+            "class_uid": provider_test_class.uid,
             "configuration": {
                 **provider_test_class.default_configuration,
                 "extra": "extradata",
@@ -1072,10 +1072,10 @@ def test_post_provider__extra_config(
     mock_fetch_provider_task.delay.assert_called_once_with(data["id"])
 
 
-def test_post_provider__bad_class_id(LocalSession, client, mock_fetch_provider_task):
+def test_post_provider__bad_class_uid(LocalSession, client, mock_fetch_provider_task):
     response = client.post(
         url="/api/v1/providers",
-        json={"class_id": "lu9%z", "configuration": {}},
+        json={"class_uid": "lu9%z", "configuration": {}},
     )
 
     assert response.status_code == 400
@@ -1090,7 +1090,7 @@ def test_post_provider__duplicate(
     response = client.post(
         url="/api/v1/providers",
         json={
-            "class_id": fake_provider.class_id,
+            "class_uid": fake_provider.class_uid,
             "configuration": fake_provider.configuration,
         },
     )

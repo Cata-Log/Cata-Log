@@ -7,7 +7,7 @@ document.getElementById("provider-form").addEventListener("submit", (event) => {
       "Content-Type": "application/json",
     }),
     body: JSON.stringify({
-      class_id: form.get("class_id"),
+      class_uid: form.get("class_uid"),
       configuration: JSON.parse(form.get("configuration")),
     }),
   });

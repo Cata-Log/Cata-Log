@@ -30,6 +30,7 @@ from .regions import Germany
 class EdekaMarkt(Provider):
     """Provider class for Edeka Marktangebote catalog."""
 
+    uid = "edeka-markt-de"
     name = "Edeka-Markt"
     description = "Edeka Markt Angebote"
     url = "https://www.edeka-wochenangebote.de/"

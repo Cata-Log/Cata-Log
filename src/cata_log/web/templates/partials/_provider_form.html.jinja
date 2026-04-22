@@ -1,8 +1,8 @@
 <form id="provider-form">
-    <label for="class_id">ID of Provider</label>
-    <select name="class_id">
+    <label for="class_uid">ID of Provider</label>
+    <select name="class_uid">
         {% for available_provider in available_providers %}
-            <option value="{{ available_provider.class_id }}">{{ available_provider.name }}</option>
+            <option value="{{ available_provider.class_uid }}">{{ available_provider.name }}</option>
         {% endfor %}
     </select>
     <label for="configuration">Configuration</label>

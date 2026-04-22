@@ -15,7 +15,6 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 import logging
 import mimetypes
 from datetime import UTC, datetime
@@ -59,7 +58,7 @@ class Provider(ModelBase, TimestampMixin):
     """ORM model for a catalog provider."""
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
-    class_id: orm.Mapped[str] = orm.mapped_column()
+    class_uid: orm.Mapped[str] = orm.mapped_column()
     configuration: orm.Mapped[dict[str, str]] = orm.mapped_column(JSON)
     note: orm.Mapped[str] = orm.mapped_column(nullable=True)
     task: orm.Mapped[PeriodicTask] = orm.relationship()
@@ -76,7 +75,7 @@ class Provider(ModelBase, TimestampMixin):
         server_default=StatusEnum.HEALTHY.value,
     )
     __tablename__ = "providers"
-    __table_args__ = (UniqueConstraint("class_id", "configuration"),)
+    __table_args__ = (UniqueConstraint("class_uid", "configuration"),)
 
     def get_provider_class(self) -> type[ProviderType]:
         """Get the class for this provider.
@@ -84,7 +83,7 @@ class Provider(ModelBase, TimestampMixin):
         Returns:
             The provider class.
         """
-        return ProviderType.get_class(self.class_id)
+        return ProviderType.get_class(self.class_uid)
 
     def get_provider_instance(self) -> ProviderType:
         """Get a class instance for this provider.
@@ -147,7 +146,7 @@ class Provider(ModelBase, TimestampMixin):
                 provider_warning.provider_status.value,
                 extra={
                     "provider_id": self.id,
-                    "provider_class_id": self.class_id,
+                    "provider_class_uid": self.class_uid,
                 },
             )
             self.status = provider_warning.provider_status
@@ -210,14 +209,14 @@ class Catalog(ModelBase, TimestampMixin):
         """
         provider_class = self.provider.get_provider_class()
         entry = opds.Entry(
-            title=f"{self.provider.class_id.title()} {self.valid_since.date()} - {self.valid_until.date()}",
+            title=f"{provider_class.name.title()} {self.valid_since.date()} - {self.valid_until.date()}",
             uid=str(self.id),
         )
         entry.metadata.extend(
             [
                 opds.Metadata(provider_class.description, "summary"),
                 opds.Metadata(provider_class.region.language_code, "language", "dc"),
-                opds.Metadata(self.provider.class_id.title(), "publisher", "dc"),
+                opds.Metadata(self.provider.class_uid.title(), "publisher", "dc"),
                 opds.Metadata(self.created_at.date().isoformat(), "issued", "dc"),
                 opds.Metadata(
                     self.updated_at.isoformat(timespec="seconds"), "updated", "dc"
@@ -259,7 +258,7 @@ class Catalog(ModelBase, TimestampMixin):
         provider_class = self.provider.get_provider_class()
         book = epub.EpubBook()
         book.set_title(
-            f"{self.provider.class_id.title()}, {self.valid_since.date()} - {self.valid_until.date()}"
+            f"{self.provider.class_uid.title()}, {self.valid_since.date()} - {self.valid_until.date()}"
         )
         book.set_direction("rtl" if provider_class.region.is_rtl else "ltr")
         book.set_language(provider_class.region.language_code)

@@ -52,6 +52,8 @@ class Provider(abc.ABC):
     """Abstract base class for all catalog providers."""
 
     _registry: ClassVar[dict[str, type[Provider]]] = {}
+    uid: str
+    """A unique identifier for this provider class. Must not be changed after definition."""
     name: str
     """The name of this catalog provider."""
     description: str
@@ -102,9 +104,9 @@ class Provider(abc.ABC):
             ProviderRegistrationWarning: If a provider subclass could not be registered.
         """
         super().__init_subclass__()
-        if cls.id() in cls._registry:
-            raise ProviderRegistrationWarning
-        cls._registry[cls.id()] = cls
+        if cls.uid in cls._registry:
+            raise ProviderRegistrationWarning(cls.uid)
+        cls._registry[cls.uid] = cls
 
     @final
     def __enter__(self) -> Self:
@@ -256,16 +258,6 @@ class Provider(abc.ABC):
 
     @final
     @classmethod
-    def id(cls) -> str:
-        """Build a unique identifier for this provider class based on :attr:`name and the local name of :attr:`region`.
-
-        Returns:
-            A unique identifier for this provider class.
-        """
-        return cls.name.lower().replace(" ", "-") + "-" + cls.region.local_name.lower()
-
-    @final
-    @classmethod
     def info(cls) -> dict[str, str | dict[str, str] | list[dict[str, str | None]]]:
         """Get user-relevant info about this provider.
 
@@ -277,17 +269,17 @@ class Provider(abc.ABC):
             "description": cls.description,
             "url": cls.url,
             "region": cls.region.info(),
-            "class_id": cls.id(),
+            "class_uid": cls.uid,
             "configuration": [config.info() for config in cls.configuration],
         }
 
     @final
     @classmethod
-    def get_class(cls, class_id: str) -> type[Provider]:
+    def get_class(cls, class_uid: str) -> type[Provider]:
         """Get the provider class to a given class-id.
 
         Args:
-            class_id: The class-id to get the provider for.
+            class_uid: The class-id to get the provider for.
 
         Returns:
             The class to the class-id.
@@ -295,14 +287,14 @@ class Provider(abc.ABC):
         Raises:
             ProviderUnknownClassWarning: If there is no class for the given class-id.
         """
-        provider_class = cls._registry.get(class_id)
+        provider_class = cls._registry.get(class_uid)
         if not provider_class:
             raise ProviderUnknownClassWarning
         return provider_class
 
     @final
     @classmethod
-    def get_class_ids(cls) -> list[str]:
+    def get_class_uids(cls) -> list[str]:
         """Get all registered class-ids.
 
         Returns:

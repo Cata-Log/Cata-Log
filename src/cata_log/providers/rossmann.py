@@ -32,6 +32,7 @@ from .regions import Germany
 class RossmannAngebote(Provider):
     """Provider class for Rossmann Angebote catalog."""
 
+    uid = "rossmann-de"
     name = "Rossmann-Angebote"
     description = "Rossmann Angebote"
     url = "https://www.rossmann.de/de/kataloge/angebote/index.html"

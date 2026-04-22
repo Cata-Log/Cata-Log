@@ -5,8 +5,10 @@
     <p>{{ provider_info.description }}, {{ provider_info.region.local_name }}</p>
 
     {% if provider_info.configuration %}
-        <div>
-            <strong>Configuration</strong>
+        <details>
+            <summary>
+                <strong>Configuration</strong>
+            </summary>
             <ul>
                 {% for config in provider_info.configuration %}
                     <li>
@@ -21,6 +23,6 @@
                     </li>
                 {% endfor %}
             </ul>
-        </div>
+        </details>
     {% endif %}
 </article>

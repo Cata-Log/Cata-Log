@@ -161,7 +161,7 @@ def fake_fs(monkeypatch):
 @pytest.fixture
 def fake_provider(db_session, provider_test_class):
     fake_provider = database.Provider(
-        class_id=provider_test_class.id(),
+        class_uid=provider_test_class.uid,
         configuration=provider_test_class.validate_configuration(
             provider_test_class.default_configuration
         ),
@@ -327,9 +327,10 @@ class SideEffects(enum.StrEnum):
 
 
 @pytest.fixture(scope="session")
-def provider_test_class(_session_faker):  # simplifies things
+def provider_test_class(_session_faker):
     class TestProvider(Provider):
-        name = "test-provider"
+        uid = "test-provider-de"
+        name = "Test-Provider"
         description = "A provider for testing"
         url = "https://test.provider.it/catalog"
         region = Germany
@@ -397,7 +398,8 @@ def provider_test_class(_session_faker):  # simplifies things
 @pytest.fixture(scope="session")
 def preview_provider_test_class(provider_test_class):
     class TestPreviewProvider(Preview, provider_test_class):
-        name = provider_test_class.name + "-preview"
+        uid = provider_test_class.uid + "-preview"
+        name = provider_test_class.name + "-Preview"
         preview_timedelta = timedelta(days=7)
 
     return TestPreviewProvider

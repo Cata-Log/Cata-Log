@@ -93,7 +93,7 @@ def after_provider_insert(
     except ProviderUnknownClassWarning:
         logger.exception(
             "No provider class found for newly inserted provider instance!",
-            extra={"provider_id": target.id, "provider_class_id": target.class_id},
+            extra={"provider_id": target.id, "provider_class_uid": target.class_uid},
         )
         return
     with orm.Session(bind=connection) as db_session:
@@ -101,7 +101,7 @@ def after_provider_insert(
             db_session, provider_class.schedule, provider_class.region.timezone
         )
         task = PeriodicTask(
-            name=f"{target.class_id}-{target.configuration}",
+            name=f"{target.class_uid}-{target.configuration}",
             task="cata_log.tasks.fetch_provider",
             args=f"[{target.id}]",
             crontab_id=crontab.id,

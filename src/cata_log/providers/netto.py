@@ -33,6 +33,7 @@ from .regions import Germany
 class Netto(Provider):
     """Provider class for Netto catalog."""
 
+    uid = "netto-de"
     name = "Netto"
     description = "Netto Angebote"
     region = Germany
@@ -80,6 +81,7 @@ class Netto(Provider):
 class NettoPreview(Preview, Netto):
     """Provider class for Netto preview catalog for next week."""
 
+    uid = Netto.uid + "-preview"
     name = Netto.name + "-Vorschau"
     description = Netto.description + " nächste Woche"
     schedule = crontab(minute=0, hour=4)

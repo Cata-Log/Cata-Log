@@ -1,8 +1,10 @@
 <article id="provider-{{ provider.id }}">
     <header>
-        {{ provider.name }}
+        {{ provider.get_provider_class().name.title() }}
     </header>
-    <div>{{ provider.note }}</div>
+
+    {% if provider.note %}<div>{{ provider.note }}</div>{% endif %}
+
     <nav>
         <ul>
             {{ provider.status | title }}

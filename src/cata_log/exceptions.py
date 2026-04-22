@@ -85,7 +85,7 @@ class ProviderUnknownClassWarning(ProviderMisconfiguredWarning):
 
     @override
     def __init__(self) -> None:
-        super().__init__("Provider type is unknown.", bad_configurations=["class_id"])
+        super().__init__("Provider type is unknown.", bad_configurations=["class_uid"])
 
 
 class ProviderMisconfiguredOrBrokenWarning(ProviderWarning):

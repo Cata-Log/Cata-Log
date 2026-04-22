@@ -44,7 +44,7 @@ class Provider(AwareTimestampsMixin, BaseModel):
     """Provider data model."""
 
     id: int
-    class_id: str
+    class_uid: str
     note: str | None
     configuration: dict[str, str]
     status: constants.StatusEnum
@@ -66,7 +66,7 @@ class ProviderUpdate(BaseModel):
 class NewProvider(BaseModel):
     """Provider creation data model."""
 
-    class_id: str
+    class_uid: str
     configuration: dict[str, str]
     note: str | None = None
 
@@ -95,7 +95,7 @@ class ProviderInfo(BaseModel):
     description: str
     url: str
     region: RegionInfo
-    class_id: str
+    class_uid: str
     configuration: list[ConfigInfo]
 
 
@@ -111,7 +111,7 @@ async def list_providers(
                 database.Catalog.pages
             )
         )
-        .order_by(database.Provider.class_id)
+        .order_by(database.Provider.class_uid)
         .all()
     )
 
@@ -137,7 +137,7 @@ async def list_available_providers(
         or (
             query
             and (
-                (query in catalog_class.id())
+                (query in catalog_class.uid)
                 or (query in catalog_class.description.lower())
             )
         )
@@ -155,13 +155,13 @@ async def post_provider(
 ) -> database.Provider:
     """Set up a new provider."""
     try:
-        provider_class = ProviderType.get_class(new_provider.class_id)
+        provider_class = ProviderType.get_class(new_provider.class_uid)
     except ProviderUnknownClassWarning as unknown_class_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "error": "The given provider type is unknown",
-                "class_id": new_provider.class_id,
+                "class_uid": new_provider.class_uid,
             },
         ) from unknown_class_warning
     try:
@@ -187,7 +187,7 @@ async def post_provider(
     if any(
         provider.configuration == validated_configuration
         for provider in db_session.query(database.Provider)
-        .filter(database.Provider.class_id == new_provider.class_id)
+        .filter(database.Provider.class_uid == new_provider.class_uid)
         .all()
     ):
         raise HTTPException(
@@ -236,7 +236,7 @@ async def patch_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "error": "The given provider type is unknown",
-                "class_id": provider.class_id,
+                "class_uid": provider.class_uid,
             },
         ) from unknown_class_warning
     try:
@@ -262,7 +262,7 @@ async def patch_provider(
     if any(
         provider.configuration == validated_configuration
         for provider in db_session.query(database.Provider)
-        .filter(database.Provider.class_id == provider.class_id)
+        .filter(database.Provider.class_uid == provider.class_uid)
         .filter(database.Provider.id != provider.id)
         .all()
     ):

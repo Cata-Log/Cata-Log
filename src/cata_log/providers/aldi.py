@@ -32,6 +32,7 @@ from .regions import Germany
 class AldiSued(Provider):
     """Provider class for Aldi-Süd current catalog."""
 
+    uid = "alid-sued-de"
     name = "Aldi-Süd"
     url = "https://www.aldi-sued.de/prospekte"
     region = Germany
@@ -81,6 +82,7 @@ class AldiSued(Provider):
 class AldiSuedPreview(Preview, AldiSued):
     """Provider class for Aldi-Süd preview catalog for next week."""
 
+    uid = AldiSued.uid + "-preview"
     name = AldiSued.name + "-Vorschau"
     description = AldiSued.description + " für nächste Woche"
     overview_url_format = (
@@ -92,6 +94,7 @@ class AldiSuedPreview(Preview, AldiSued):
 class AldiSuedPrepreview(Preview, AldiSued):
     """Provider class for Aldi-Süd preview catalog for the second-next week."""
 
+    uid = AldiSuedPreview.uid + "-2"
     name = AldiSued.name + "-Vorvorschau"
     description = AldiSued.description + " für übernächste Woche"
     overview_url_format = (

@@ -30,6 +30,7 @@ from .regions import Germany
 class KauflandWoche(Provider):
     """Provider class for Kaufland Wochenangebote catalog."""
 
+    uid = "kaufland-de"
     name = "Kaufland"
     description = "Kaufland Angebote"
     configuration = (
@@ -91,6 +92,7 @@ class KauflandWoche(Provider):
 class KauflandWochePreview(Preview, KauflandWoche):
     """Provider class for Kaufland Wochenangebote preview catalog for next week."""
 
+    uid = KauflandWoche.uid + "-preview"
     name = KauflandWoche.name + "-Vorschau"
     description = KauflandWoche.description + " im nächsten Katalog"
     preview_timedelta = timedelta(days=7)

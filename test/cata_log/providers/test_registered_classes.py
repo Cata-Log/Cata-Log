@@ -46,3 +46,5 @@ def test_registered_classes__attributes(provider_class):
     for config in provider_class.configuration:
         if config.default:
             config.parse_as(config.default)
+    assert provider_class.uid
+    assert provider_class.uid in Provider._registry

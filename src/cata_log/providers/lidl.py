@@ -30,6 +30,7 @@ from .regions import Germany, Italy
 class LidlDeutschland(Provider):
     """Provider class for the current german Lidl catalog."""
 
+    uid = "lidl-de"
     name = "Lidl"
     description = "Lidl Angebote"
     url = "https://www.lidl.de/c/online-prospekte/s10005610"
@@ -91,6 +92,7 @@ class LidlDeutschland(Provider):
 class LidlDeutschlandPreview(Preview, LidlDeutschland):
     """Provider class for Lidl preview catalog for next week."""
 
+    uid = LidlDeutschland.uid + "-preview"
     name = LidlDeutschland.name + "-Vorschau"
     description = LidlDeutschland.description + " nächste Woche"
     flyer_index = 1
@@ -107,6 +109,7 @@ class LidlDeutschlandPreview(Preview, LidlDeutschland):
 class LidlDeutschlandPrepreview(LidlDeutschlandPreview):
     """Provider class for Lidl preview catalog for second-next week."""
 
+    uid = LidlDeutschlandPreview.uid + "-2"
     name = LidlDeutschland.name + "-Vorvorschau"
     description = LidlDeutschland.description + " übernächste Woche"
     flyer_index = 2
@@ -116,6 +119,7 @@ class LidlDeutschlandPrepreview(LidlDeutschlandPreview):
 class LidlItalia(LidlDeutschland):
     """Provider class for the current italian Lidl catalog."""
 
+    uid = "lidl-it"
     region = Italy
     description = "Offerte Lidl"
 

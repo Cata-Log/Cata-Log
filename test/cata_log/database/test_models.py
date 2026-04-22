@@ -36,7 +36,7 @@ def test_sqlite_pragmas(LocalSession):
 def test_Provider_insertion(LocalSession, provider_test_class):
     with LocalSession() as db_session:
         provider = database.Provider(
-            class_id=provider_test_class.id(),
+            class_uid=provider_test_class.uid,
             configuration=dict(provider_test_class.default_configuration),
         )
         db_session.add(provider)
@@ -44,7 +44,7 @@ def test_Provider_insertion(LocalSession, provider_test_class):
         db_session.refresh(provider)
 
         assert provider.id
-        assert provider.class_id == provider_test_class.id()
+        assert provider.class_uid == provider_test_class.uid
         assert provider.configuration == provider_test_class.default_configuration
         assert provider.task_id
         periodic_task = db_session.get(PeriodicTask, provider.task_id)
@@ -71,10 +71,10 @@ def test_Provider_insertion(LocalSession, provider_test_class):
         assert provider.updated_at
 
 
-def test_Provider_insertion__bad_class_id(LocalSession):
+def test_Provider_insertion__bad_class_uid(LocalSession):
     with LocalSession() as db_session:
         provider = database.Provider(
-            class_id="unknown1234",
+            class_uid="unknown1234",
             configuration={},
         )
         db_session.add(provider)
@@ -82,7 +82,7 @@ def test_Provider_insertion__bad_class_id(LocalSession):
         db_session.refresh(provider)
 
         assert provider.id
-        assert provider.class_id == "unknown1234"
+        assert provider.class_uid == "unknown1234"
         assert provider.configuration == {}
         assert not provider.task_id
         assert provider.created_at
@@ -107,7 +107,7 @@ def test_Provider_unique_together_constraint(LocalSession, fake_provider):
     with LocalSession() as db_session:
         db_session.add(
             database.Provider(
-                class_id=fake_provider.class_id,
+                class_uid=fake_provider.class_uid,
                 configuration=fake_provider.configuration,
             )
         )
@@ -201,7 +201,7 @@ def test_Catalog_insertion(LocalSession, fake_provider):
         assert catalog.valid_since
         assert catalog.valid_until
         assert catalog.provider.id == fake_provider.id
-        assert catalog.provider.class_id == fake_provider.class_id
+        assert catalog.provider.class_uid == fake_provider.class_uid
         assert catalog.provider.configuration == fake_provider.configuration
         assert len(fake_provider.catalogs) == 1
         assert fake_provider.catalogs[0].id == catalog.id

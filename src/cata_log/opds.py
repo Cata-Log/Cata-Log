@@ -282,7 +282,7 @@ def get_opds_catalog_providers(
 ) -> Response:
     """Get the provider entries."""
     providers = (
-        db_session.query(database.Provider).order_by(database.Provider.class_id).all()
+        db_session.query(database.Provider).order_by(database.Provider.class_uid).all()
     )
     opds_catalog = opds.OPDSCatalog(title="Catalog Providers Library")
     author = opds.Author()
@@ -302,7 +302,7 @@ def get_opds_catalog_providers(
         ]
     )
     for provider in providers:
-        entry = opds.Entry(title=provider.class_id.title(), uid=str(provider.id))
+        entry = opds.Entry(title=provider.class_uid.title(), uid=str(provider.id))
         entry.links.append(
             opds.AcquistionFeedLink(
                 href=f"/opds/providers/{provider.id}/", rel=opds.Link.Rel.SUBSECTION
