@@ -34,7 +34,7 @@ from .regions import Germany
 class Rewe(Provider):
     """Provider class for Rewe catalog."""
 
-    name = "rewe"
+    name = "Rewe"
     description = "Rewe Katalog"
     url = "https://www.rewe.de/angebote/"
     region = Germany
@@ -93,7 +93,7 @@ class Rewe(Provider):
 class RewePreview(Preview, Rewe):
     """Provider class for Rewe preview catalog."""
 
-    name = "rewe-preview"
+    name = Rewe.name + "-Vorschau"
     description = Rewe.description + " nächste Woche"
     schedule = crontab(minute=30, hour=4, day_of_week="6,0")
     preview_timedelta = timedelta(days=7)

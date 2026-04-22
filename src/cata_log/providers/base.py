@@ -53,7 +53,7 @@ class Provider(abc.ABC):
 
     _registry: ClassVar[dict[str, type[Provider]]] = {}
     name: str
-    """The name of this catalog provider"""
+    """The name of this catalog provider."""
     description: str
     """The user-facing description for this provider"""
     url: str
@@ -260,9 +260,9 @@ class Provider(abc.ABC):
         """Build a unique identifier for this provider class based on :attr:`name and the local name of :attr:`region`.
 
         Returns:
-            A unique id for this provider class.
+            A unique identifier for this provider class.
         """
-        return cls.name + "-" + cls.region.local_name.lower()
+        return cls.name.lower().replace(" ", "-") + "-" + cls.region.local_name.lower()
 
     @final
     @classmethod
@@ -273,10 +273,11 @@ class Provider(abc.ABC):
             A dictionary containing class attributes of this provider class.
         """
         return {
-            "id": cls.id(),
+            "name": cls.name,
             "description": cls.description,
             "url": cls.url,
             "region": cls.region.info(),
+            "class_id": cls.id(),
             "configuration": [config.info() for config in cls.configuration],
         }
 

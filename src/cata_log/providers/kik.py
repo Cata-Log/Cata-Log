@@ -32,7 +32,7 @@ from .regions import Germany
 class Kik(Provider):
     """Provider class for Kik current catalog."""
 
-    name = "kik"
+    name = "Kik"
     url = "https://www.kik.de/Dein-Online-Prospekt"
     region = Germany
     description = "Kik Katalog"

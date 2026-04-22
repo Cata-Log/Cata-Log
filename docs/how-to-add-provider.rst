@@ -26,7 +26,7 @@ Here we give a quick rundown of what you need to do, while implementing an examp
 The following datapoints must be added as class variables to your provider class:
 
 - region: The region the flyer is distributed in. If the region is missing, adding it is very straightforward. Just check out and follow :doc:`the guide <how-to-add-region>`.
-- name: The internal name of the provider. Should be in lower-case with hyphens.
+- name: The Name of the provider. This is used to create a unique identifier together with the regions local name.
 - description: A description of the provider and the flyer that makes it possible for users to identify it.
 - url: A URL to the provider's digital flyer webpage.
 
@@ -47,7 +47,7 @@ For our example provider this could be
 
     class ExampleProvider(Provider):
        region = Germany
-       name= "example"
+       name= "Example-Provider"
        description = "An example provider for the purpose of the documentation."
        url = "https://example-provider.com/catalog"
        first_page_number = 0

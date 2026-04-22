@@ -32,7 +32,7 @@ from .regions import Austria
 class Hofer(Provider):
     """Provider class for Hofer current catalog."""
 
-    name = "hofer"
+    name = "Hofer"
     url = "https://www.hofer.at/de/angebote/aktuelle-flugblaetter-und-broschuren.html"
     region = Austria
     description = "Hofer Prospekt"
@@ -82,6 +82,6 @@ class Hofer(Provider):
 class HoferPreview(Preview, Hofer):
     """Provider class for Hofer preview catalog for next week."""
 
-    name = "hofer-preview"
+    name = Hofer.name + "-Vorschau"
     description = Hofer.description + " für nächste Woche"
     preview_timedelta = timedelta(days=7)

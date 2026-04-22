@@ -61,6 +61,7 @@ class Provider(ModelBase, TimestampMixin):
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     class_id: orm.Mapped[str] = orm.mapped_column()
     configuration: orm.Mapped[dict[str, str]] = orm.mapped_column(JSON)
+    note: orm.Mapped[str] = orm.mapped_column(nullable=True)
     task: orm.Mapped[PeriodicTask] = orm.relationship()
     task_id: orm.Mapped[int] = orm.mapped_column(
         ForeignKey(PeriodicTask.__tablename__ + ".id", ondelete="CASCADE"),

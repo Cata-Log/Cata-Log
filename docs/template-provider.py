@@ -17,17 +17,17 @@ from cata_log.utils.dates import get_calendar_week_number
 class TemplateProvider(Provider):
     # Mandatory
     region =  # The region of the provider. You can add missing regions if needed.
-    name=  # A concise identifier for the provider. Should be lower-case with hyphens.
-    description = # A complete description of the provider.
+    name=  # Name for the provider. This is used to create a unique identifier together with the regions local name.
+    description = # A short description of the provider.
     url = # The URL to the provider's digital flyer.
     # Optional
     first_page_number = 1 # The number of the first page in the provider's counting
     configuration = (
         Configuration(
             name=, # A descriptive and concise name for the configuration value",
-            helptext=, # A text describing the configuration and how to figure out what value to use.
+            helptext=, # A text describing the configuration and how to figure out what value to set.
             default=, # Only set this if the configuration value is optional
-            parse_as=, # What datatype the value should be parseable as
+            parse_as=, # What datatype the value should be parseable as, defaults to string
         ),
         # Add more Configurations if required
     )

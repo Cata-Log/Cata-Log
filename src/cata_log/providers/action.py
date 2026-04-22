@@ -32,7 +32,7 @@ from .regions import Germany
 class Action(Provider):
     """Provider class for Action current catalog."""
 
-    name = "action"
+    name = "Action"
     url = "https://www.action.com/de-de/prospekt/"
     region = Germany
     description = "Action Katalog"

@@ -31,7 +31,7 @@ from .regions import Germany
 class MetroWochenangebote(Provider):
     """Provider class for Metro Wochenangebote current catalog."""
 
-    name = "metro-wochenangebote"
+    name = "Metro-Wochenangebote"
     url = "https://www.metro.de/angebote"
     region = Germany
     description = "Metro Wochenangebote"
@@ -81,6 +81,6 @@ class MetroWochenangebote(Provider):
 class MetroWochenangebotePreview(Preview, MetroWochenangebote):
     """Provider class for Metro Wochenangebote preview catalog for next week."""
 
-    name = "metro-wochenangebote-preview"
+    name = MetroWochenangebote.name + "-Vorschau"
     description = MetroWochenangebote.description + " für nächste Woche"
     preview_timedelta = timedelta(days=7)

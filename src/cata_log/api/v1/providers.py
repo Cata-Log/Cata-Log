@@ -45,6 +45,7 @@ class Provider(AwareTimestampsMixin, BaseModel):
 
     id: int
     class_id: str
+    note: str | None
     configuration: dict[str, str]
     status: constants.StatusEnum
 
@@ -59,6 +60,7 @@ class ProviderUpdate(BaseModel):
     """Provider update data model."""
 
     configuration: dict[str, str]
+    note: str | None = None
 
 
 class NewProvider(BaseModel):
@@ -66,6 +68,7 @@ class NewProvider(BaseModel):
 
     class_id: str
     configuration: dict[str, str]
+    note: str | None = None
 
 
 class RegionInfo(BaseModel):
@@ -88,11 +91,12 @@ class ConfigInfo(BaseModel):
 class ProviderInfo(BaseModel):
     """Provider info data model."""
 
-    id: str
-    configuration: list[ConfigInfo]
+    name: str
     description: str
     url: str
     region: RegionInfo
+    class_id: str
+    configuration: list[ConfigInfo]
 
 
 @router.get("", response_model=list[Provider], operation_id="list-providers-v1")
