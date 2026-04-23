@@ -292,6 +292,24 @@ async def get_provider(
     return provider
 
 
+@router.get(
+    "/available/{provider_class_uid}",
+    response_model=ProviderInfo,
+    operation_id="get-available-provider-v1",
+)
+async def get_available_provider(
+    provider_class_uid: str,
+) -> dict[str, str | dict[str, str] | list[dict[str, str | None]]]:
+    """Get a single provider."""
+    try:
+        provider = ProviderType.get_class(provider_class_uid)
+    except ProviderUnknownClassWarning as warning:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
+        ) from warning
+    return provider.info()
+
+
 @router.delete(
     "/{provider_id}",
     status_code=status.HTTP_204_NO_CONTENT,

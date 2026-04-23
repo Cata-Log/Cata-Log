@@ -709,6 +709,53 @@ def test_get_provider__not_found(client):
     assert response.json() == {"detail": "Provider not found"}
 
 
+def test_get_available_provider(provider_test_class, client):
+    response = client.get(f"/api/v1/providers/available/{provider_test_class.uid}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["class_uid"] == provider_test_class.uid
+
+
+def test_get_available_provider__noauth(provider_test_class, noauth_client):
+    response = noauth_client.get(
+        f"/api/v1/providers/available/{provider_test_class.uid}"
+    )
+
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_available_provider__bad_auth(provider_test_class, bad_auth_client):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/available/{provider_test_class.uid}"
+    )
+
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_available_provider__noauth__public_get(
+    provider_test_class, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/available/{provider_test_class.uid}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["class_uid"] == provider_test_class.uid
+
+
+def test_get_available_provider__not_found(client):
+    response = client.get("/api/v1/providers/available/uidfornothing")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Provider not found"}
+
+
 def test_delete_provider(LocalSession, fake_provider, client):
     response = client.delete(f"/api/v1/providers/{fake_provider.id}")
 
