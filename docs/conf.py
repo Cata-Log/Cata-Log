@@ -24,6 +24,10 @@
 import datetime
 import sys
 import tomllib
+import os
+
+sys.path.insert(0, os.path.abspath("../"))
+sys.path.insert(0, os.path.abspath("../src/"))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -34,7 +38,7 @@ author = "David Aderbauer & The Cata-Log Contributors"
 release = "0.1.0"
 year = datetime.date.today().year
 
-with open("../../pyproject.toml", "rb") as pyproject_toml:
+with open("../pyproject.toml", "rb") as pyproject_toml:
     config = tomllib.load(pyproject_toml)
 
 version = config["project"]["version"]
@@ -154,7 +158,7 @@ autodoc_inherit_docstrings = True
 # https://www.sphinx-doc.org/en/master/usage/extensions/apidoc.html#configuration
 #
 apidoc_modules = [
-    {"path": "../src/", "destination": "apidoc-rst/src"},
+    {"path": "../src/cata_log", "destination": "apidoc-rst/cata_log"},
     {"path": "../test", "destination": "apidoc-rst/test"},
 ]
 

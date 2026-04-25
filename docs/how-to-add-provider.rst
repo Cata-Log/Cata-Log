@@ -25,10 +25,11 @@ Here we give a quick rundown of what you need to do, while implementing an examp
 3. Now metadata needs to be added to the class. That data can either be obvious (e.g. the provider's region) or can depend on the way you intend to scrape the provider's api.
 The following datapoints must be added as class variables to your provider class:
 
-- region: The region the flyer is distributed in. If the region is missing, adding it is very straightforward. Just check out and follow :doc:`the guide <how-to-add-region>`.
+- uid: A unique identifier for this provider class. Ideally consists of unique combination of attributes of the class (e.g. name + regioncode).
 - name: The Name of the provider. This is used to create a unique identifier together with the regions local name.
 - description: A description of the provider and the flyer that makes it possible for users to identify it.
 - url: A URL to the provider's digital flyer webpage.
+- region: The region the flyer is distributed in. If the region is missing, adding it is very straightforward. Just check out and follow :doc:`the guide <how-to-add-region>`.
 
 All other datapoints must only be added if they differ from the defaults:
 
@@ -46,10 +47,11 @@ For our example provider this could be
     from celery.schedules import crontab
 
     class ExampleProvider(Provider):
-       region = Germany
+       uid = "example-de"
        name= "Example-Provider"
        description = "An example provider for the purpose of the documentation."
-       url = "https://example-provider.com/catalog"
+       url = "https://example-provider.de/catalog"
+       region = Germany
        first_page_number = 0
        configuration = (
            Configuration(name="argument", helptext="An argument introduced here for example purposes. You can set any value."),
@@ -65,18 +67,17 @@ For our example provider this could be
     - self._client: A HTTP client instance that you should use to make requests to the provider's website.
     - self._relevant_datetime: The datetime identifying the flyer.
 
-    In general:
-
-    - You do not have to worry about handling errors. The base class will take care of that.
-        You only need to catch and handle expected errors, you will see what that means when we continue with the example.
+    **You do not have to worry about handling errors. The base class will take care of that.**
+    You only need to catch and handle expected errors, you will see what that means when we continue with the example.
 
     The methods you must implement are:
 
     - _get_catalog_data:
+
         This allows you to get data from the provider which is needed to access the pages of the flyer.
+
         For example, some providers offer an endpoint to download a json file with the URLs to all currently available flyers and their pages.
         That data can be retrieved and stored in an instance variable to access it in the _get_page method.
-        If this method is not needed, just set ``pass`` as its body. That way a call to it will do exactly nothing.
 
         .. code-block:: python
 
@@ -86,13 +87,18 @@ For our example provider this could be
                 def _get_catalog_data(self):
                     self.pages_json = self._client.get("https://example-provider.com/api/v5/where-are-all-the-pages").json()
 
+        If this method is not needed, just set ``pass`` as its body. That way a call to it will do exactly nothing.
+
     - _get_page:
+
         In this function you fetch the image data for a single page of the flyer.
         The page to be fetched is defined by the page_number argument.
-        But of course it is not clear that that page number even exists in the flyer.
+
+        Of course it is not clear that the requested page number exists in the flyer.
         That's where error handling comes into play.
         If the page number does not exist in the json data we got in _get_catalog_data, then that needs to be addressed.
         The rule is simple: If the page to the page_number argument does not exist, you raise a ``PagesExhausted`` exception.
+
         There are some fallbacks to make this even more simple:
         If you make a HTTP request for page data and that page doesn't exist, the provider's server will most likely respond with status 404.
         You do not need to handle this yourself. If a status 404 error occurs in _get_page,
@@ -112,10 +118,13 @@ For our example provider this could be
                     return self._client.get(urljoin("https://example-provider.com/catalog/pages/", page_relative_url)).content
 
     - _get_valid_since:
+
         This function returns the datetime of the moment that the flyer became valid, in the sense that the offers in it became active.
         Typically that will be 0am of the start-day labeled on the flyer. There is no need to consider store opening hours.
+
         Let's say our flyer always becomes active on wednesday.
         Then we need to calculate back to the past wednesday to get the start-datetime of the currently active flyer.
+
         We need to think about this for a bit:
         If we get the flyer on a Friday, then the last wednesday will be 2 days prior.
         If we get it on a Monday, the last wednesday will be 5 days in the past.
@@ -138,10 +147,13 @@ For our example provider this could be
                     )
 
     - _get_valid_until:
+
         This function returns the datetime of the moment after the flyer became invalid, in the sense that the offers in it became inactive.
         Typically that will be 0am of the day after the end-day labeled on the flyer. There is no need to consider store opening hours.
+
         If the flyer has a fixed ryhthm, like being valid for an entire week, the implementation of this method is really simple.
         We just add an entire week to the valid_since datetime.
+
         In our example the flyer always becomes valid on a wednesday so the offers also end on the next wednesday.
 
         .. code-block:: python
@@ -153,15 +165,20 @@ For our example provider this could be
 5. If necessary, you may want to override other methods as well.
 
     - get_relevant_datetime:
+
         This method returns the datetime that is relevant to identify the provider's flyer.
-        In many cases, the digital flyer URLs contain the year and calendar-week number of the week the flyer is valid.
+
+        In many cases, the digital flyer URLs contain the year and calendar-week number of the week in which the flyer is valid.
         For example: *https://other_provider.com/catalogs/2026_week41/pages/1.jpg*
+
         To be able to format this string, a datetime within the flyer's activity timeframe is required.
         That is what the _relevant_datetime variable is set up for.
+
         The standard implementation returns just the current datetime in the provider region's timezone.
         With that datetime, the currently active flyer can be retrieved.
+
         If you want to implement a flyer preview of a flyer with a weekly schedule, you need the relevant datetime to be in the next week, not the current one.
-        You can simply achieve this by overriding the get_relevant_datetime method and adding a week to the default implementation.
+        You can achieve this by overriding the get_relevant_datetime method and adding a week to the default implementation.
 
         .. code-block:: python
 
@@ -170,7 +187,21 @@ For our example provider this could be
                 return super().get_relevant_datetime() + timedelta(days=7)
 
         In many cases, digital preview flyers follow the same or similar logic as current catalogs.
+
         For these cases, a preview provider class can inherit from the current provider class and override just this method.
+        To make this even simpler, a mixin is provided that does exactly that.
+
+        .. code-block:: python
+
+            from .base import Preview
+            ...
+
+            class ExamplePreviewProvider(Preview, ExampleProvider):
+                ...
+                preview_timedelta = timedelta(days=7)
+
+        Note the order of inheritance, the mixin must come first.
+
 
 We are now done implementing our example provider class.
 
@@ -186,7 +217,7 @@ Putting it all together we get
 
     from cata_log.exceptions import PagesExhausted
 
-    from .base import Provider
+    from .base import Provider, Preview
     from .configuration import Configuration
     from .regions import Germany
 
@@ -229,13 +260,12 @@ Putting it all together we get
             return self._get_valid_since() + timedelta(days=7)
 
 
-    class ExamplePreviewProvider(ExampleProvider):
-        name= "example-preview"
+    class ExamplePreviewProvider(Preview, ExampleProvider):
+        uid = "example-de-preview"
+        name = "example-preview"
         description = "An example preview provider"
+        preview_timedelta = timedelta(days=7)
 
-        @override
-        def get_relevant_datetime(self):
-            return super().get_relevant_datetime() + timedelta(days=7)
 
 
 For more exemplary implementations, you can check the source code of existing and stable provider classes.
@@ -264,7 +294,7 @@ To turn your provider file into a viable plugin, replace all imports from . into
 
 With that file follow :doc:`the guide for plugins <plugins>` to run it in a Cata-Log instance.
 
-After you're done testing, you can restore the original import paths.
+After you're done testing, restore the original import paths.
 
 3. Lint the code you created, please run
 

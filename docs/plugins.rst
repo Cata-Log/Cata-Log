@@ -1,3 +1,9 @@
+..
+   SPDX-License-Identifier: CC-BY-SA 4.0
+
+   Copyright (C) 2026 David Aderbauer & The Cata-Log Contributors
+   Licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+
 Plugins
 =======
 
@@ -5,12 +11,13 @@ Cata-Log has a plugin system for providers.
 
 This allows you to use providers that are not built-in or use your own custom implementations.
 
-Installation
-------------
+Activation
+----------
 
-Installation of a plugin is straightforward.
+Activating a plugin is straightforward.
 
-1. Get a file for a Cata-Log plugin. A plugin file must end in *.py*. It must contain at least one class that inherits from *cata_log.providers.base.Provider*.
+1. Get a file for a Cata-Log plugin. A plugin file must end in *.py*.
+   It must contain at least one class that inherits from *cata_log.providers.base.Provider*.
 
 .. important::
 
@@ -22,10 +29,10 @@ You may order the plugins into subdirectories of that volume.
 
 3. Restart (or start) the Cata-Log instance. The plugged-in provider is now available.
 
-Uninstallation
---------------
+Deactivation
+------------
 
-To uninstall a plugin:
+To deactivate a plugin:
 
 1. Remove the plugin from the */mnt/plugins/* docker volume.
 

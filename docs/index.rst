@@ -10,23 +10,16 @@ Cata-Log Documentation
 Welcome to the documentation of Cata-Log, the central self-hostable hub for all flyers and catalogs.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    quickstart
-   faq
    installation
    configuration
-   troubleshooting
    plugins
-   how-to-add-provider
-   how-to-add-plugin
-   how-to-add-region
+   faq
+   troubleshooting
+   contributors
    changelog
    contact
-   contributing
-   code_of_conduct
-   development
-   todo
-   modules
    license

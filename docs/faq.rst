@@ -10,7 +10,7 @@ FAQ
 This is a list of frequently asked questions with their answers
 and quick solutions to common problems.
 
-If you have run into a problem running Cata-Log, check out the :doc:`troubleshooting page <troubleshooting>`.
+If you have run into a problem hosting Cata-Log, check out the :doc:`troubleshooting page <troubleshooting>`.
 
 What's the point of this application?
 -------------------------------------
@@ -82,10 +82,12 @@ If the problem is security-related please contact one of the developers privatel
 Will there be translations to other languages beside english?
 -------------------------------------------------------------
 
-No, as this is mainly intended to serve as an api interface,
+No, as this is mainly intended to serve as an API interface,
 there are no plans to implement localization and translation.
+
 The providers are described in the language of their region anyway,
 so you should not have trouble finding and adding the ones you actually need.
+
 If you still have trouble with the language,
 many browsers have an autotranslation feature that may help you.
 
@@ -93,7 +95,6 @@ many browsers have an autotranslation feature that may help you.
 How can I contribute to this project?
 -------------------------------------
 
-Everyone is welcome to help with the development of Cata-Log!
+This project lives and thrives on community contributions!
 
-To get you off to a good start please check out the quickstart and how-to guidelines.
-You can find them alongside the source code documentation in the :doc:`developers section <developers>`.
+To get off to a good start please check out the :doc:`quickstart <contributing-quickstart>` and :doc:`the how-to guides <how-to>`.

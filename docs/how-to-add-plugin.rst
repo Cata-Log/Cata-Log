@@ -28,6 +28,11 @@ Please refer to :doc:`the guide on creating a provider <how-to-add-provider>` fo
             from .base import Provider
 
     Plugin:
+
         .. code-block:: python
 
             from cata_log.providers.base import Provider
+
+After you have written the code for the plugin, you can test it manually by adding it to your local Cata-Log instance.
+
+See :doc:`the plugin instruction <plugins>` for more details on how to do that.

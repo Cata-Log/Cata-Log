@@ -3,7 +3,7 @@ from typing import override
 
 from cata_log.exceptions import PagesExhausted, CalendarUnavailableWarning
 
-from .base import Provider
+from .base import Provider, Preview
 from .configuration import Configuration
 from .regions import
 
@@ -16,6 +16,7 @@ from cata_log.utils.dates import get_calendar_week_number
 
 class TemplateProvider(Provider):
     # Mandatory
+    uid = # A unique identifier for this provider. Ideally composed of a unique combination of provider attributes (e.g. name + regioncode).
     region =  # The region of the provider. You can add missing regions if needed.
     name=  # Name for the provider. This is used to create a unique identifier together with the regions local name.
     description = # A short description of the provider.
@@ -95,9 +96,11 @@ class TemplateProvider(Provider):
 # If the provider offers more digital flyers like previews, that use the same logic as the current flyer,
 # you can simply inherit from the current flyer's provider class and override just what needs to be adapted.
 
-class TemplatePreviewProvider(TemplateProvider):
+class TemplatePreviewProvider(Preview, TemplateProvider):
     # Override the methods that are different for the preview flyer.
     #
-    # You probably will have to override get_relevant_datetime.
-    #
     # See netto.py for an example of a provider with both preview and retrospect provider classes.
+    uid = # Set a uid for the preview
+    name = # A proper name for the preview
+    description = # A description for the preview provider
+    preview_timedelta = timedelta( # the timedelta that the preview is ahead of the regular flyer release schedule

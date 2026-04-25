@@ -7,10 +7,15 @@
 Quickstart Guide
 ================
 
-Get the *docker/docker-compose.yml* file from the git repository and run
+- If you don't have already, `install docker <https://docs.docker.com/engine/install/>`_.
 
-.. code-block:: console
+- Get `the docker-compose.yml file <https://gitlab.com/cata-log/cata-log/-/blob/main/docker/docker-compose.yml>`_ from the git repository
+  and run
 
-    docker compose -f docker-compose.yml up -d
+    .. code-block:: console
 
-Then visit `http://localhost:2424/`.
+        docker compose up -d
+
+- Then visit `http://localhost:2424/`.
+
+For a complete installation go to :doc:`the installation page <installation>`.

@@ -24,5 +24,5 @@ Documentation License
 Third-Party-Licenses
 --------------------
 
-.. include:: THIRD_PARTY_LICENSES
+.. include:: ../THIRD_PARTY_LICENSES
     :parser: myst_parser.sphinx_
