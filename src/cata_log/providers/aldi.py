@@ -32,7 +32,7 @@ from .regions import Germany
 class AldiSued(Provider):
     """Provider class for Aldi-Süd current catalog."""
 
-    uid = "alid-sued-de"
+    uid = "aldi-sued-de"
     name = "Aldi-Süd"
     url = "https://www.aldi-sued.de/prospekte"
     region = Germany
