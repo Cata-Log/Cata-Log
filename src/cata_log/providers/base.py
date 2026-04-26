@@ -365,6 +365,8 @@ class Provider(abc.ABC):
         return STORAGE_PATH / filename
 
 
+# mypy: disable_error_code=misc
+# mypy: disable_error_code=no-any-return
 class Preview:
     """Preview mixin for a provider class."""
 

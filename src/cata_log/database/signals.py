@@ -22,13 +22,7 @@ import logging
 from celery_sqlalchemy_v2_scheduler.models import (
     PeriodicTask,
 )
-from sqlalchemy import (
-    Connection,
-    delete,
-    engine,
-    event,
-    orm,
-)
+from sqlalchemy import Connection, Engine, delete, event, orm
 from sqlalchemy.engine.interfaces import DBAPIConnection
 from sqlalchemy.pool.base import _ConnectionRecord
 
@@ -42,7 +36,7 @@ from .utils import get_or_create_crontab_schedule
 logger = logging.getLogger(__name__)
 
 
-@event.listens_for(engine.Engine, "connect")
+@event.listens_for(Engine, "connect")
 def set_sqlite_pragma(
     dbapi_connection: DBAPIConnection,
     connection_record: _ConnectionRecord,  # noqa: ARG001  # required for event decorator
@@ -132,3 +126,12 @@ def after_provider_delete(
         "Success cleaning up periodictask of a deleted provider.",
         extra={"provider_id": target.id, "task_id": target.task_id},
     )
+
+
+__all__ = [
+    "after_page_delete",
+    "after_pagefile_delete",
+    "after_provider_delete",
+    "after_provider_insert",
+    "set_sqlite_pragma",
+]

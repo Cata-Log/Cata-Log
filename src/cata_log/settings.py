@@ -18,7 +18,7 @@
 
 import enum
 import os
-from typing import override
+from typing import Any, override
 
 from cata_log.exceptions import ApplicationMisconfiguredError
 
@@ -37,7 +37,7 @@ class Settings(enum.Enum):
 
     @property
     @override
-    def value(self) -> type:
+    def value(self) -> Any:
         default = super().value
         return type(default)(os.environ.get(self.name, default))
 

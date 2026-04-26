@@ -29,7 +29,6 @@ from .signals import *  # noqa: F403 # all signals must be loaded
 
 engine = create_engine(url=DATABASE_URL)
 
-
 DBSession = orm.sessionmaker(bind=engine)
 
 

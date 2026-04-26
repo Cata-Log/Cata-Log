@@ -119,8 +119,7 @@ lint = [
     { name = "djlint" },
     { name = "doc8" },
     { name = "gitlab-ci-verify" },
-    { name = "lxml" },
-    { name = "mypy" },
+    { name = "mypy", extra = ["reports"] },
     { name = "ruff" },
 ]
 stubs = [
@@ -167,8 +166,7 @@ lint = [
     { name = "djlint", specifier = ">=1.36.4" },
     { name = "doc8", specifier = ">=2.0.0" },
     { name = "gitlab-ci-verify", specifier = ">=2.11.0" },
-    { name = "lxml", specifier = ">=6.0.2" },
-    { name = "mypy", specifier = ">=1.19.1" },
+    { name = "mypy", extras = ["reports"], specifier = ">=1.19.1" },
     { name = "ruff", specifier = ">=0.15.8" },
 ]
 stubs = [{ name = "celery-types", specifier = ">=0.26.0" }]
@@ -983,6 +981,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5a/2c/78a8851264dec38cd736ca5b8bc9380674df0dd0be7792f538916157716c/mypy-1.20.2-cp314-cp314t-win_amd64.whl", hash = "sha256:9bcb8aa397ff0093c824182fd76a935a9ba7ad097fcbef80ae89bf6c1731d8ec", size = 12568661, upload-time = "2026-04-21T17:11:54.473Z" },
     { url = "https://files.pythonhosted.org/packages/83/01/cd7318aa03493322ce275a0e14f4f52b8896335e4e79d4fb8153a7ad2b77/mypy-1.20.2-cp314-cp314t-win_arm64.whl", hash = "sha256:e061b58443f1736f8a37c48978d7ab581636d6ab03e3d4f99e3fa90463bb9382", size = 10389240, upload-time = "2026-04-21T17:09:42.719Z" },
     { url = "https://files.pythonhosted.org/packages/28/9a/f23c163e25b11074188251b0b5a0342625fc1cdb6af604757174fa9acc9b/mypy-1.20.2-py3-none-any.whl", hash = "sha256:a94c5a76ab46c5e6257c7972b6c8cff0574201ca7dc05647e33e795d78680563", size = 2637314, upload-time = "2026-04-21T17:05:54.5Z" },
+]
+
+[package.optional-dependencies]
+reports = [
+    { name = "lxml" },
 ]
 
 [[package]]

@@ -23,7 +23,7 @@ def get_credentials() -> tuple[str, str | None]:
 
 def verify_credentials(
     request: Request,
-    credentials: HTTPBasicCredentials = depends_http_basic_security,
+    credentials: HTTPBasicCredentials | None = depends_http_basic_security,
 ) -> None:
     """Verify credentials given by the user.
 
@@ -35,8 +35,8 @@ def verify_credentials(
         return
     username, password = get_credentials()
     if (
-        not password
-        or not credentials
+        (credentials is None)
+        or not password
         or not (
             secrets.compare_digest(credentials.username, username)
             and secrets.compare_digest(credentials.password, password)

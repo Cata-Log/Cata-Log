@@ -35,8 +35,7 @@ docs = [
     "sphinxcontrib-napoleon>=0.7",
 ]
 lint = [
-    "mypy>=1.19.1",
-    "lxml>=6.0.2",
+    "mypy[reports]>=1.19.1",
     "ruff>=0.15.8",
     "codespell>=2.4.2",
     "djlint>=1.36.4",
