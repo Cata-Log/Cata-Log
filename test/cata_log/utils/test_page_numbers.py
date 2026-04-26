@@ -179,6 +179,8 @@ def test_DoublePageNumber___eq___unequal(double_page_number, unequal_object):
             page_numbers.DoublePageNumber(5, 0, 2),
             page_numbers.DoublePageNumber(1, 0, 2),
         ),
+        (page_numbers.DoublePageNumber(1, 1, 0), 1.4),
+        (page_numbers.DoublePageNumber(3, 1, 0), 2.3),
     ],
 )
 def test_DoublePageNumber___gt___greater(double_page_number, smaller_object):

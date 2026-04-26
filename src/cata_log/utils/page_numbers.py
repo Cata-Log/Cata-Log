@@ -327,18 +327,3 @@ def page_numbering(start_number: int = 0) -> Generator[PageNumber]:
     while True:
         yield page_number
         page_number = page_number.next()
-
-
-def double_page_numbering(start_number: int = 0) -> Generator[DoublePageNumber]:
-    """Generator for double page numbering.
-
-    Args:
-        start_number: The first page number.
-
-    Yields:
-        The consecutive double page numbers starting with the first double page.
-    """
-    double_page_number = DoublePageNumber(0, 0, start_number=start_number)
-    while True:
-        yield double_page_number
-        double_page_number = double_page_number.next()

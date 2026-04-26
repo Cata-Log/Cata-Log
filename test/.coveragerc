@@ -15,6 +15,10 @@ format=total
 exclude_also =
     if TYPE_CHECKING
     @overload
+    @override\n\s*def _get_page
+    @override\n\s*def _get_catalog_data
+    @override\n\s*def _get_valid_since
+    @override\n\s*def _get_valid_until
 include_namespace_packages=True
 precision=2
 show_missing=True

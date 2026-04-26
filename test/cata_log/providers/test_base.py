@@ -19,8 +19,16 @@
 import pytest
 
 from cata_log import exceptions
+from cata_log.providers import Provider
 from cata_log.utils.page_numbers import PageNumber
 from test.cata_log.conftest import SideEffects
+
+
+def test_duplicate_provider(provider_test_class):
+    with pytest.raises(exceptions.ProviderRegistrationWarning):
+
+        class DuplicateProvider(Provider):
+            uid = provider_test_class.uid
 
 
 @pytest.mark.parametrize(

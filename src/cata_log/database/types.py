@@ -33,12 +33,8 @@ class PathType(TypeDecorator):
 
     @override
     def process_bind_param(self, value: Path | None, dialect: Dialect) -> str | None:
-        if value is None:
-            return None
-        return str(value)
+        return str(value) if value is not None else None
 
     @override
     def process_result_value(self, value: str | None, dialect: Dialect) -> Path | None:
-        if value is None:
-            return None
-        return Path(value)
+        return Path(value) if value is not None else None

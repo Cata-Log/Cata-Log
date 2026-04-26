@@ -249,7 +249,9 @@ class Provider(abc.ABC):
         Returns:
             A generator of the pages data as bytes.
         """
-        for page_number in page_numbering(self.first_page_number):
+        for page_number in page_numbering(
+            self.first_page_number
+        ):  # pragma: no branch # this iterator never finishes
             try:
                 yield page_number.normalized, self.get_page(page_number)
             except PagesExhausted:
