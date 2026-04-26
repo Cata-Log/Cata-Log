@@ -25,8 +25,12 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pip-licenses>=5.5.1",
-    "pre-commit>=4.5.1",
+    {include-group = "docs"},
+    {include-group = "lint"},
+    {include-group = "stubs"},
+    {include-group = "test"},
+    "pip-licenses",
+    "pre-commit",
 ]
 docs = [
     "myst-parser>=5.0.0",
@@ -35,12 +39,12 @@ docs = [
     "sphinxcontrib-napoleon>=0.7",
 ]
 lint = [
-    "mypy[reports]>=1.19.1",
-    "ruff>=0.15.8",
-    "codespell>=2.4.2",
-    "djlint>=1.36.4",
-    "gitlab-ci-verify>=2.11.0",
-    "doc8>=2.0.0",
+    "mypy[reports]",
+    "ruff",
+    "codespell",
+    "djlint",
+    "gitlab-ci-verify",
+    "doc8",
 ]
 stubs = [
     "celery-types>=0.26.0",
