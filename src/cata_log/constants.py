@@ -38,7 +38,7 @@ FAST_API_LICENSE_INFO = {
 }
 FAST_API_CONTACT = {
     "name": "Github Repo",
-    "url": "https://github.com/Dacid99/cata-log.git",
+    "url": "https://github.com/cata-log/cata-log.git",
 }
 
 

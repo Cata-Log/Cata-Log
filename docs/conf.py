@@ -120,7 +120,7 @@ html_theme_options = {
     "touch_icon": "",
     "github_button": True,
     "github_repo": "cata-log",
-    "github_user": "Dacid99",
+    "github_user": "Cata-Log",
     "show_powered_by": True,
     "show_relbars": True,
     "fixed_sidebar": True,

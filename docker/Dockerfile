@@ -70,8 +70,8 @@ FROM python:${PYTHON_VERSION}-alpine${ALPINE_VERSION} AS cata-log
 # labels
 LABEL org.opencontainers.image.authors="David Aderbauer & The Cata-Log Contributors"
 LABEL org.opencontainers.image.documentation="https://cata-log.readthedocs.io"
-LABEL org.opencontainers.image.source="https://gitlab.com/Dacid99/cata-log"
-LABEL org.opencontainers.image.url="https://gitlab.com/Dacid99/cata-log"
+LABEL org.opencontainers.image.source="https://gitlab.com/cata-log/cata-log"
+LABEL org.opencontainers.image.url="https://gitlab.com/cata-log/cata-log"
 LABEL org.opencontainers.image.licenses="AGPL-3.0-or-later"
 LABEL org.opencontainers.image.description="The central hub for grocery shopping catalogs."
 LABEL org.opencontainers.image.title="Cata-Log Server"
