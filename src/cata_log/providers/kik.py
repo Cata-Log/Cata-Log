@@ -39,9 +39,7 @@ class Kik(Provider):
     description = "Kik Katalog"
     first_page_number = 0
 
-    overview_url_format = (
-        "https://prospekt.kik.de/kik-{year}-op{catalog_number}-de_high/spreads.json"
-    )
+    overview_url_format = "https://prospekt.kik.de/kik-{relevant_datetime:%Y}-op{catalog_number}-de_high/spreads.json"
     base_url = "https://prospekt.kik.de/"
 
     @override
@@ -49,7 +47,7 @@ class Kik(Provider):
         self.catalog_data = self._client.get(
             self.overview_url_format.format(
                 catalog_number=get_calendar_week_number(self._relevant_datetime) // 4,
-                year=self._relevant_datetime.year,
+                relevant_datetime=self._relevant_datetime,
             )
         ).json()
 

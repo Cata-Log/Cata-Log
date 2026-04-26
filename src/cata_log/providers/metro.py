@@ -38,7 +38,7 @@ class MetroWochenangebote(Provider):
     description = "Metro Wochenangebote"
     first_page_number = 0
 
-    overview_url_format = "https://prospekte.metro.de/wochen-angebote-{valid_since}-{valid_until}/spreads.json"
+    overview_url_format = "https://prospekte.metro.de/wochen-angebote-{valid_since:%y%m%d}-{valid_until:%y%m%d}/spreads.json"
 
     base_url = "https://prospekte.metro.de/"
 
@@ -48,8 +48,7 @@ class MetroWochenangebote(Provider):
         valid_until = self.get_valid_until() - timedelta(days=3)
         self.catalog_data = self._client.get(
             self.overview_url_format.format(
-                valid_until=valid_until.strftime("%y%m%d"),
-                valid_since=valid_since.strftime("%y%m%d"),
+                valid_until=valid_until, valid_since=valid_since
             )
         ).json()
 

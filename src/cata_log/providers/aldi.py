@@ -39,9 +39,7 @@ class AldiSued(Provider):
     description = "Aldi Süd Katalog"
     first_page_number = 0
 
-    overview_url_format = (
-        "https://prospekt.aldi-sued.de/kw{week_number:02}-{year}-op-mp/spreads.json"
-    )
+    overview_url_format = "https://prospekt.aldi-sued.de/kw{week_number:02}-{relevant_datetime:%y}-op-mp/spreads.json"
     base_url = "https://view.publitas.com"
 
     @override
@@ -49,7 +47,7 @@ class AldiSued(Provider):
         self.catalog_data = self._client.get(
             self.overview_url_format.format(
                 week_number=get_calendar_week_number(self._relevant_datetime),
-                year=self._relevant_datetime.year % 100,
+                relevant_datetime=self._relevant_datetime,
             )
         ).json()
 

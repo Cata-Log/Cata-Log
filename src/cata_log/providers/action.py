@@ -39,7 +39,7 @@ class Action(Provider):
     description = "Action Katalog"
     first_page_number = 0
 
-    overview_url_format = "https://de.publications.action.com/action-week-{week_number:02}-{year}/spreads.json"
+    overview_url_format = "https://de.publications.action.com/action-week-{week_number:02}-{valid_since:%Y}/spreads.json"
     base_url = "https://de.publications.action.com/"
 
     @override
@@ -48,7 +48,7 @@ class Action(Provider):
         self.catalog_data = self._client.get(
             self.overview_url_format.format(
                 week_number=get_calendar_week_number(valid_since),
-                year=valid_since.year,
+                valid_since=valid_since,
             )
         ).json()
 

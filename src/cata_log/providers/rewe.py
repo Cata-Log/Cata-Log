@@ -52,7 +52,7 @@ class Rewe(Provider):
     )
     first_page_number = 0
 
-    overview_url_format = "https://view.publitas.com/rewe-markt/rewe_{year}_wk{week_number:02}_{markt_id}/spreads.json"
+    overview_url_format = "https://view.publitas.com/rewe-markt/rewe_{relevant_datetime:%Y}_wk{week_number:02}_{markt_id}/spreads.json"
     base_url = "https://view.publitas.com"
 
     @override
@@ -60,7 +60,7 @@ class Rewe(Provider):
         self.catalog_data = self._client.get(
             self.overview_url_format.format(
                 week_number=dates.get_calendar_week_number(self._relevant_datetime),
-                year=self._relevant_datetime.year,
+                relevant_datetime=self._relevant_datetime,
                 **self._configuration,
             )
         ).json()

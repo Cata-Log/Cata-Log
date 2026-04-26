@@ -39,7 +39,7 @@ class Hofer(Provider):
     description = "Hofer Prospekt"
     first_page_number = 0
 
-    overview_url_format = "https://katalog.hofer.at/flipbook_kw{week_number:02}_{short_year}_0/spreads.json"
+    overview_url_format = "https://katalog.hofer.at/flipbook_kw{week_number:02}_{relevant_datetime:%y}_0/spreads.json"
     base_url = "https://katalog.hofer.at"
 
     @override
@@ -50,7 +50,7 @@ class Hofer(Provider):
         self.catalog_data = self._client.get(
             self.overview_url_format.format(
                 week_number=shifted_week_number,
-                short_year=self._relevant_datetime.year % 100,
+                relevant_datetime=self._relevant_datetime,
             )
         ).json()
 

@@ -36,7 +36,7 @@ class Norma(Provider):
     region = Germany
     url = "https://www.norma-online.de/de/angebote/onlineprospekt/"
 
-    catalog_url_format = "https://www.norma-online.de/de/angebote/online-prospekt/{year}-{week_number:02}_FG/files/page/{page_number}.jpg"
+    catalog_url_format = "https://www.norma-online.de/de/angebote/online-prospekt/{relevant_datetime:%Y}-{week_number:02}_FG/files/page/{page_number}.jpg"
 
     @override
     def _get_catalog_data(self) -> None:
@@ -46,7 +46,7 @@ class Norma(Provider):
     def _get_page(self, page_number: PageNumber) -> bytes:
         response = self._client.get(
             url=self.catalog_url_format.format(
-                year=self._relevant_datetime.year,
+                relevant_datetime=self._relevant_datetime,
                 week_number=get_calendar_week_number(
                     self._relevant_datetime, self.region.week_counting_startpoint
                 ),
