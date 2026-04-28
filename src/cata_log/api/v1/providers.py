@@ -25,6 +25,7 @@ from starlette.responses import JSONResponse
 
 from cata_log import constants, database
 from cata_log.api.mixins import AwareTimestampsMixin
+from cata_log.api.v1 import common
 from cata_log.exceptions import (
     ProviderIncompleteConfigurationWarning,
     ProviderInvalidConfigurationWarning,
@@ -148,6 +149,20 @@ async def list_available_providers(
     "",
     status_code=status.HTTP_201_CREATED,
     response_model=Provider,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": common.HTTP400Error,
+            "description": "If the given data is invalid.",
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+        status.HTTP_409_CONFLICT: {
+            "model": common.HTTPStatusError,
+            "description": "If the object already exists.",
+        },
+    },
     operation_id="setup-provider-v1",
 )
 async def post_provider(
@@ -160,8 +175,8 @@ async def post_provider(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "error": "The given provider type is unknown",
-                "class_uid": new_provider.class_uid,
+                "message": "The given provider type is unknown",
+                "fields": [{"class_uid": new_provider.class_uid}],
             },
         ) from unknown_class_warning
     try:
@@ -172,16 +187,16 @@ async def post_provider(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "error": "The given provider configuration is incomplete",
-                "missing_configurations": incomplete_warning.bad_configurations,
+                "message": "The given provider configuration is incomplete",
+                "fields": [{"configuration": incomplete_warning.bad_configurations}],
             },
         ) from incomplete_warning
     except ProviderInvalidConfigurationWarning as invalid_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "error": "The given provider configuration is invalid",
-                "missing_configurations": invalid_warning.bad_configurations,
+                "message": "The given provider configuration is invalid",
+                "fields": [{"configuration": invalid_warning.bad_configurations}],
             },
         ) from invalid_warning
     if any(
@@ -191,7 +206,7 @@ async def post_provider(
         .all()
     ):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_409_CONFLICT,
             detail="The given provider configuration already exists",
         )
     provider = database.Provider(
@@ -208,6 +223,20 @@ async def post_provider(
 @router.patch(
     "/{provider_id}",
     response_model=Provider,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": common.HTTP400Error,
+            "description": "If the given data is invalid.",
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+        status.HTTP_409_CONFLICT: {
+            "model": common.HTTPStatusError,
+            "description": "If the object already exists.",
+        },
+    },
     operation_id="update-provider-v1",
 )
 async def patch_provider(
@@ -235,8 +264,8 @@ async def patch_provider(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "error": "The given provider type is unknown",
-                "class_uid": provider.class_uid,
+                "message": "The given provider type is unknown",
+                "fields": [{"class_uid": provider.class_uid}],
             },
         ) from unknown_class_warning
     try:
@@ -247,16 +276,16 @@ async def patch_provider(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "error": "The given provider configuration is incomplete",
-                "missing_configurations": incomplete_warning.bad_configurations,
+                "message": "The given provider configuration is incomplete",
+                "fields": [{"configuration": incomplete_warning.bad_configurations}],
             },
         ) from incomplete_warning
     except ProviderInvalidConfigurationWarning as invalid_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "error": "The given provider configuration is invalid",
-                "invalid_configurations": invalid_warning.bad_configurations,
+                "message": "The given provider configuration is invalid",
+                "fields": [{"configuration": invalid_warning.bad_configurations}],
             },
         ) from invalid_warning
     if any(
@@ -267,7 +296,7 @@ async def patch_provider(
         .all()
     ):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_409_CONFLICT,
             detail="The given provider configuration already exists",
         )
     provider.configuration = validated_configuration
@@ -278,7 +307,15 @@ async def patch_provider(
 
 
 @router.get(
-    "/{provider_id}", response_model=FullProvider, operation_id="get-provider-v1"
+    "/{provider_id}",
+    response_model=FullProvider,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
+    operation_id="get-provider-v1",
 )
 async def get_provider(
     provider_id: int, db_session: Session = database.depends_db_session
@@ -295,6 +332,12 @@ async def get_provider(
 @router.get(
     "/available/{provider_class_uid}",
     response_model=ProviderInfo,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
     operation_id="get-available-provider-v1",
 )
 async def get_available_provider(
@@ -313,6 +356,12 @@ async def get_available_provider(
 @router.delete(
     "/{provider_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
     operation_id="delete-provider-v1",
 )
 async def delete_provider(

@@ -26,6 +26,7 @@ from sqlalchemy.sql import func
 
 from cata_log import database
 from cata_log.api.mixins import AwareTimestampsMixin
+from cata_log.api.v1 import common
 
 from .pages import Page
 
@@ -134,7 +135,17 @@ async def list_outdated_catalogs(
     )
 
 
-@router.get("/{catalog_id}", response_model=FullCatalog, operation_id="get-catalog-v1")
+@router.get(
+    "/{catalog_id}",
+    response_model=FullCatalog,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
+    operation_id="get-catalog-v1",
+)
 async def get_catalog(
     catalog_id: int, db_session: Session = database.depends_db_session
 ) -> database.Catalog:
@@ -149,7 +160,16 @@ async def get_catalog(
     return catalog
 
 
-@router.get("/{catalog_id}/download", operation_id="download-catalog-v1")
+@router.get(
+    "/{catalog_id}/download",
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
+    operation_id="download-catalog-v1",
+)
 async def download_catalog(
     catalog_id: int,
     filename: str | None = None,
@@ -173,6 +193,12 @@ async def download_catalog(
 @router.get(
     "/{catalog_id}/pages",
     response_model=list[Page],
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
     operation_id="get-catalog-pages-v1",
 )
 async def get_catalog_pages(
@@ -190,6 +216,12 @@ async def get_catalog_pages(
 @router.get(
     "/{catalog_id}/pages/{page_number}",
     response_model=Page,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
     operation_id="get-catalog-page-v1",
 )
 async def get_catalog_page(
@@ -211,6 +243,12 @@ async def get_catalog_page(
 
 @router.get(
     "/{catalog_id}/pages/{page_number}/download",
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
     operation_id="download-catalog-page-v1",
 )
 async def download_catalog_page(
@@ -240,7 +278,14 @@ async def download_catalog_page(
 
 
 @router.get(
-    "/{catalog_id}/pages/{page_number}/embed", operation_id="embed-catalog-page-v1"
+    "/{catalog_id}/pages/{page_number}/embed",
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
+    operation_id="embed-catalog-page-v1",
 )
 async def embed_catalog_page(
     catalog_id: int,

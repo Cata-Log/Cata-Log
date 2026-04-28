@@ -20,18 +20,20 @@ from fastapi import Depends, FastAPI, status
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from cata_log import __version__, api, constants, opds, settings, web
-from cata_log.logging import setup_logging
-from cata_log.security import verify_credentials
+from cata_log import __version__, api, constants, logging, opds, security, settings, web
 
-setup_logging()
-settings.Settings.check()
+logging.setup_logging()
 
 settings.Settings.check()
-
 
 app = FastAPI(
-    dependencies=[Depends(verify_credentials)],
+    dependencies=[Depends(security.verify_credentials)],
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": security.HTTP401Error,
+            "description": "If the request is not authorized.",
+        },
+    },
     title=constants.FAST_API_TITLE,
     description=constants.FAST_API_DESCRIPTION,
     summary=constants.FAST_API_SUMMARY,
@@ -54,6 +56,7 @@ app.mount(
     StaticFiles(directory=constants.SOURCE_PATH / "cata_log/web/static/js"),
     name="static-js",
 )
+
 app.include_router(api.router)
 app.include_router(web.router)
 app.include_router(opds.router)

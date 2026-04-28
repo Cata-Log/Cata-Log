@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 
 from cata_log import database
 from cata_log.api.mixins import AwareTimestampsMixin
+from cata_log.api.v1 import common
 
 router = APIRouter(prefix="/pages", tags=["pages"])
 
@@ -55,7 +56,11 @@ class Page(AwareTimestampsMixin, BaseModel):
     file: PageFile
 
 
-@router.get("", response_model=list[Page], operation_id="list-pages-v1")
+@router.get(
+    "",
+    response_model=list[Page],
+    operation_id="list-pages-v1",
+)
 async def list_pages(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Page]:
@@ -68,7 +73,17 @@ async def list_pages(
     )
 
 
-@router.get("/{page_id}", response_model=Page, operation_id="get-page-v1")
+@router.get(
+    "/{page_id}",
+    response_model=Page,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
+    operation_id="get-page-v1",
+)
 async def get_page(
     page_id: int, db_session: Session = database.depends_db_session
 ) -> database.Page:
@@ -81,7 +96,16 @@ async def get_page(
     return page
 
 
-@router.get("/{page_id}/download", operation_id="download-page-v1")
+@router.get(
+    "/{page_id}/download",
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
+    operation_id="download-page-v1",
+)
 async def download_page(
     page_id: int,
     filename: str | None = None,
@@ -106,7 +130,16 @@ async def download_page(
     )
 
 
-@router.get("/{page_id}/embed", operation_id="embed-page-v1")
+@router.get(
+    "/{page_id}/embed",
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
+    operation_id="embed-page-v1",
+)
 async def embed_page(
     page_id: int,
     filename: str | None = None,
