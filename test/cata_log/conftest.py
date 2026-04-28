@@ -110,13 +110,18 @@ def public_get():
 
 
 @pytest.fixture
-def noauth_client(fake_fs, fake_credentials):
+def fastapi_app(fake_fs):
     from cata_log.main import app  # noqa: PLC0415
 
-    with TestClient(app) as noauth_client:
-        yield noauth_client
+    yield app
 
     del app
+
+
+@pytest.fixture
+def noauth_client(fake_credentials, fastapi_app):
+    with TestClient(fastapi_app) as noauth_client:
+        yield noauth_client
 
 
 @pytest.fixture

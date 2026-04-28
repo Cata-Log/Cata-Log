@@ -47,7 +47,6 @@ app.add_route(
     "/docs",
     lambda _: RedirectResponse("/docs/swagger", status_code=status.HTTP_302_FOUND),
 )
-
 app.mount(
     "/static/pages", StaticFiles(directory=constants.STORAGE_PATH), name="static_pages"
 )

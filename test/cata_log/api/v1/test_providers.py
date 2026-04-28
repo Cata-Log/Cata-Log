@@ -23,9 +23,8 @@ from urllib.parse import urljoin
 import pytest
 from celery.app.task import Task
 
-from cata_log import database
-from src.cata_log import security
-from src.cata_log.api.v1 import common
+from cata_log import database, security
+from cata_log.api.v1 import common
 
 
 @pytest.fixture
