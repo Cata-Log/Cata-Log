@@ -25,7 +25,7 @@ from sqlalchemy.orm import selectinload
 from cata_log import constants, database
 from cata_log.providers import Provider
 
-router = APIRouter(prefix="", tags=["web"])
+router = APIRouter(prefix="", tags=["web"], include_in_schema=False)
 
 
 __all__ = ["router"]

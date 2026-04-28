@@ -29,7 +29,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from cata_log import database
 
-router = APIRouter(prefix="/opds", tags=["opds"])
+router = APIRouter(prefix="/opds", tags=["opds"], include_in_schema=False)
 
 __all__ = ["router"]
 
