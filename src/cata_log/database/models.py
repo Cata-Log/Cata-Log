@@ -338,6 +338,7 @@ class PageFile(ModelBase, TimestampMixin):
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     path: orm.Mapped[Path] = orm.mapped_column(PathType, unique=True)
     sha256: orm.Mapped[str] = orm.mapped_column()
+    size: orm.Mapped[int] = orm.mapped_column()
     pages: orm.Mapped[list[Page]] = orm.relationship(
         back_populates="file",
         passive_deletes="all",  # essential to make ondelete=RESTRICT work: https://stackoverflow.com/questions/55968951/sqlalchemy-fk-ondelete-does-not-restrict
@@ -368,7 +369,7 @@ class PageFile(ModelBase, TimestampMixin):
         sha256_hash = sha256(page_bytes).hexdigest()
         pagefile = db_session.query(cls).filter(cls.sha256 == sha256_hash).first()
         if not pagefile:
-            pagefile = cls(sha256=sha256_hash, path=path)
+            pagefile = cls(sha256=sha256_hash, size=len(page_bytes), path=path)
             db_session.add(pagefile)
             db_session.flush()
             path.write_bytes(page_bytes)

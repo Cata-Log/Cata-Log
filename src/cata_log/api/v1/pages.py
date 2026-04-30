@@ -16,11 +16,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from cata_log import database
@@ -35,16 +34,9 @@ class PageFile(AwareTimestampsMixin, BaseModel):
 
     id: int
     sha256: str
-    path: Path = Field(exclude=True)
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    """Pydantic model configuration."""
-
-    @computed_field  # type: ignore[prop-decorator]  # as documented for this decorator
-    @property
-    def name(self) -> str:
-        """Compute the static filename from the storage path."""
-        return Path(self.path).name
+    size: int
+    name: str
+    media_type: str
 
 
 class Page(AwareTimestampsMixin, BaseModel):

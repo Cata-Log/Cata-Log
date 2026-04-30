@@ -253,7 +253,9 @@ def fake_file(faker, fake_fs):
 
 @pytest.fixture
 def fake_pagefile(faker, db_session, fake_file):
-    fake_pagefile = database.PageFile(path=str(fake_file), sha256=faker.sha256())
+    fake_pagefile = database.PageFile(
+        path=str(fake_file), size=faker.random.randint(1, 1000), sha256=faker.sha256()
+    )
     db_session.add(fake_pagefile)
     db_session.commit()
     db_session.refresh(fake_pagefile)

@@ -225,6 +225,7 @@ def test_PageFile_insertion(faker, LocalSession):
         pagefile = database.PageFile(
             path=STORAGE_PATH / "testfile.jpg",
             sha256=faker.sha256(),
+            size=faker.random.randint(1, 2000),
         )
         db_session.add(pagefile)
         db_session.commit()
