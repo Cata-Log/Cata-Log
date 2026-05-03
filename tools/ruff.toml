@@ -10,7 +10,7 @@ output-format = "full"
 docstring-code-format = true
 
 [lint]
-
+exclude = ["**/migrations/**"]
 select = [
   "A",    # flake8-builtins
   "ANN",  # flake8-type-annotations
