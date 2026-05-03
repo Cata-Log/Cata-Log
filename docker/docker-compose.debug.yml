@@ -11,6 +11,5 @@ services:
       - 2424:8000
     environment:
       - PASSWORD=test1234 # gitleaks:allow
-      - DEBUG=True
-      - ENABLE_FLOWER=False
+      - LOG_LEVEL=DEBUG
     restart: unless-stopped

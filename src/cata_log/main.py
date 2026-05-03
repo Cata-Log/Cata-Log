@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import alembic.command
+from alembic.config import Config
 from fastapi import Depends, FastAPI, status
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -31,13 +33,13 @@ from cata_log import (
     settings,
     web,
 )
-from cata_log.database import ModelBase, engine
 
 logging.setup_logging()
 
 settings.Settings.check()
 
-ModelBase.metadata.create_all(bind=engine)
+alembic_config = Config("cata_log/migrations/alembic.ini")
+alembic.command.upgrade(config=alembic_config, revision="head")
 
 jobs.scheduler.start()
 
