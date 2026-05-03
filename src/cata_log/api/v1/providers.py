@@ -18,6 +18,7 @@
 
 from datetime import UTC, datetime
 
+from apscheduler.triggers.date import DateTrigger
 from fastapi import APIRouter, HTTPException, responses, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, selectinload
@@ -31,8 +32,8 @@ from cata_log.exceptions import (
     ProviderInvalidConfigurationWarning,
     ProviderUnknownClassWarning,
 )
+from cata_log.jobs import scheduler
 from cata_log.providers import Provider as ProviderType
-from cata_log.tasks import fetch_provider
 from cata_log.utils.queries import latest_provider_catalog_id_subquery
 
 from .catalogs import Catalog
@@ -214,9 +215,15 @@ async def post_provider(
         configuration=validated_configuration,
     )
     db_session.add(provider)
+    db_session.flush()
+    scheduler.add_job(
+        "cata_log.jobs:fetch_provider",
+        args=[provider.id],
+        trigger=DateTrigger(),
+        id="fetch-provider-on-patch-one-off",
+        replace_existing=False,
+    )
     db_session.commit()
-    db_session.refresh(provider)
-    fetch_provider.delay(provider.id)
     return provider
 
 
@@ -300,9 +307,15 @@ async def patch_provider(
             detail="The given provider configuration already exists",
         )
     provider.configuration = validated_configuration
+    db_session.flush()
+    scheduler.add_job(
+        "cata_log.jobs:fetch_provider",
+        args=[provider_id],
+        trigger=DateTrigger(),
+        id="fetch-provider-on-patch-one-off",
+        replace_existing=False,
+    )
     db_session.commit()
-    db_session.refresh(provider)
-    fetch_provider.delay(provider.id)
     return provider
 
 
@@ -569,11 +582,12 @@ async def list_provider_current_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> list[database.Catalog]:
     """List all current catalogs of a provider."""
+    now = datetime.now(tz=UTC)
     return (
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
-        .filter(database.Catalog.valid_since <= datetime.now(tz=UTC))
-        .filter(database.Catalog.valid_until > datetime.now(tz=UTC))
+        .filter(database.Catalog.valid_since <= now)
+        .filter(database.Catalog.valid_until > now)
         .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
         .all()
@@ -641,5 +655,11 @@ async def post_provider_update(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
         )
-    fetch_provider.delay(provider_id)
+    scheduler.add_job(
+        "cata_log.jobs:fetch_provider",
+        args=[provider_id],
+        trigger=DateTrigger(),
+        id="fetch-provider-user-triggered-one-off",
+        replace_existing=False,
+    )
     return {"detail": "Provider update scheduled."}

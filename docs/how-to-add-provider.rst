@@ -35,7 +35,7 @@ All other datapoints must only be added if they differ from the defaults:
 
 - first_page_number (``1``): The number of the first page of a flyer in the provider's publicly accessible data.
 - configuration (``()``): A tuple of configuration values for accessing the digital flyer data.
-- schedule (``0 4 * * *``): A crontab defining the caching schedule. For more details on the crontab syntax, see `the wikipedia page <https://en.wikipedia.org/wiki/Cron>`_.
+- schedule (``0 4 * * *``): A crontab string defining the caching schedule. For more details on the crontab syntax, see `the wikipedia page <https://en.wikipedia.org/wiki/Cron>`_.
 - page_file_extension (``.jpg``): The file extension of the flyer page images.
 
 For our example provider this could be
@@ -44,7 +44,6 @@ For our example provider this could be
 
     from .regions import Germany
     from .configuration import Configuration
-    from celery.schedules import crontab
 
     class ExampleProvider(Provider):
        uid = "example-de"
@@ -58,7 +57,7 @@ For our example provider this could be
            Configuration(name="optional_argument", helptext="An optional argument. If it is omitted, the default will be used.", default ="Default value"),
            Configuration(name="parsed_argument", helptext="An argument that must represent a certain datatype like an integer.", parse_as=int),
        )
-       schedule = crontab(minute=30, hour=2) # fetch at 2:30am every day
+       schedule = "30 2 * * *" # fetch at 2:30am every day
        page_file_extension = ".webp"
 
 4. The Provider baseclass is abstract, meaning you must implement at least four of its methods.
@@ -210,7 +209,6 @@ Putting it all together we get
 .. code-block:: python
 
     from calendar import Day
-    from celery.schedules import crontab
     from datetime import datetime, time, timedelta
     from urllib.parse import urljoin
     from typing import override
@@ -233,7 +231,7 @@ Putting it all together we get
             Configuration(name="optional_argument", helptext="An optional argument. If it is omitted, the default will be used.", default ="Default value"),
             Configuration(name="parsed_argument", helptext="An argument that must represent a certain datatype like an integer.", parse_as=int),
         )
-        schedule = crontab(minute=30, hour=2) # fetch at 2:30am every day
+        schedule = "30 2 * * *" # fetch at 2:30am every day
         page_file_extension = ".webp"
 
         @override

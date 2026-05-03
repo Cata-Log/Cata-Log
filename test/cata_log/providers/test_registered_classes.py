@@ -17,7 +17,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-from celery.schedules import crontab
+from apscheduler.triggers.cron import CronTrigger
 
 from cata_log.providers import Provider
 from cata_log.providers.configuration import Configuration
@@ -38,7 +38,8 @@ def test_registered_classes__attributes(provider_class):
     assert provider_class.region
     assert issubclass(provider_class.region, Region)
     assert provider_class.schedule
-    assert isinstance(provider_class.schedule, crontab)
+    assert isinstance(provider_class.schedule, str)
+    assert CronTrigger.from_crontab(provider_class.schedule)
     assert isinstance(provider_class.first_page_number, int)
     assert isinstance(provider_class.configuration, tuple)
     for config in provider_class.configuration:

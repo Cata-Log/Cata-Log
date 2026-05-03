@@ -17,11 +17,11 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 
+import contextlib
 import logging
 
-from celery_sqlalchemy_v2_scheduler.models import (
-    PeriodicTask,
-)
+from apscheduler.jobstores.sqlalchemy import JobLookupError
+from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import Connection, Engine, delete, event, orm
 from sqlalchemy.engine.interfaces import DBAPIConnection
 from sqlalchemy.pool.base import _ConnectionRecord
@@ -29,9 +29,9 @@ from sqlalchemy.pool.base import _ConnectionRecord
 from cata_log.exceptions import (
     ProviderUnknownClassWarning,
 )
+from cata_log.jobs import scheduler
 
 from . import models
-from .utils import get_or_create_crontab_schedule
 
 logger = logging.getLogger(__name__)
 
@@ -90,41 +90,37 @@ def after_provider_insert(
             extra={"provider_id": target.id, "provider_class_uid": target.class_uid},
         )
         return
-    with orm.Session(bind=connection) as db_session:
-        crontab = get_or_create_crontab_schedule(
-            db_session, provider_class.schedule, provider_class.region.timezone
-        )
-        task = PeriodicTask(
-            name=f"{target.class_uid}-{target.configuration}",
-            task="cata_log.tasks.fetch_provider",
-            args=f"[{target.id}]",
-            crontab_id=crontab.id,
-            enabled=True,
-        )
-        db_session.add(task)
-        db_session.flush()
-        db_session.execute(
-            models.Provider.__table__.update()
-            .where(models.Provider.id == target.id)
-            .values(task_id=task.id)
-        )
+    job = scheduler.add_job(
+        name=f"{target.class_uid}-{target.configuration}",
+        func="cata_log.jobs:fetch_provider",
+        args=[target.id],
+        trigger=CronTrigger.from_crontab(
+            provider_class.schedule, timezone=provider_class.region.timezone
+        ),
+    )
+    connection.execute(
+        models.Provider.__table__.update()
+        .where(models.Provider.id == target.id)
+        .values(job_id=job.id)
+    )
     logger.debug(
-        "Success adding periodictask to a newly inserted provider.",
-        extra={"provider_id": target.id, "task_id": target.task_id},
+        "Success adding task to a newly inserted provider.",
+        extra={"provider_id": target.id, "job_id": target.job_id},
     )
 
 
 @event.listens_for(models.Provider, "after_delete")
 def after_provider_delete(
     mapper: orm.Mapper,  # noqa: ARG001  # required for event decorator
-    connection: Connection,
+    connection: Connection,  # noqa: ARG001  # required for event decorator
     target: models.Provider,
 ) -> None:
     """Event cleaning up a providers task after deleting the provider."""
-    connection.execute(delete(PeriodicTask).where(PeriodicTask.id == target.task_id))
+    with contextlib.suppress(JobLookupError):
+        scheduler.remove_job(target.job_id)
     logger.debug(
         "Success cleaning up periodictask of a deleted provider.",
-        extra={"provider_id": target.id, "task_id": target.task_id},
+        extra={"provider_id": target.id, "job_id": target.job_id},
     )
 
 

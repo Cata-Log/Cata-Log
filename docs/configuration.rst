@@ -30,7 +30,7 @@ Optional
 +-----------------------+----------+-----------------------------------------------------------------------------------------------+
 | REQUEST_TIMEOUT       | 10       | The timeout for HTTP requests to external provider servers in seconds.                        |
 +-----------------------+----------+-----------------------------------------------------------------------------------------------+
-| MAX_RETRIES           | 3        | How many times tasks that failed due to network errors will be retried.                       |
+| MAX_RETRIES           | 3        | How many times jobs that failed due to network errors will be retried.                       |
 +-----------------------+----------+-----------------------------------------------------------------------------------------------+
 | RETRY_DELAY           | 180      | How long to wait between task retries in seconds.                                             |
 +-----------------------+----------+-----------------------------------------------------------------------------------------------+

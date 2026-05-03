@@ -1,4 +1,3 @@
-from celery.schedules import crontab
 from typing import override
 
 from cata_log.exceptions import PagesExhausted, CalendarUnavailableWarning
@@ -32,7 +31,7 @@ class TemplateProvider(Provider):
         ),
         # Add more Configurations if required
     )
-    schedule = crontab(minute=0, hour=4) # The crontab schedule on which the provider data is cached
+    schedule = "0 4 * * *" # The crontab schedule on which the provider data is cached
     page_file_extension = ".jpg" # The file extension of the page image files
 
     # The following methods must be implemented.

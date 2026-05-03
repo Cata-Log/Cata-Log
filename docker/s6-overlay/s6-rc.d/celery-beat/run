@@ -1,2 +1,0 @@
-#!/command/with-contenv sh
-celery -A cata_log.tasks beat --loglevel=${CELERY_LOG_LEVEL:-INFO}

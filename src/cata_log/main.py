@@ -20,11 +20,26 @@ from fastapi import Depends, FastAPI, status
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from cata_log import __version__, api, constants, logging, opds, security, settings, web
+from cata_log import (
+    __version__,
+    api,
+    constants,
+    jobs,
+    logging,
+    opds,
+    security,
+    settings,
+    web,
+)
+from cata_log.database import ModelBase, engine
 
 logging.setup_logging()
 
 settings.Settings.check()
+
+ModelBase.metadata.create_all(bind=engine)
+
+jobs.scheduler.start()
 
 app = FastAPI(
     dependencies=[Depends(security.verify_credentials)],

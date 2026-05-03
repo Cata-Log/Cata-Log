@@ -21,8 +21,6 @@ from datetime import datetime, time, timedelta
 from typing import override
 from urllib.parse import urljoin
 
-from celery.schedules import crontab
-
 from cata_log.exceptions import PagesExhausted
 from cata_log.utils import dates, page_numbers
 
@@ -97,5 +95,5 @@ class RewePreview(Preview, Rewe):
     uid = Rewe.uid + "-preview"
     name = Rewe.name + "-Vorschau"
     description = Rewe.description + " nächste Woche"
-    schedule = crontab(minute=30, hour=4, day_of_week="6,0")
+    schedule = "30 4 * * 6,0"
     preview_timedelta = timedelta(days=7)

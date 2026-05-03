@@ -48,8 +48,8 @@ LOGGING_CONFIG = {
             "filename": str(LOG_DIRECTORY_PATH / "amqp.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
-        "celery-logfile": {
-            "filename": str(LOG_DIRECTORY_PATH / "celery.log"),
+        "apscheduler-logfile": {
+            "filename": str(LOG_DIRECTORY_PATH / "apscheduler.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
         "sqlalchemy-logfile": {
@@ -71,9 +71,9 @@ LOGGING_CONFIG = {
             "handlers": ["console", "fastapi-logfile"],
             **COMMON_LOGGER_CONFIG,
         },
-        "celery": {"handlers": ["celery-logfile"], **COMMON_LOGGER_CONFIG},
         "sqlalchemy": {"handlers": ["sqlalchemy-logfile"], **COMMON_LOGGER_CONFIG},
         "amqp": {"handlers": ["amqp-logfile"], **COMMON_LOGGER_CONFIG},
+        "apscheduler": {"handlers": ["apscheduler-logfile"], **COMMON_LOGGER_CONFIG},
         "cata_log": {
             "handlers": ["console", "cata-log-logfile"],
             **COMMON_LOGGER_CONFIG,

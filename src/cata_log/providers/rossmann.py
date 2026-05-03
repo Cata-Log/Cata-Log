@@ -20,8 +20,6 @@ from calendar import Day
 from datetime import datetime, time, timedelta
 from typing import override
 
-from celery.schedules import crontab
-
 from cata_log.utils.dates import get_calendar_week_number
 from cata_log.utils.page_numbers import PageNumber
 
@@ -37,7 +35,7 @@ class RossmannAngebote(Provider):
     description = "Rossmann Angebote"
     url = "https://www.rossmann.de/de/kataloge/angebote/index.html"
     region = Germany
-    schedule = crontab(minute=0, hour=5, day_of_week=0)
+    schedule = "0 5 * * 0"
 
     url_format = "https://www.rossmann.de/de/kataloge/angebote/catalogs/{relevant_datetime:%Y}_kw{week_number}_beilage/normal/bk_{page_number}.jpg"
 

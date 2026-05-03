@@ -11,12 +11,10 @@ license-files = ["LICENSE"]
 requires-python = ">=3.14,<3.15"
 dependencies = [
     "alembic>=1.18.4",
-    "celery>=5.6.2",
-    "celery-sqlalchemy-v2-scheduler>=0.1.2",
+    "apscheduler>=3.11.2",
     "ebooklib>=0.20",
     "fake-useragent>=2.2.0",
     "fastapi[standard-no-fastapi-cloud-cli]>=0.135.1",
-    "flower>=2.0.1",
     "opds>=0.1.1",
     "pillow>=12.1.1",
     "python-json-logger>=4.0.0",
@@ -46,9 +44,7 @@ lint = [
     "gitlab-ci-verify",
     "doc8",
 ]
-stubs = [
-    "celery-types>=0.26.0",
-]
+stubs = []
 test = [
     "faker>=40.8.0",
     "freezegun>=1.5.5",

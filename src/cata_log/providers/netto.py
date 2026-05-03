@@ -21,8 +21,6 @@ from datetime import datetime, time, timedelta
 from typing import override
 from urllib.parse import urljoin
 
-from celery.schedules import crontab
-
 from cata_log.exceptions import PagesExhausted
 from cata_log.utils import dates, page_numbers
 
@@ -39,7 +37,7 @@ class Netto(Provider):
     region = Germany
     url = "https://www.netto-online.de/ueber-netto/Online-Prospekte.chtm"
     first_page_number = 0
-    schedule = crontab(minute=0, hour=4, day_of_week="1-6")
+    schedule = "0 4 * * 1-6"
 
     overview_url_format = (
         "https://wochenprospekt.netto-online.de/hz{week_number}_pobd/spreads.json"
@@ -84,5 +82,5 @@ class NettoPreview(Preview, Netto):
     uid = Netto.uid + "-preview"
     name = Netto.name + "-Vorschau"
     description = Netto.description + " nächste Woche"
-    schedule = crontab(minute=0, hour=4)
+    schedule = "0 4 * * *"
     preview_timedelta = timedelta(days=7)

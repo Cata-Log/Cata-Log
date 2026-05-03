@@ -1,2 +1,0 @@
-#!/command/with-contenv sh
-celery -A cata_log.tasks worker --loglevel=${CELERY_LOG_LEVEL:-INFO} --without-gossip --without-mingle --concurrency=1

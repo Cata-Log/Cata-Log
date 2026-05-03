@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 import logging
 import mimetypes
 from datetime import UTC, datetime
@@ -24,10 +25,6 @@ from io import BytesIO
 from pathlib import Path
 
 import opds
-from celery_sqlalchemy_v2_scheduler.models import (
-    ModelBase,
-    PeriodicTask,
-)
 from ebooklib import epub
 from PIL import Image
 from sqlalchemy import (
@@ -38,6 +35,7 @@ from sqlalchemy import (
     orm,
 )
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import select
 
 from cata_log import constants
@@ -54,6 +52,10 @@ from .types import PathType
 logger = logging.getLogger(__name__)
 
 
+class ModelBase(DeclarativeBase):
+    """Base for all ORM models."""
+
+
 class Provider(ModelBase, TimestampMixin):
     """ORM model for a catalog provider."""
 
@@ -61,11 +63,7 @@ class Provider(ModelBase, TimestampMixin):
     class_uid: orm.Mapped[str] = orm.mapped_column()
     configuration: orm.Mapped[dict[str, str]] = orm.mapped_column(JSON)
     note: orm.Mapped[str] = orm.mapped_column(nullable=True)
-    task: orm.Mapped[PeriodicTask] = orm.relationship()
-    task_id: orm.Mapped[int] = orm.mapped_column(
-        ForeignKey(PeriodicTask.__tablename__ + ".id", ondelete="CASCADE"),
-        nullable=True,
-    )
+    job_id: orm.Mapped[int] = orm.mapped_column(nullable=True, unique=True)
     catalogs: orm.Mapped[list[Catalog]] = orm.relationship(
         back_populates="provider", cascade="all, delete-orphan"
     )

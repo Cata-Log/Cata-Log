@@ -16,16 +16,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 from collections.abc import Generator
 
 from fastapi import Depends
 from sqlalchemy import create_engine, orm
 
 from cata_log.constants import DATABASE_URL
+from cata_log.database.signals import *  # noqa: F403 # signals need to be brought into scope
 
 from .models import Catalog, ModelBase, Page, PageFile, Provider
-from .signals import *  # noqa: F403 # all signals must be loaded
 
 engine = create_engine(url=DATABASE_URL)
 

@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 import abc
 import logging
 import uuid
@@ -25,7 +26,6 @@ from types import TracebackType
 from typing import ClassVar, Self, final, override
 
 import httpx
-from celery.schedules import crontab
 from fake_useragent import UserAgent
 
 from cata_log.constants import STORAGE_PATH
@@ -68,7 +68,7 @@ class Provider(abc.ABC):
     """The file extension of page files from the providers api"""
     configuration: tuple[Configuration, ...] = ()
     """The configuration parameters with helptexts for this provider"""
-    schedule: crontab = crontab(minute=0, hour=4)
+    schedule: str = "0 4 * * *"
     """The crontab schedule for fetching this provider"""
 
     @final
