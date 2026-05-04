@@ -83,9 +83,7 @@ class AldiSuedPreview(Preview, AldiSued):
     uid = AldiSued.uid + "-preview"
     name = AldiSued.name + "-Vorschau"
     description = AldiSued.description + " für nächste Woche"
-    overview_url_format = (
-        "https://prospekt.aldi-sued.de/kw{week_number:02}-{year}-op/spreads.json"
-    )
+    overview_url_format = "https://prospekt.aldi-sued.de/kw{week_number:02}-{relevant_datetime:%y}-op/spreads.json"
     preview_timedelta = timedelta(days=7)
 
 
@@ -95,7 +93,5 @@ class AldiSuedPrepreview(Preview, AldiSued):
     uid = AldiSuedPreview.uid + "-2"
     name = AldiSued.name + "-Vorvorschau"
     description = AldiSued.description + " für übernächste Woche"
-    overview_url_format = (
-        "https://prospekt.aldi-sued.de/kw{week_number:02}-{year}-vop/spreads.json"
-    )
+    overview_url_format = "https://prospekt.aldi-sued.de/kw{week_number:02}-{relevant_datetime:%y}-vop/spreads.json"
     preview_timedelta = timedelta(days=14)
