@@ -5,10 +5,6 @@
 ARG PYTHON_VERSION=3.14
 ARG ALPINE_VERSION=3.23
 
-ARG RUNTIME_APK_DEPENDENCIES=""
-
-ARG BUILD_PYTHON_APK_DEPENDENCIES=""
-
 ARG STORAGE_PATH=/mnt/storage/  # must match STORAGE_PATH in constants
 ARG LOG_PATH=/var/log/cata-log/  # must match LOG_DIRECTORY_PATH in constants
 ARG DATABASE_PATH=/mnt/db  # must match DATABASE_PATH in constants
@@ -61,26 +57,14 @@ VOLUME ${STORAGE_PATH} ${LOG_PATH} ${DATABASE_PATH} ${PLUGIN_PATH}
 
 ENTRYPOINT [ "fastapi", "run" , "cata_log/main.py"]
 
-# install apk runtime dependencies
-ARG RUNTIME_APK_DEPENDENCIES
-
-RUN apk update && \
-    apk add --no-cache ${RUNTIME_APK_DEPENDENCIES} && \
-    rm -rf /var/cache/apk/* && \
-    rm -rf /tmp/*
-
 # install python dependencies
 COPY --from=uv-prestage /requirements.txt ./
 
 ARG BUILD_PYTHON_APK_DEPENDENCIES
 
-RUN apk add --no-cache ${BUILD_PYTHON_APK_DEPENDENCIES} && \
-    pip install --no-cache-dir --requirement requirements.txt && \
-    apk del ${BUILD_PYTHON_APK_DEPENDENCIES} && \
-    rm -rf /var/cache/apk/* && \
+RUN pip install --no-cache-dir --requirement requirements.txt && \
     rm -rf /tmp/* && \
     rm -f requirements.txt
-
 
 COPY pyproject.toml src/ ./
 
