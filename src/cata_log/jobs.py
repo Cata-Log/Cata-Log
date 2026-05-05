@@ -42,7 +42,6 @@ scheduler = BackgroundScheduler(
     executors={"default": ThreadPoolExecutor(max_workers=1)},
     timezone=UTC,
     job_defaults={
-        "replace_existing": True,
         "coalesce": True,
         "misfire_grace_time": 3600,
         "jobstore": "default",
