@@ -19,6 +19,7 @@
 import alembic.command
 from alembic.config import Config
 from fastapi import Depends, FastAPI, status
+from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -26,6 +27,7 @@ from cata_log import (
     __version__,
     api,
     constants,
+    health,
     jobs,
     logging,
     opds,
@@ -33,6 +35,7 @@ from cata_log import (
     settings,
     web,
 )
+from cata_log.exceptions import HealthCheckFailedError
 
 logging.setup_logging()
 
@@ -72,6 +75,18 @@ app.mount(
     StaticFiles(directory=constants.SOURCE_PATH / "cata_log/web/static/js"),
     name="static-js",
 )
+
+
+@app.get("/health", status_code=200)
+def healthcheck() -> None:
+    """HTTP endpoint to trigger healthchecks."""
+    try:
+        health.check()
+    except HealthCheckFailedError as error:
+        raise HTTPException(detail=str(error), status_code=500) from error
+    else:
+        return
+
 
 app.include_router(api.router)
 app.include_router(web.router)

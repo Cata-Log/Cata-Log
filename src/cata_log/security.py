@@ -12,6 +12,8 @@ http_basic_security = HTTPBasic(auto_error=False)
 
 depends_http_basic_security = Depends(http_basic_security)
 
+UNPROTECTED_PATHS = ("/health",)
+
 
 class HTTP401Error(BaseModel):
     """Response model for a HTTP 401 error."""
@@ -39,6 +41,8 @@ def verify_credentials(
         credentials: The user-given credentials.
     """
     if Settings.PUBLIC_GET.value and request.method == "GET":
+        return
+    if request.url.path in UNPROTECTED_PATHS:
         return
     username, password = get_credentials()
     if (

@@ -26,6 +26,14 @@ class ApplicationMisconfiguredError(Exception):
     """An error indicating a bad app configuration."""
 
 
+class HealthCheckFailedError(Exception):
+    """An error indicating a failed healthcheck."""
+
+    @override
+    def __init__(self, *args: object) -> None:
+        super().__init__("Healthcheck failed: ", *args)
+
+
 class ProviderWarning(Warning):
     """A warning about a provider."""
 
