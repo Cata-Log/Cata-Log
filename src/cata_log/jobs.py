@@ -31,7 +31,7 @@ from cata_log import database
 from cata_log.exceptions import NetworkError
 from cata_log.settings import Settings
 
-JOB_DATABASE_URL = "sqlite:////mnt/db/jobs.sqlite"
+JOB_DATABASE_URL = "sqlite:////mnt/db/jobs.sqlite3"
 
 __all__ = ["JOB_DATABASE_URL", "fetch_provider", "scheduler"]
 
