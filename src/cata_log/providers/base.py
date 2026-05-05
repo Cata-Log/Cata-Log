@@ -70,6 +70,8 @@ class Provider(abc.ABC):
     """The configuration parameters with helptexts for this provider"""
     schedule: str = "0 4 * * *"
     """The crontab schedule for fetching this provider"""
+    jitter: int = 3600
+    """Jitter for the schedule timing in seconds."""
 
     @final
     @override

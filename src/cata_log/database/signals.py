@@ -90,13 +90,15 @@ def after_provider_insert(
             extra={"provider_id": target.id, "provider_class_uid": target.class_uid},
         )
         return
+    cron_trigger = CronTrigger.from_crontab(
+        provider_class.schedule, timezone=provider_class.region.timezone
+    )
+    cron_trigger.jitter = provider_class.jitter
     job = scheduler.add_job(
         name=f"{target.class_uid}-{target.configuration}",
         func="cata_log.jobs:fetch_provider",
         args=[target.id],
-        trigger=CronTrigger.from_crontab(
-            provider_class.schedule, timezone=provider_class.region.timezone
-        ),
+        trigger=cron_trigger,
     )
     connection.execute(
         models.Provider.__table__.update()
