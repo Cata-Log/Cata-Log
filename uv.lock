@@ -114,6 +114,7 @@ dev = [
     { name = "sphinx" },
     { name = "sphinx-autodoc-typehints" },
     { name = "sphinxcontrib-napoleon" },
+    { name = "types-psutil" },
 ]
 docs = [
     { name = "myst-parser" },
@@ -128,6 +129,9 @@ lint = [
     { name = "gitlab-ci-verify" },
     { name = "mypy", extra = ["reports"] },
     { name = "ruff" },
+]
+stubs = [
+    { name = "types-psutil" },
 ]
 test = [
     { name = "faker" },
@@ -174,6 +178,7 @@ dev = [
     { name = "sphinx", specifier = ">=9.1.0" },
     { name = "sphinx-autodoc-typehints", specifier = ">=3.10.2" },
     { name = "sphinxcontrib-napoleon", specifier = ">=0.7" },
+    { name = "types-psutil", specifier = ">=7.2.2.20260408" },
 ]
 docs = [
     { name = "myst-parser", specifier = ">=5.0.0" },
@@ -189,7 +194,7 @@ lint = [
     { name = "mypy", extras = ["reports"] },
     { name = "ruff" },
 ]
-stubs = []
+stubs = [{ name = "types-psutil", specifier = ">=7.2.2.20260408" }]
 test = [
     { name = "faker", specifier = ">=40.8.0" },
     { name = "freezegun", specifier = ">=1.5.5" },
@@ -1654,6 +1659,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7b/27/ede8cec7596e0041ba7e7b80b47d132562f56ff454313a16f6084e555c9f/typer-0.25.0.tar.gz", hash = "sha256:123eaf9f19bb40fd268310e12a542c0c6b4fab9c98d9d23342a01ff95e3ce930", size = 120150, upload-time = "2026-04-26T08:46:14.767Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9a/72/193d4e586ec5a4db834a36bbeb47641a62f951f114ffd0fe5b1b46e8d56f/typer-0.25.0-py3-none-any.whl", hash = "sha256:ac01b48823d3db9a83c9e164338057eadbb1c9957a2a6b4eeb486669c560b5dc", size = 55993, upload-time = "2026-04-26T08:46:15.889Z" },
+]
+
+[[package]]
+name = "types-psutil"
+version = "7.2.2.20260408"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/44/14/279fd5defebbd560ede04aecd38f7651cccee7336f2264d0889d8c9a9d43/types_psutil-7.2.2.20260408.tar.gz", hash = "sha256:e8053450685965b8cd52afb62569073d00ea9967ae78bb45dff5f606847f97f2", size = 26556, upload-time = "2026-04-08T04:27:44.349Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/af/40/2fd92a4a1ee088c4dbcc44c977908d9869838d9cd2a2fa2e001352f56694/types_psutil-7.2.2.20260408-py3-none-any.whl", hash = "sha256:0c334f6f6bc9e9c24fca5c7d1f0b6971c961a0a2e3956dc5ce704722c01f9762", size = 32861, upload-time = "2026-04-08T04:27:42.929Z" },
 ]
 
 [[package]]

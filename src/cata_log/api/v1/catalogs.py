@@ -226,7 +226,7 @@ async def get_catalog_pages(
 )
 async def get_catalog_page(
     catalog_id: int, page_number: int, db_session: Session = database.depends_db_session
-) -> database.Catalog:
+) -> database.Page:
     """Get a single catalog page by its page number."""
     page = (
         db_session.query(database.Page)

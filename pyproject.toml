@@ -45,7 +45,9 @@ lint = [
     "gitlab-ci-verify",
     "doc8",
 ]
-stubs = []
+stubs = [
+    "types-psutil>=7.2.2.20260408",
+]
 test = [
     "faker>=40.8.0",
     "freezegun>=1.5.5",
