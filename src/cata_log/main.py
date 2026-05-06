@@ -77,15 +77,13 @@ app.mount(
 )
 
 
-@app.get("/health", status_code=200)
+@app.get("/health", status_code=200, include_in_schema=False)
 def healthcheck() -> None:
     """HTTP endpoint to trigger healthchecks."""
     try:
         health.check()
     except HealthCheckFailedError as error:
         raise HTTPException(detail=str(error), status_code=500) from error
-    else:
-        return
 
 
 app.include_router(api.router)
