@@ -28,12 +28,9 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 
 from cata_log import database
+from cata_log.constants import JOB_DATABASE_URL
 from cata_log.exceptions import NetworkError
 from cata_log.settings import Settings
-
-JOB_DATABASE_URL = "sqlite:////mnt/db/jobs.sqlite3"
-
-__all__ = ["JOB_DATABASE_URL", "fetch_provider", "scheduler"]
 
 logger = logging.getLogger(__name__)
 

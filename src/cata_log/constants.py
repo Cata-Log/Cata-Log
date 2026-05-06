@@ -26,8 +26,8 @@ DATABASE_PATH = Path("/mnt/db/")
 LOG_DIRECTORY_PATH = Path("/var/log/cata-log/")
 PLUGINS_PATH = Path("/mnt/plugins/")
 
-DATABASE_URL = "sqlite:////mnt/db/cata-log.sqlite3"
-BROKER_URL = "amqp://guest:guest@localhost:5672//"
+DATABASE_URL = f"sqlite:///{DATABASE_PATH / 'cata-log.sqlite3'}"
+JOB_DATABASE_URL = f"sqlite:///{DATABASE_PATH / 'jobs.sqlite3'}"
 
 FAST_API_TITLE = "Cata-Log"
 FAST_API_DESCRIPTION = "The Central Hub For Grocery Store Catalogs"
