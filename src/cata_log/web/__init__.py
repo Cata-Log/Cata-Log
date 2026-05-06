@@ -27,7 +27,6 @@ from cata_log.providers import Provider
 
 router = APIRouter(prefix="", tags=["web"], include_in_schema=False)
 
-
 __all__ = ["router"]
 
 templates = Jinja2Templates(directory=constants.SOURCE_PATH / "cata_log/web/templates")

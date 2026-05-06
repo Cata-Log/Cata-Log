@@ -21,7 +21,6 @@ from alembic.config import Config
 from fastapi import Depends, FastAPI, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
-from fastapi.staticfiles import StaticFiles
 
 from cata_log import (
     __version__,
@@ -33,6 +32,7 @@ from cata_log import (
     opds,
     security,
     settings,
+    static,
     web,
 )
 from cata_log.exceptions import HealthCheckFailedError
@@ -67,14 +67,6 @@ app.add_route(
     "/docs",
     lambda _: RedirectResponse("/docs/swagger", status_code=status.HTTP_302_FOUND),
 )
-app.mount(
-    "/static/pages", StaticFiles(directory=constants.STORAGE_PATH), name="static_pages"
-)
-app.mount(
-    "/static/js",
-    StaticFiles(directory=constants.SOURCE_PATH / "cata_log/web/static/js"),
-    name="static-js",
-)
 
 
 @app.get("/health", status_code=200, include_in_schema=False)
@@ -86,6 +78,7 @@ def healthcheck() -> None:
         raise HTTPException(detail=str(error), status_code=500) from error
 
 
+app.mount("/static", static.app, "static")
 app.include_router(api.router)
 app.include_router(web.router)
 app.include_router(opds.router)
