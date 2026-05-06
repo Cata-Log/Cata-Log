@@ -10,3 +10,5 @@
 - test for staticfiles
 
 ## To Fix
+
+- networkerror listener doesn't work

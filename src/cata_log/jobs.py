@@ -19,55 +19,13 @@
 import logging
 from datetime import UTC, datetime, timedelta
 
-from apscheduler.events import EVENT_JOB_ERROR, JobExecutionEvent
-from apscheduler.executors.pool import ThreadPoolExecutor
-from apscheduler.job import Job
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from apscheduler.triggers.date import DateTrigger
 
 from cata_log import database
-from cata_log.constants import JOB_DATABASE_URL
-from cata_log.exceptions import NetworkError
+from cata_log.scheduler import scheduler
 from cata_log.settings import Settings
 
 logger = logging.getLogger(__name__)
-
-scheduler = BackgroundScheduler(
-    jobstores={"default": SQLAlchemyJobStore(url=JOB_DATABASE_URL)},
-    executors={"default": ThreadPoolExecutor(max_workers=1)},
-    timezone=UTC,
-    job_defaults={
-        "coalesce": True,
-        "misfire_grace_time": 3600,
-        "jobstore": "default",
-        "executor": "default",
-    },
-)
-
-
-def retry_on_network_error_listener(event: JobExecutionEvent) -> None:
-    """Listener for job errors that schedules a retry job on networkerror.
-
-    Args: event: The jobevent.
-    """
-    logger.critical("listener event match")
-    if event.exception and isinstance(event.exception, NetworkError):
-        logger.critical("listener triggered")
-        job: Job | None = scheduler.get_job(event.job_id)
-        if job:
-            logger.critical("Job %s ran into networkerror", job.id)
-            scheduler.add_job(
-                job.func,
-                args=job.args,
-                id=job.id + "-retry",
-                trigger=DateTrigger(event.scheduled_run_time + timedelta(seconds=10)),
-                replace_existing=True,
-            )
-
-
-scheduler.add_listener(retry_on_network_error_listener, EVENT_JOB_ERROR)
 
 
 def fetch_provider(provider_id: int) -> None:

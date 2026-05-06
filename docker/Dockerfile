@@ -5,10 +5,10 @@
 ARG PYTHON_VERSION=3.14
 ARG ALPINE_VERSION=3.23
 
-ARG STORAGE_PATH=/mnt/storage/  # must match STORAGE_PATH in constants
-ARG LOG_PATH=/var/log/cata-log/  # must match LOG_DIRECTORY_PATH in constants
-ARG DATABASE_PATH=/mnt/db  # must match DATABASE_PATH in constants
-ARG PLUGIN_PATH=/mnt/plugins  # must match PLUGIN_PATH in constants
+ARG STORAGE_PATH=/mnt/storage/
+ARG LOG_PATH=/var/log/cata-log/
+ARG DATABASE_PATH=/mnt/db
+ARG PLUGIN_PATH=/mnt/plugins
 
 ##    stage 1    ##
 ## convert pyproject.toml to requirements file for python dependencies ##
@@ -56,6 +56,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY --from=uv-prestage /requirements.txt ./
 
 RUN pip install --no-cache-dir --requirement requirements.txt && \
+    rm -f requirements.txt && \
     rm -rf /tmp/*
 
 # install cata_log
@@ -67,7 +68,11 @@ RUN pip install --no-cache-dir . && \
 
 # set default settings for dockerized usage
 ENV HOST="0.0.0.0" \
-    PORT=2424
+    PORT=2424 \
+    DATABASE_PATH=${DATABASE_PATH} \
+    LOG_PATH=${LOG_PATH} \
+    PLUGIN_PATH=${PLUGIN_PATH} \
+    STORAGE_PATH=${STORAGE_PATH}
 
 WORKDIR /
 

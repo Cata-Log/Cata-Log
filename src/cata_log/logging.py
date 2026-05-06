@@ -16,9 +16,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import logging.config
-
-from cata_log.constants import LOG_DIRECTORY_PATH
 from cata_log.settings import Settings
 
 COMMON_FILEHANDLER_CONFIG = {
@@ -30,7 +27,7 @@ COMMON_FILEHANDLER_CONFIG = {
 }
 
 COMMON_LOGGER_CONFIG = {
-    "level": Settings.LOG_LEVEL.value,
+    "level": "NOTSET",
     "propagate": True,
 }
 
@@ -39,7 +36,7 @@ LOGGING_CONFIG = {
     "disable_existing_loggers": False,
     "formatters": {
         "console": {
-            "format": "{asctime} ({levelname}) - {name}: {module}.{funcName}:{lineno} - {message}",
+            "format": "{asctime} ({levelname}) - {name}: {message}",
             "style": "{",
         },
         "json": {
@@ -55,46 +52,49 @@ LOGGING_CONFIG = {
             "formatter": "console",
         },
         "root-logfile": {
-            "filename": str(LOG_DIRECTORY_PATH / "root.log"),
+            "filename": str(Settings.LOGS_PATH.value / "root.log"),
+            **COMMON_FILEHANDLER_CONFIG,
+        },
+        "uvicorn-logfile": {
+            "filename": str(Settings.LOGS_PATH.value / "uvicorn.log"),
+            **COMMON_FILEHANDLER_CONFIG,
+        },
+        "access-logfile": {
+            "filename": str(Settings.LOGS_PATH.value / "access.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
         "cata-log-logfile": {
-            "filename": str(LOG_DIRECTORY_PATH / "cata-log.log"),
+            "filename": str(Settings.LOGS_PATH.value / "cata-log.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
         "apscheduler-logfile": {
-            "filename": str(LOG_DIRECTORY_PATH / "apscheduler.log"),
+            "filename": str(Settings.LOGS_PATH.value / "apscheduler.log"),
+            **COMMON_FILEHANDLER_CONFIG,
+        },
+        "alembic-logfile": {
+            "filename": str(Settings.LOGS_PATH.value / "alembic.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
         "sqlalchemy-logfile": {
-            "filename": str(LOG_DIRECTORY_PATH / "sqlalchemy.log"),
-            **COMMON_FILEHANDLER_CONFIG,
-        },
-        "fastapi-logfile": {
-            "filename": str(LOG_DIRECTORY_PATH / "fastapi.log"),
+            "filename": str(Settings.LOGS_PATH.value / "sqlalchemy.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
     },
     "root": {
-        "handlers": ["root-logfile"],
+        "handlers": ["console", "root-logfile"],
         "level": Settings.LOG_LEVEL.value,
     },
     "loggers": {
-        "uvicorn": {"handlers": ["console", "fastapi-logfile"], **COMMON_LOGGER_CONFIG},
-        "starlette": {
-            "handlers": ["console", "fastapi-logfile"],
-            **COMMON_LOGGER_CONFIG,
+        "uvicorn": {"handlers": ["uvicorn-logfile"], "level": "INFO"},
+        "uvicorn.access": {
+            "handlers": ["access-logfile"],
+            "level": "INFO",
+            "propagate": False,
         },
+        "alembic": {"handlers": ["alembic-logfile"], **COMMON_LOGGER_CONFIG},
         "sqlalchemy": {"handlers": ["sqlalchemy-logfile"], **COMMON_LOGGER_CONFIG},
         "apscheduler": {"handlers": ["apscheduler-logfile"], **COMMON_LOGGER_CONFIG},
-        "cata_log": {
-            "handlers": ["console", "cata-log-logfile"],
-            **COMMON_LOGGER_CONFIG,
-        },
+        "cata_log": {"handlers": ["cata-log-logfile"], **COMMON_LOGGER_CONFIG},
+        "httpx": {"handlers": ["cata-log-logfile"], **COMMON_LOGGER_CONFIG},
     },
 }
-
-
-def setup_logging() -> None:
-    """Set up logging."""
-    logging.config.dictConfig(LOGGING_CONFIG)

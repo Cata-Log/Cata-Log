@@ -28,7 +28,6 @@ from typing import ClassVar, Self, final, override
 import httpx
 from fake_useragent import UserAgent
 
-from cata_log.constants import STORAGE_PATH
 from cata_log.exceptions import (
     CatalogUnavailableWarning,
     NetworkError,
@@ -366,7 +365,7 @@ class Provider(abc.ABC):
             The storage path.
         """
         filename = str(uuid.uuid4()) + cls.page_file_extension
-        return STORAGE_PATH / filename
+        return Settings.STORAGE_PATH.value / filename
 
 
 # mypy: disable_error_code=misc

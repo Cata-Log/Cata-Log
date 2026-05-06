@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import os
 import secrets
 
 from fastapi import Depends, Request, status
@@ -45,7 +44,7 @@ def get_credentials() -> tuple[str, str | None]:
     Returns:
         Username and password.
     """
-    return os.environ.get("USERNAME", "admin"), os.environ.get("PASSWORD")
+    return Settings.USERNAME.value, Settings.PASSWORD.value
 
 
 def verify_credentials(

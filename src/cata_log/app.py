@@ -16,10 +16,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from importlib import resources
-
-import alembic.command
-from alembic.config import Config
 from fastapi import Depends, FastAPI, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
@@ -27,27 +23,13 @@ from fastapi.responses import RedirectResponse
 from cata_log import (
     __version__,
     api,
-    constants,
     health,
-    jobs,
-    logging,
     opds,
     security,
-    settings,
     static,
     web,
 )
 from cata_log.exceptions import HealthCheckFailedError
-
-logging.setup_logging()
-
-settings.Settings.check()
-
-with resources.path("cata_log.migrations", "alembic.ini") as path:
-    alembic_config = Config(path)
-alembic.command.upgrade(config=alembic_config, revision="head")
-
-jobs.scheduler.start()
 
 app = FastAPI(
     dependencies=[Depends(security.verify_credentials)],
@@ -57,12 +39,18 @@ app = FastAPI(
             "description": "If the request is not authorized.",
         },
     },
-    title=constants.FAST_API_TITLE,
-    description=constants.FAST_API_DESCRIPTION,
-    summary=constants.FAST_API_SUMMARY,
+    title="Cata-Log",
+    description="The Central Hub For Grocery Store Catalogs",
+    summary="API overview for Cata-Log",
     version=__version__,
-    license_info=constants.FAST_API_LICENSE_INFO,
-    contact=constants.FAST_API_CONTACT,
+    license_info={
+        "name": "AGPL version 3 or later",
+        "url": "https://www.gnu.org/licenses/agpl-3.0",
+    },
+    contact={
+        "name": "Github Repo",
+        "url": "https://github.com/cata-log/cata-log.git",
+    },
     docs_url="/docs/swagger",
     redoc_url="/docs/redoc",
 )

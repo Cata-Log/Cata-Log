@@ -18,17 +18,29 @@
 
 from importlib import resources
 
-import fastapi_cli.cli
+import alembic.command
+import uvicorn
+from alembic.config import Config
 
+from cata_log import logging, scheduler
 from cata_log.settings import Settings
 
 if __name__ == "__main__":
-    with resources.path("cata_log", "app.py") as app_path:
-        if Settings.DEBUG.value:
-            fastapi_cli.cli.dev(
-                path=app_path, host=Settings.HOST.value, port=Settings.PORT.value
-            )
-        else:
-            fastapi_cli.cli.run(
-                path=app_path, host=Settings.HOST.value, port=Settings.PORT.value
-            )
+    Settings.check()
+    Settings.ensure_dirs()
+
+    with resources.path("cata_log.migrations", "alembic.ini") as path:
+        alembic_config = Config(path)
+    alembic.command.upgrade(config=alembic_config, revision="head")
+
+    scheduler.scheduler.start()
+
+    uvicorn.run(
+        app="cata_log.app:app",
+        host=Settings.HOST.value,
+        port=Settings.PORT.value,
+        forwarded_allow_ips=Settings.FORWARDED_ALLOW_IPS.value,
+        log_config=logging.LOGGING_CONFIG,
+        log_level=Settings.LOG_LEVEL.value,
+        reload=Settings.DEBUG.value,
+    )

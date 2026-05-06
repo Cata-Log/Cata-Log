@@ -18,7 +18,10 @@
 
 import enum
 import os
+from pathlib import Path
 from typing import Any, override
+
+from platformdirs import user_data_path, user_log_path
 
 from cata_log.exceptions import ApplicationMisconfiguredError
 
@@ -27,6 +30,16 @@ from cata_log.exceptions import ApplicationMisconfiguredError
 class Settings(enum.Enum):
     """Enum listing all configuration defaults."""
 
+    STORAGE_PATH = (
+        user_data_path("cata-log", appauthor=False, ensure_exists=False) / "storage"
+    )
+    DATABASE_PATH = (
+        user_data_path("cata-log", appauthor=False, ensure_exists=False) / "db"
+    )
+    LOGS_PATH = user_log_path("cata-log", appauthor=False, ensure_exists=False)
+    PLUGIN_PATH = (
+        user_data_path("cata-log", appauthor=False, ensure_exists=False) / "plugins"
+    )
     DEBUG = False
     PORT = 2424
     HOST = "localhost"
@@ -37,6 +50,9 @@ class Settings(enum.Enum):
     LOG_LEVEL = "INFO"
     LOG_FILE_BACKUP_COUNT = 5
     LOG_FILE_MAXSIZE = 2097152  # 2 MB
+    FORWARDED_ALLOW_IPS = "localhost,127.0.0.1"
+    USERNAME = "admin"
+    PASSWORD = ""
 
     @property
     @override
@@ -55,3 +71,11 @@ class Settings(enum.Enum):
                 bad_configs.append(setting.name)
         if bad_configs:
             raise ApplicationMisconfiguredError(bad_configs)
+
+    @classmethod
+    def ensure_dirs(cls) -> None:
+        """Ensure all directory settings exist."""
+        for setting in cls:
+            setting_value = setting.value
+            if isinstance(setting_value, Path):
+                setting_value.mkdir(exist_ok=True, parents=True)

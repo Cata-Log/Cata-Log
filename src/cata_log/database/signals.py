@@ -29,7 +29,7 @@ from sqlalchemy.pool.base import _ConnectionRecord
 from cata_log.exceptions import (
     ProviderUnknownClassWarning,
 )
-from cata_log.jobs import scheduler
+from cata_log.scheduler import scheduler
 
 from . import models
 

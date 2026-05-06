@@ -18,27 +18,6 @@
 
 import calendar
 import enum
-from pathlib import Path
-
-STORAGE_PATH = Path("/mnt/storage/")
-DATABASE_PATH = Path("/mnt/db/")
-LOG_DIRECTORY_PATH = Path("/var/log/cata-log/")
-PLUGINS_PATH = Path("/mnt/plugins/")
-
-DATABASE_URL = f"sqlite:///{DATABASE_PATH / 'cata-log.sqlite3'}"
-JOB_DATABASE_URL = f"sqlite:///{DATABASE_PATH / 'jobs.sqlite3'}"
-
-FAST_API_TITLE = "Cata-Log"
-FAST_API_DESCRIPTION = "The Central Hub For Grocery Store Catalogs"
-FAST_API_SUMMARY = "API overview for Cata-Log"
-FAST_API_LICENSE_INFO = {
-    "name": "AGPL version 3 or later",
-    "url": "https://www.gnu.org/licenses/agpl-3.0",
-}
-FAST_API_CONTACT = {
-    "name": "Github Repo",
-    "url": "https://github.com/cata-log/cata-log.git",
-}
 
 
 class StatusEnum(enum.StrEnum):

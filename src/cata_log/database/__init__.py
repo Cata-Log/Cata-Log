@@ -21,10 +21,12 @@ from collections.abc import Generator
 from fastapi import Depends
 from sqlalchemy import create_engine, orm
 
-from cata_log.constants import DATABASE_URL
 from cata_log.database.signals import *  # noqa: F403 # signals need to be brought into scope
+from cata_log.settings import Settings
 
 from .models import Catalog, ModelBase, Page, PageFile, Provider
+
+DATABASE_URL = f"sqlite:///{Settings.DATABASE_PATH.value / 'cata-log.sqlite3'}"
 
 engine = create_engine(url=DATABASE_URL)
 

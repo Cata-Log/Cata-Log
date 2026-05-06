@@ -38,13 +38,13 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import select
 
-from cata_log import constants
 from cata_log.constants import StatusEnum
 from cata_log.exceptions import (
     NetworkError,
     ProviderWarning,
 )
 from cata_log.providers import Provider as ProviderType
+from cata_log.settings import Settings
 
 from .mixins import TimestampMixin
 from .types import PathType
@@ -381,7 +381,7 @@ class PageFile(ModelBase, TimestampMixin):
             db_session: A database session.
         """
         used_paths = set(db_session.execute(select(cls.path)).scalars().all())
-        for storage_filepath in constants.STORAGE_PATH.iterdir():
+        for storage_filepath in Settings.STORAGE_PATH.value.iterdir():
             if storage_filepath.is_dir() or storage_filepath.resolve() in used_paths:
                 continue
             storage_filepath.unlink(missing_ok=True)

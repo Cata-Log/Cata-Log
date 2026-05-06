@@ -32,8 +32,8 @@ from cata_log.exceptions import (
     ProviderInvalidConfigurationWarning,
     ProviderUnknownClassWarning,
 )
-from cata_log.jobs import scheduler
 from cata_log.providers import Provider as ProviderType
+from cata_log.scheduler import scheduler
 from cata_log.utils.queries import latest_provider_catalog_id_subquery
 
 from .catalogs import Catalog

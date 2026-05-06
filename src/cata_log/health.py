@@ -24,10 +24,10 @@ import psutil
 import sqlalchemy.exc
 from sqlalchemy.sql import text
 
-from cata_log.constants import STORAGE_PATH
 from cata_log.database import DBSession
 from cata_log.exceptions import HealthCheckFailedError
-from cata_log.jobs import scheduler
+from cata_log.scheduler import scheduler
+from cata_log.settings import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -126,8 +126,8 @@ def check_storage_io() -> None:
         HealthCheckFailedError: If an error occurs in IO with the storage.
     """
     try:
-        (STORAGE_PATH / "testfile").write_text("test")
-        (STORAGE_PATH / "testfile").unlink()
+        (Settings.STORAGE_PATH.value / "testfile").write_text("test")
+        (Settings.STORAGE_PATH.value / "testfile").unlink()
     except OSError as error:
         logger.critical("Can't write storage files!", exc_info=True)
         raise HealthCheckFailedError("Can't write storage files!") from error
