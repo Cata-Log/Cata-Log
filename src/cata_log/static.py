@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+from importlib import resources
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -24,8 +26,10 @@ from cata_log import constants
 app = FastAPI(openapi_url=None)
 
 app.mount("/pages", StaticFiles(directory=constants.STORAGE_PATH), name="static-pages")
-app.mount(
-    "/js",
-    StaticFiles(directory=constants.SOURCE_PATH / "cata_log/web/static/js"),
-    name="static-js",
-)
+
+with resources.path("cata_log.web", "static/js") as path:
+    app.mount(
+        "/js",
+        StaticFiles(directory=path),
+        name="static-js",
+    )

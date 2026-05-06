@@ -26,11 +26,27 @@ Don't forget to activate the venv
 source .venv/bin/activate
 ```
 
+You can install the editable package for development
+
+
+
 ## Debug
 
 To browse the sqlite3 db for debugging, install [sqlitebrowser](https://github.com/sqlitebrowser/sqlitebrowser).
 
 There is a debug docker-compose file that can be used to run the application in debug mode.
+
+Also you can install the editable package locally
+
+```bash
+uv pip install -e .
+```
+
+and run it
+
+```bash
+python3 -m cata_log
+```
 
 ## Testing
 

@@ -60,7 +60,6 @@ $RECYCLE.BIN/
 .directory
 .dmypy.json
 .eggs/
-# blocking .env file from context is essential !
 .env
 .env/
 .fseventsd
@@ -95,6 +94,7 @@ __pycache__/
 [._]ss[a-gi-z]
 [._]sw[a-p]
 [Bb]in
+[Bb]uild
 [Dd]esktop.ini
 [Ii]nclude
 [Ll]ib

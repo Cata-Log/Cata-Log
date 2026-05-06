@@ -20,7 +20,6 @@ import calendar
 import enum
 from pathlib import Path
 
-SOURCE_PATH = Path("/opt/")
 STORAGE_PATH = Path("/mnt/storage/")
 DATABASE_PATH = Path("/mnt/db/")
 LOG_DIRECTORY_PATH = Path("/var/log/cata-log/")

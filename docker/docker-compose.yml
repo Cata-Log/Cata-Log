@@ -8,7 +8,7 @@ services:
       - /path/to/cata-log/log:/var/log/cata-log
       - /path/to/cata-log/plugins:/mnt/plugins
     ports:
-      - 4848:8000
+      - 2424:2424
     environment:
       - USERNAME=admin
       - PASSWORD=SafE_pAs5w0rd # setting no password makes authentication impossible #gitleaks:allow
@@ -20,6 +20,7 @@ services:
       - LOG_LEVEL=INFO
       - LOG_FILE_BACKUP_COUNT=10
       - LOG_FILE_MAXSIZE=2097152
+      - DEBUG= # set this for debug mode
     restart: unless-stopped
     depends_on:
       db:

@@ -16,10 +16,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import tomllib
-from pathlib import Path
+from importlib import resources
 
-with Path("pyproject.toml").open("rb") as pyproject_file:
-    pyproject_data = tomllib.load(pyproject_file)
+import fastapi_cli.cli
 
-code = pyproject_data["project"]["version"]
+from cata_log.settings import Settings
+
+if __name__ == "__main__":
+    with resources.path("cata_log", "app.py") as app_path:
+        if Settings.DEBUG.value:
+            fastapi_cli.cli.dev(
+                path=app_path, host=Settings.HOST.value, port=Settings.PORT.value
+            )
+        else:
+            fastapi_cli.cli.run(
+                path=app_path, host=Settings.HOST.value, port=Settings.PORT.value
+            )

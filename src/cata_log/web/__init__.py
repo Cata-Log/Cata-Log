@@ -16,20 +16,23 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+from importlib import resources
+
 from fastapi import APIRouter, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import selectinload
 
-from cata_log import constants, database
+from cata_log import database
 from cata_log.providers import Provider
 
 router = APIRouter(prefix="", tags=["web"], include_in_schema=False)
 
 __all__ = ["router"]
 
-templates = Jinja2Templates(directory=constants.SOURCE_PATH / "cata_log/web/templates")
+with resources.path("cata_log.web", "templates") as path:
+    templates = Jinja2Templates(directory=path)
 
 
 @router.get("/", response_class=HTMLResponse)

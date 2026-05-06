@@ -62,10 +62,6 @@ LOGGING_CONFIG = {
             "filename": str(LOG_DIRECTORY_PATH / "cata-log.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
-        "amqp-logfile": {
-            "filename": str(LOG_DIRECTORY_PATH / "amqp.log"),
-            **COMMON_FILEHANDLER_CONFIG,
-        },
         "apscheduler-logfile": {
             "filename": str(LOG_DIRECTORY_PATH / "apscheduler.log"),
             **COMMON_FILEHANDLER_CONFIG,
@@ -90,7 +86,6 @@ LOGGING_CONFIG = {
             **COMMON_LOGGER_CONFIG,
         },
         "sqlalchemy": {"handlers": ["sqlalchemy-logfile"], **COMMON_LOGGER_CONFIG},
-        "amqp": {"handlers": ["amqp-logfile"], **COMMON_LOGGER_CONFIG},
         "apscheduler": {"handlers": ["apscheduler-logfile"], **COMMON_LOGGER_CONFIG},
         "cata_log": {
             "handlers": ["console", "cata-log-logfile"],

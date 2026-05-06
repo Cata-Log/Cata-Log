@@ -1,0 +1,3 @@
+recursive-include cata_log/**/static
+recursive-include cata_log/**/templates
+recursive-include cata_log/migrations

@@ -50,25 +50,32 @@ WORKDIR ${SRC_PATH}
 
 # environment setup
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=${SRC_PATH} \
     PYTHONUNBUFFERED=1
-
-VOLUME ${STORAGE_PATH} ${LOG_PATH} ${DATABASE_PATH} ${PLUGIN_PATH}
-
-ENTRYPOINT [ "fastapi", "run" , "cata_log/main.py"]
 
 # install python dependencies
 COPY --from=uv-prestage /requirements.txt ./
 
-ARG BUILD_PYTHON_APK_DEPENDENCIES
-
 RUN pip install --no-cache-dir --requirement requirements.txt && \
-    rm -rf /tmp/* && \
-    rm -f requirements.txt
+    rm -rf /tmp/*
 
+# install cata_log
 COPY pyproject.toml src/ ./
 
-# must match port used by fastapi
-EXPOSE 8000
+RUN pip install --no-cache-dir . && \
+    rm -rf /tmp/* && \
+    rm -rf ./*
+
+# set default settings for dockerized usage
+ENV HOST="0.0.0.0" \
+    PORT=2424
+
+WORKDIR /
+
+# must match port used by cata-log
+EXPOSE 2424
+
+VOLUME ${STORAGE_PATH} ${LOG_PATH} ${DATABASE_PATH} ${PLUGIN_PATH}
+
+ENTRYPOINT [ "python3", "-m" , "cata_log"]
 
 HEALTHCHECK --interval=60s --timeout=30s --start-period=3s --retries=3 CMD [ "wget", "--quiet", "http://0.0.0.0:8000/health", "--output-document" , "/dev/null"]

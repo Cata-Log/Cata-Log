@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+from importlib import resources
+
 import alembic.command
 from alembic.config import Config
 from fastapi import Depends, FastAPI, status
@@ -41,7 +43,8 @@ logging.setup_logging()
 
 settings.Settings.check()
 
-alembic_config = Config("cata_log/migrations/alembic.ini")
+with resources.path("cata_log.migrations", "alembic.ini") as path:
+    alembic_config = Config(path)
 alembic.command.upgrade(config=alembic_config, revision="head")
 
 jobs.scheduler.start()
@@ -57,7 +60,7 @@ app = FastAPI(
     title=constants.FAST_API_TITLE,
     description=constants.FAST_API_DESCRIPTION,
     summary=constants.FAST_API_SUMMARY,
-    version=__version__.code,
+    version=__version__,
     license_info=constants.FAST_API_LICENSE_INFO,
     contact=constants.FAST_API_CONTACT,
     docs_url="/docs/swagger",

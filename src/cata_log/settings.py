@@ -23,9 +23,13 @@ from typing import Any, override
 from cata_log.exceptions import ApplicationMisconfiguredError
 
 
+# ruff: noqa: PIE796
 class Settings(enum.Enum):
     """Enum listing all configuration defaults."""
 
+    DEBUG = False
+    PORT = 2424
+    HOST = "localhost"
     PUBLIC_GET = False
     REQUEST_TIMEOUT = 10
     RETRY_DELAY = 1800

@@ -8,8 +8,9 @@ services:
       - /path/to/cata-log/log:/var/log/cata-log
       - /path/to/cata-log/plugins:/mnt/plugins
     ports:
-      - 2424:8000
+      - 2424:2424
     environment:
       - PASSWORD=test1234 # gitleaks:allow
       - LOG_LEVEL=DEBUG
+      - DEBUG=True
     restart: unless-stopped

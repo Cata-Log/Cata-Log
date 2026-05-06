@@ -10,5 +10,3 @@
 - test for staticfiles
 
 ## To Fix
-
-- import src into dockerimage for consistency to tests OR remove src dir layer
