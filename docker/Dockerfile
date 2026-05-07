@@ -6,7 +6,7 @@ ARG PYTHON_VERSION=3.14
 ARG ALPINE_VERSION=3.23
 
 ARG STORAGE_PATH=/mnt/storage/
-ARG LOG_PATH=/var/log/cata-log/
+ARG LOGS_PATH=/var/log/cata-log/
 ARG DATABASE_PATH=/mnt/db
 ARG PLUGIN_PATH=/mnt/plugins
 
@@ -40,17 +40,29 @@ LABEL org.opencontainers.image.licenses="AGPL-3.0-or-later"
 LABEL org.opencontainers.image.description="The central hub for grocery shopping catalogs."
 LABEL org.opencontainers.image.title="Cata-Log Server"
 
-ARG SRC_PATH=/opt/
-ARG STORAGE_PATH
-ARG DATABASE_PATH
-ARG LOG_PATH
-ARG PLUGIN_PATH
-
-WORKDIR ${SRC_PATH}
-
 # environment setup
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
+
+ARG STORAGE_PATH
+ARG DATABASE_PATH
+ARG LOGS_PATH
+ARG PLUGIN_PATH
+
+# set default settings for dockerized usage
+ENV HOST="0.0.0.0" \
+    PORT=2424 \
+    DATABASE_PATH=${DATABASE_PATH} \
+    LOGS_PATH=${LOGS_PATH} \
+    PLUGIN_PATH=${PLUGIN_PATH} \
+    STORAGE_PATH=${STORAGE_PATH}
+
+EXPOSE 2424
+
+VOLUME ${STORAGE_PATH} ${LOGS_PATH} ${DATABASE_PATH} ${PLUGIN_PATH}
+
+# installation
+WORKDIR /opt/
 
 # install python dependencies
 COPY --from=uv-prestage /requirements.txt ./
@@ -66,20 +78,7 @@ RUN pip install --no-cache-dir . && \
     rm -rf /tmp/* && \
     rm -rf ./*
 
-# set default settings for dockerized usage
-ENV HOST="0.0.0.0" \
-    PORT=2424 \
-    DATABASE_PATH=${DATABASE_PATH} \
-    LOG_PATH=${LOG_PATH} \
-    PLUGIN_PATH=${PLUGIN_PATH} \
-    STORAGE_PATH=${STORAGE_PATH}
-
 WORKDIR /
-
-# must match port used by cata-log
-EXPOSE 2424
-
-VOLUME ${STORAGE_PATH} ${LOG_PATH} ${DATABASE_PATH} ${PLUGIN_PATH}
 
 ENTRYPOINT [ "python3", "-m" , "cata_log"]
 
