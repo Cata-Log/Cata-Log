@@ -53,6 +53,7 @@ class Settings(enum.Enum):
     FORWARDED_ALLOW_IPS = "localhost,127.0.0.1"
     USERNAME = "admin"
     PASSWORD = ""
+    WORKERS = 1
 
     @property
     @override

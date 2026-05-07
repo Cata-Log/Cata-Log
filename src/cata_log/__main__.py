@@ -43,4 +43,5 @@ if __name__ == "__main__":
         log_config=logging.LOGGING_CONFIG,
         log_level=Settings.LOG_LEVEL.value,
         reload=Settings.DEBUG.value,
+        workers=Settings.WORKERS.value,
     )
