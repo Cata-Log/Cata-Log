@@ -79,7 +79,9 @@ class Provider(abc.ABC):
 
         Stores kwargs into the :attr:`_config` member.
         """
-        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger = logging.getLogger(
+            self.__module__ + "." + self.__class__.__name__
+        )
 
         self._configuration = self.validate_configuration(configuration)
         self._relevant_datetime = self.get_relevant_datetime()
