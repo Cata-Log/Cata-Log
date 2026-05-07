@@ -29,9 +29,14 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Enum listing all configuration defaults."""
 
+    username: str = Field(default="admin", description="Username for authentication")
+    password: str = Field(
+        default="",
+        description="Password, keep this empty to allow no authentication at all.",
+    )
     data_path: Path = Field(
         default=user_data_path("cata-log", appauthor=False, ensure_exists=False),
-        description="Path to the ",
+        description="Path to the directory for Cata-Log's data. Use the following path options for detailed control.",
     )
     storage_path: Path = Field(
         default=data_path.default / "storage",
@@ -50,13 +55,6 @@ class Settings(BaseSettings):
         description="Path to the logfiles.",
     )
     debug: bool = Field(default=False, description="Whether to run in debug mode.")
-    port: int = Field(
-        default=2424, ge=1, le=64435, description="Portnumber for the server"
-    )
-    host: IPvAnyAddress = Field(
-        default=IPv4Address("127.0.0.1"),
-        description="The host address that Cata-Log should be served under.",
-    )
     public_get: bool = Field(
         default=False,
         description="Set this to allow access to all GET endpoints without authentication.",
@@ -72,21 +70,23 @@ class Settings(BaseSettings):
         default=14,
         description="Number of days after creation until old catalogs are deleted.",
     )
-    log_level: str = Field(default="INFO", description="Global loglevel")
+    log_level: str = Field(default="WARNING", description="Global loglevel")
     log_file_backup_count: NonNegativeInt = Field(
         default=5, description="Number of backup logfiles to keep."
     )
     log_file_maxsize: NonNegativeInt = Field(
         default=2097152, description="Maximum size of a single logfile."
     )  # 2 MB
+    host: IPvAnyAddress = Field(
+        default=IPv4Address("127.0.0.1"),
+        description="The host address that Cata-Log should be served under.",
+    )
+    port: int = Field(
+        default=2424, ge=1, le=64435, description="Portnumber for the server"
+    )
     forwarded_allow_ips: str = Field(
         default="localhost,127.0.0.1",
         description="Comma separated list of IP Addresses to trust with proxy headers",
-    )
-    username: str = Field(default="admin", description="Username for authentication")
-    password: str = Field(
-        default="",
-        description="Password, keep this empty to allow no authentication at all.",
     )
     workers: PositiveInt = Field(
         default=1, description="Number of webworker processes to run."
