@@ -22,12 +22,9 @@ import alembic.command
 import uvicorn
 from alembic.config import Config
 
-from cata_log import logging, scheduler
-from cata_log.settings import Settings
-
 if __name__ == "__main__":
-    Settings.check()
-    Settings.ensure_dirs()
+    from cata_log import logging, scheduler
+    from cata_log.settings import settings
 
     with resources.path("cata_log.migrations", "alembic.ini") as path:
         alembic_config = Config(path)
@@ -37,11 +34,11 @@ if __name__ == "__main__":
 
     uvicorn.run(
         app="cata_log.app:app",
-        host=Settings.HOST.value,
-        port=Settings.PORT.value,
-        forwarded_allow_ips=Settings.FORWARDED_ALLOW_IPS.value,
+        host=str(settings.host),
+        port=settings.port,
+        forwarded_allow_ips=settings.forwarded_allow_ips,
         log_config=logging.LOGGING_CONFIG,
-        log_level=Settings.LOG_LEVEL.value,
-        reload=Settings.DEBUG.value,
-        workers=Settings.WORKERS.value,
+        log_level=settings.log_level,
+        reload=settings.debug,
+        workers=settings.workers,
     )

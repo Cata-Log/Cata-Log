@@ -23,7 +23,7 @@ from fastapi.exceptions import HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 
-from cata_log.settings import Settings
+from cata_log.settings import settings
 
 http_basic_security = HTTPBasic(auto_error=False)
 
@@ -44,7 +44,7 @@ def get_credentials() -> tuple[str, str | None]:
     Returns:
         Username and password.
     """
-    return Settings.USERNAME.value, Settings.PASSWORD.value
+    return settings.username, settings.password
 
 
 def verify_credentials(
@@ -57,7 +57,7 @@ def verify_credentials(
         request: The request that needs to be authenticated.
         credentials: The user-given credentials.
     """
-    if Settings.PUBLIC_GET.value and request.method == "GET":
+    if settings.public_get and request.method == "GET":
         return
     if request.url.path in UNPROTECTED_PATHS:
         return

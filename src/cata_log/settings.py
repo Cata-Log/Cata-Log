@@ -16,67 +16,123 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import enum
-import os
+from argparse import ArgumentParser
+from ipaddress import IPv4Address
 from pathlib import Path
-from typing import Any, override
+from typing import Any, Self
 
 from platformdirs import user_data_path, user_log_path
+from pydantic import Field, IPvAnyAddress, NonNegativeInt, PositiveInt, field_validator
+from pydantic_settings import BaseSettings
 
-from cata_log.exceptions import ApplicationMisconfiguredError
 
-
-# ruff: noqa: PIE796
-class Settings(enum.Enum):
+class Settings(BaseSettings):
     """Enum listing all configuration defaults."""
 
-    STORAGE_PATH = (
-        user_data_path("cata-log", appauthor=False, ensure_exists=False) / "storage"
+    data_path: Path = Field(
+        default=user_data_path("cata-log", appauthor=False, ensure_exists=False),
+        description="Path to the ",
     )
-    DATABASE_PATH = (
-        user_data_path("cata-log", appauthor=False, ensure_exists=False) / "db"
+    storage_path: Path = Field(
+        default=data_path.default / "storage",
+        description="Path to the storage for catalog page files.",
     )
-    LOGS_PATH = user_log_path("cata-log", appauthor=False, ensure_exists=False)
-    PLUGIN_PATH = (
-        user_data_path("cata-log", appauthor=False, ensure_exists=False) / "plugins"
+    database_path: Path = Field(
+        default=data_path.default / "db",
+        description="Path to the directory for the database files.",
     )
-    DEBUG = False
-    PORT = 2424
-    HOST = "localhost"
-    PUBLIC_GET = False
-    REQUEST_TIMEOUT = 10
-    RETRY_DELAY = 1800
-    EXPIRATION_DAYS = 14
-    LOG_LEVEL = "INFO"
-    LOG_FILE_BACKUP_COUNT = 5
-    LOG_FILE_MAXSIZE = 2097152  # 2 MB
-    FORWARDED_ALLOW_IPS = "localhost,127.0.0.1"
-    USERNAME = "admin"
-    PASSWORD = ""
-    WORKERS = 1
+    plugin_path: Path = Field(
+        default=data_path.default / "plugins",
+        description="Path to the plugin directory.",
+    )
+    logs_path: Path = Field(
+        default=user_log_path("cata-log", appauthor=False, ensure_exists=False),
+        description="Path to the logfiles.",
+    )
+    debug: bool = Field(default=False, description="Whether to run in debug mode.")
+    port: int = Field(
+        default=2424, ge=1, le=64435, description="Portnumber for the server"
+    )
+    host: IPvAnyAddress = Field(
+        default=IPv4Address("127.0.0.1"),
+        description="The host address that Cata-Log should be served under.",
+    )
+    public_get: bool = Field(
+        default=False,
+        description="Set this to allow access to all GET endpoints without authentication.",
+    )
+    request_timeout: PositiveInt = Field(
+        default=10, description="Timeout for requests to provider servers."
+    )
+    retry_delay: PositiveInt = Field(
+        default=1800,
+        description="Number of seconds to wait before retrying a failed job.",
+    )
+    expiration_days: NonNegativeInt = Field(
+        default=14,
+        description="Number of days after creation until old catalogs are deleted.",
+    )
+    log_level: str = Field(default="INFO", description="Global loglevel")
+    log_file_backup_count: NonNegativeInt = Field(
+        default=5, description="Number of backup logfiles to keep."
+    )
+    log_file_maxsize: NonNegativeInt = Field(
+        default=2097152, description="Maximum size of a single logfile."
+    )  # 2 MB
+    forwarded_allow_ips: str = Field(
+        default="localhost,127.0.0.1",
+        description="Comma separated list of IP Addresses to trust with proxy headers",
+    )
+    username: str = Field(default="admin", description="Username for authentication")
+    password: str = Field(
+        default="",
+        description="Password, keep this empty to allow no authentication at all.",
+    )
+    workers: PositiveInt = Field(
+        default=1, description="Number of webworker processes to run."
+    )
 
-    @property
-    @override
-    def value(self) -> Any:
-        default = super().value
-        return type(default)(os.environ.get(self.name, default))
+    class Config:
+        """Config metadata for pydantic model."""
+
+        env_prefix = "CATA_LOG_"
+
+    @field_validator("*", mode="after")
+    @classmethod
+    def ensure_dirs(cls, value: Any) -> Any:  # noqa: ANN401 # no reason to be precise here
+        """Create non-existent paths.
+
+        Returns:
+            The path.
+        """
+        if isinstance(value, Path):
+            value.mkdir(exist_ok=True, parents=True)
+        return value
 
     @classmethod
-    def check(cls) -> None:
-        """Checks the validity of all settings."""
-        bad_configs = []
-        for setting in cls:
-            try:
-                _ = setting.value
-            except TypeError, ValueError:
-                bad_configs.append(setting.name)
-        if bad_configs:
-            raise ApplicationMisconfiguredError(bad_configs)
+    def load(cls) -> Self:
+        """Load settings from args or env.
 
-    @classmethod
-    def ensure_dirs(cls) -> None:
-        """Ensure all directory settings exist."""
-        for setting in cls:
-            setting_value = setting.value
-            if isinstance(setting_value, Path):
-                setting_value.mkdir(exist_ok=True, parents=True)
+        Returns:
+            The settings instance.
+        """
+        parser = ArgumentParser(
+            prog="Cata-Log",
+            description="Start the Cata-Log server. You can configure the settings with the command-line arguments or with environment variables starting with CATA_LOG_.",
+        )
+        for name, field in cls.model_fields.items():
+            arg_name = "--" + name.replace("_", "-")
+
+            parser.add_argument(
+                arg_name,
+                type=field.annotation or str,
+                default=None,
+                help=f"default: {field.default}; {field.description}",
+            )
+        args = parser.parse_args()
+        return cls(
+            **{key: value for key, value in vars(args).items() if value is not None}
+        )
+
+
+settings = Settings.load()

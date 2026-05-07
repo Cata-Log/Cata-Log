@@ -16,13 +16,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from cata_log.settings import Settings
+from cata_log.settings import settings
 
 COMMON_FILEHANDLER_CONFIG = {
     "level": "DEBUG",
     "class": "logging.handlers.RotatingFileHandler",
-    "maxBytes": Settings.LOG_FILE_MAXSIZE.value,
-    "backupCount": Settings.LOG_FILE_BACKUP_COUNT.value,
+    "maxBytes": settings.log_file_maxsize,
+    "backupCount": settings.log_file_backup_count,
     "formatter": "json",
 }
 
@@ -52,37 +52,37 @@ LOGGING_CONFIG = {
             "formatter": "console",
         },
         "root-logfile": {
-            "filename": str(Settings.LOGS_PATH.value / "root.log"),
+            "filename": str(settings.logs_path / "root.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
         "uvicorn-logfile": {
-            "filename": str(Settings.LOGS_PATH.value / "uvicorn.log"),
+            "filename": str(settings.logs_path / "uvicorn.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
         "access-logfile": {
-            "filename": str(Settings.LOGS_PATH.value / "access.log"),
+            "filename": str(settings.logs_path / "access.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
         "cata-log-logfile": {
-            "filename": str(Settings.LOGS_PATH.value / "cata-log.log"),
+            "filename": str(settings.logs_path / "cata-log.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
         "apscheduler-logfile": {
-            "filename": str(Settings.LOGS_PATH.value / "apscheduler.log"),
+            "filename": str(settings.logs_path / "apscheduler.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
         "alembic-logfile": {
-            "filename": str(Settings.LOGS_PATH.value / "alembic.log"),
+            "filename": str(settings.logs_path / "alembic.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
         "sqlalchemy-logfile": {
-            "filename": str(Settings.LOGS_PATH.value / "sqlalchemy.log"),
+            "filename": str(settings.logs_path / "sqlalchemy.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
     },
     "root": {
         "handlers": ["console", "root-logfile"],
-        "level": Settings.LOG_LEVEL.value,
+        "level": settings.log_level,
     },
     "loggers": {
         "uvicorn": {"handlers": ["uvicorn-logfile"], "level": "INFO"},

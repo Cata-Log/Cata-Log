@@ -22,10 +22,6 @@ from typing import Any, override
 from cata_log.constants import StatusEnum
 
 
-class ApplicationMisconfiguredError(Exception):
-    """An error indicating a bad app configuration."""
-
-
 class HealthCheckFailedError(Exception):
     """An error indicating a failed healthcheck."""
 

@@ -44,7 +44,7 @@ from cata_log.exceptions import (
     ProviderWarning,
 )
 from cata_log.providers import Provider as ProviderType
-from cata_log.settings import Settings
+from cata_log.settings import settings
 
 from .mixins import TimestampMixin
 from .types import PathType
@@ -381,7 +381,7 @@ class PageFile(ModelBase, TimestampMixin):
             db_session: A database session.
         """
         used_paths = set(db_session.execute(select(cls.path)).scalars().all())
-        for storage_filepath in Settings.STORAGE_PATH.value.iterdir():
+        for storage_filepath in settings.storage_path.iterdir():
             if storage_filepath.is_dir() or storage_filepath.resolve() in used_paths:
                 continue
             storage_filepath.unlink(missing_ok=True)

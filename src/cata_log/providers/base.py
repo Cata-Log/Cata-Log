@@ -40,7 +40,7 @@ from cata_log.exceptions import (
     ProviderUnknownClassWarning,
     ProviderWarning,
 )
-from cata_log.settings import Settings
+from cata_log.settings import settings
 from cata_log.utils.page_numbers import PageNumber, page_numbering
 
 from .configuration import Configuration
@@ -93,7 +93,7 @@ class Provider(abc.ABC):
                     lambda r, *_, **__: r.raise_for_status(),
                 ]
             },
-            timeout=Settings.REQUEST_TIMEOUT.value,
+            timeout=settings.request_timeout,
         )
         self.get_catalog_data()
 
@@ -367,7 +367,7 @@ class Provider(abc.ABC):
             The storage path.
         """
         filename = str(uuid.uuid4()) + cls.page_file_extension
-        return Settings.STORAGE_PATH.value / filename
+        return settings.storage_path / filename
 
 
 # mypy: disable_error_code=misc

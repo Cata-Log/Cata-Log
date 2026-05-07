@@ -27,11 +27,11 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.date import DateTrigger
 
 from cata_log.exceptions import NetworkError
-from cata_log.settings import Settings
+from cata_log.settings import settings
 
 logger = logging.getLogger(__name__)
 
-JOB_DATABASE_URL = f"sqlite:///{Settings.DATABASE_PATH.value / 'jobs.sqlite3'}"
+JOB_DATABASE_URL = f"sqlite:///{settings.database_path / 'jobs.sqlite3'}"
 
 scheduler = BackgroundScheduler(
     jobstores={"default": SQLAlchemyJobStore(url=JOB_DATABASE_URL)},

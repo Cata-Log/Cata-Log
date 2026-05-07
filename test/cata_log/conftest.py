@@ -37,7 +37,7 @@ from cata_log.providers import Provider
 from cata_log.providers.base import Preview
 from cata_log.providers.configuration import Configuration
 from cata_log.providers.regions import Germany
-from cata_log.settings import Settings
+from cata_log.settings import settings
 
 
 @pytest.fixture
@@ -149,9 +149,9 @@ def fake_fs(monkeypatch):
 
         patcher.fs.create_dir(constants.STORAGE_PATH)
         monkeypatch.setattr(
-            "cata_log.constants.STORAGE_PATH", Path(str(Settings.STORAGE_PATH.value))
+            "cata_log.constants.STORAGE_PATH", Path(str(settings.storage_path))
         )
-        patcher.fs.create_dir(Settings.LOGS_PATH.value)
+        patcher.fs.create_dir(settings.logs_path)
         patcher.fs.add_real_directory(Path(constants.__file__).parent.parent.parent)
         patcher.fs.add_real_directory(
             Path(constants.__file__).parent, target_path="/opt/cata_log"
