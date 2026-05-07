@@ -34,8 +34,10 @@ include:
   - local: .gitlab/ci/.gitlab-ci-optional-lint.yml
   - local: .gitlab/ci/.gitlab-ci-lint.yml
   - local: .gitlab/ci/.gitlab-ci-test.yml
-  - local: .gitlab/ci/.gitlab-ci-build.yml
-  - local: .gitlab/ci/.gitlab-ci-debug-build.yml
+  - local: .gitlab/ci/.gitlab-ci-build-docker.yml
+  - local: .gitlab/ci/.gitlab-ci-build-package.yml
+  - local: .gitlab/ci/.gitlab-ci-debug-build-docker.yml
+  - local: .gitlab/ci/.gitlab-ci-debug-build-package.yml
   - local: .gitlab/ci/.gitlab-ci-release.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
   - template: Jobs/SAST.gitlab-ci.yml

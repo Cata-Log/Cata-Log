@@ -1,0 +1,8 @@
+# https://docs.gitlab.com/ci/docker/using_buildkit/#build-multi-platform-images
+debug_build_package:
+  stage: build
+  rules:
+    - if: "$CI_COMMIT_TAG =~ /^debug/"
+  script:
+    - uv build
+    - uv publish

@@ -11,17 +11,16 @@ release:
     - CHANGELOG=$(git diff "$PREVIOUS_BUILD_TAG":CHANGELOG.md "$CI_COMMIT_TAG":CHANGELOG.md | grep '^+[^+]' | sed 's/^+//')
     # gitlab
     - |
-      curl --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN" \
-           --data "name=$CI_COMMIT_TAG" \
-           --data "tag_name=$CI_COMMIT_TAG" \
-           --data-urlencode "assets[links][][name]=Get it on Dockerhub!" \
-           --data-urlencode "assets[links][][url]=https://hub.docker.com/layers/dacid99/cata-log/$CI_COMMIT_TAG/images" \
-           --data-urlencode "assets[links][][link_type]=image" \
-           --data-urlencode "description=$CHANGELOG" \
+      curl --request POST --header "Content-Type: application/json" --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+           --data '{ "name": '"$CI_COMMIT_TAG"', "tag_name": '"$CI_COMMIT_TAG"', "description": '"$CHANGELOG"', \
+           "assets": { "links": [\
+           {"name": "Get it on Dockerhub!", "url": '"https://hub.docker.com/layers/dacid99/cata-log/$CI_COMMIT_TAG/images"', "type": "image"}, \
+           {"name": "Get it on PyPI!", "url": "https://pypi.org/project/cata-log", "type": "package"} \
+           ]} }' \
            "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/releases"
     # github
     - |
-      body=$(printf "%s\n\n[Get it on Dockerhub!](https://hub.docker.com/layers/dacid99/cata-log/%s/images)" \
+      body=$(printf "%s\n\n[Get it on Dockerhub!](https://hub.docker.com/layers/dacid99/cata-log/%s/images)\n\n[Get it on PyPI!](https://pypi.org/project/cata-log/)" \
        "$CHANGELOG" "$CI_COMMIT_TAG")
     - |
       json=$(printf '%s' "$body" | jq -R -s --arg tag "$CI_COMMIT_TAG" '
