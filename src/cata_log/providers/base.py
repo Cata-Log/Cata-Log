@@ -18,10 +18,8 @@
 
 import abc
 import logging
-import uuid
 from collections.abc import Generator
 from datetime import datetime, timedelta
-from pathlib import Path
 from types import TracebackType
 from typing import ClassVar, Self, final, override
 
@@ -62,8 +60,6 @@ class Provider(abc.ABC):
     """The region this catalog is issued in"""
     first_page_number: int = 1
     """The number of the first page in the providers api"""
-    page_file_extension: str = ".jpg"
-    """The file extension of page files from the providers api"""
     schedule: str = "0 4 * * *"
     """The crontab schedule for fetching this provider"""
     jitter: int = 3600
@@ -322,17 +318,6 @@ class Provider(abc.ABC):
         except ValidationError as validation_error:
             raise ProviderInvalidConfigurationWarning from validation_error
         return validated_configuration
-
-    @final
-    @classmethod
-    def get_new_path(cls) -> Path:
-        """Get a new unique storage path for page data.
-
-        Returns:
-            The storage path.
-        """
-        filename = str(uuid.uuid4()) + cls.page_file_extension
-        return settings.storage_path / filename
 
 
 # mypy: disable_error_code=misc

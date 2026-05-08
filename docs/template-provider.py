@@ -32,7 +32,6 @@ class TemplateProvider(Provider):
         # Add more Configurations if required
     )
     schedule = "0 4 * * *" # The crontab schedule on which the provider data is cached
-    page_file_extension = ".jpg" # The file extension of the page image files
 
     # The following methods must be implemented.
     # These instance variables are always available:

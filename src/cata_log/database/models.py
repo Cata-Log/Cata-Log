@@ -19,6 +19,7 @@
 import contextlib
 import logging
 import mimetypes
+import uuid
 from datetime import UTC, datetime
 from functools import cached_property
 from hashlib import sha256
@@ -122,11 +123,9 @@ class Provider(ModelBase, TimestampMixin):
                     page_number,
                     page_bytes,
                 ) in provider_fetcher.iter_catalog_pages():
-                    page_path = provider_fetcher.get_new_path()
                     pagefile = PageFile.get_or_create(
                         db_session=db_session,
                         page_bytes=page_bytes,
-                        path=page_path,
                     )
                     logger.debug(
                         "Success saving page data to storage.",
@@ -134,7 +133,7 @@ class Provider(ModelBase, TimestampMixin):
                             "provider_id": self.id,
                             "catalog_id": new_catalog.id,
                             "page_nr": page_number,
-                            "path": page_path,
+                            "path": pagefile.path,
                         },
                     )
                     new_page = Page(
@@ -389,12 +388,13 @@ class PageFile(ModelBase, TimestampMixin):
     @cached_property
     def media_type(self) -> str:
         """The mimetype of the stored file."""
-        return mimetypes.guess_file_type(self.name)[0] or "application/octet-stream"
+        return (
+            mimetypes.guess_file_type(self.name, strict=False)[0]
+            or "application/octet-stream"
+        )
 
     @classmethod
-    def get_or_create(
-        cls, db_session: orm.Session, page_bytes: bytes, path: Path
-    ) -> PageFile:
+    def get_or_create(cls, db_session: orm.Session, page_bytes: bytes) -> PageFile:
         """Get or create a pagefile.
 
         Args:
@@ -405,11 +405,27 @@ class PageFile(ModelBase, TimestampMixin):
         sha256_hash = sha256(page_bytes).hexdigest()
         pagefile = db_session.query(cls).filter(cls.sha256 == sha256_hash).first()
         if not pagefile:
-            pagefile = cls(sha256=sha256_hash, size=len(page_bytes), path=path)
+            pagefile = cls(sha256=sha256_hash, size=len(page_bytes))
+            with Image.open(BytesIO(page_bytes)) as image:
+                pagefile.set_new_path(
+                    extension=mimetypes.guess_extension(
+                        image.get_format_mimetype() or "", strict=False
+                    )
+                    or ""
+                )
             db_session.add(pagefile)
             db_session.flush()
-            path.write_bytes(page_bytes)
+            pagefile.path.write_bytes(page_bytes)
         return pagefile
+
+    def set_new_path(self, extension: str) -> None:
+        """Set a new path.
+
+        Args:
+            extension: The extension of the filepath.
+        """
+        filename = str(uuid.uuid4()) + extension
+        self.path = settings.storage_path / filename
 
     @classmethod
     def cleanup(cls, db_session: orm.Session) -> None:

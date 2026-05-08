@@ -33,8 +33,6 @@ def test_registered_classes__attributes(provider_class):
     assert isinstance(provider_class.description, str)
     assert provider_class.url
     assert isinstance(provider_class.url, str)
-    assert provider_class.page_file_extension
-    assert isinstance(provider_class.page_file_extension, str)
     assert provider_class.region
     assert issubclass(provider_class.region, Region)
     assert provider_class.schedule
