@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from collections.abc import Sequence
 from typing import Any, override
 
 from cata_log.constants import StatusEnum
@@ -35,6 +34,10 @@ class ProviderWarning(Warning):
 
     provider_status: StatusEnum
 
+    @override
+    def __init__(self, *args: Any) -> None:
+        super().__init__(f"Provider is {self.provider_status.value}.", *args)
+
 
 class NetworkError(Exception):
     """An error with the network."""
@@ -49,36 +52,31 @@ class ProviderBrokenWarning(ProviderWarning):
 class ProviderRegistrationWarning(ProviderBrokenWarning):
     """An error indicating that the provider class could not be registered."""
 
+    @override
+    def __init__(self, *args: Any) -> None:
+        super().__init__("Provider class could not be registered.", *args)
+
 
 class ProviderMisconfiguredWarning(ProviderWarning):
     """An error indicating that the provider is misconfigured."""
 
     provider_status = StatusEnum.MISCONFIGURED
 
-    @override
-    def __init__(
-        self, *args: Any, bad_configurations: Sequence[str] | None = None
-    ) -> None:
-        self.bad_configurations = bad_configurations
-        super().__init__(*args)
-
 
 class ProviderInvalidConfigurationWarning(ProviderMisconfiguredWarning):
     """An error indicating that a provider configuration is invalid."""
 
     @override
-    def __init__(self, bad_configurations: Sequence[str] | None = None) -> None:
-        super().__init__(
-            "Provider configuration is invalid.", bad_configurations=bad_configurations
-        )
+    def __init__(self, *args: Any) -> None:
+        super().__init__("Provider configuration is invalid.", *args)
 
 
 class ProviderUnknownClassWarning(ProviderMisconfiguredWarning):
     """An error indicating that the provider class-id is unknown."""
 
     @override
-    def __init__(self) -> None:
-        super().__init__("Provider type is unknown.", bad_configurations=["class_uid"])
+    def __init__(self, *args: Any) -> None:
+        super().__init__("Provider class is unknown.", *args)
 
 
 class ProviderMisconfiguredOrBrokenWarning(ProviderWarning):

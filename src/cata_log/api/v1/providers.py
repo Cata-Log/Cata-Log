@@ -23,10 +23,12 @@ from apscheduler.job import Job as SchedulerJob
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from fastapi import APIRouter, HTTPException, responses, status
-from fastapi.encoders import jsonable_encoder
+from fastapi.requests import Request
 from pydantic import BaseModel, Field, field_validator
 from pydantic.fields import FieldInfo
 from pydantic.types import AwareDatetime
+from pydantic_core import PydanticCustomError
+from pydantic_core.core_schema import ValidationInfo
 from sqlalchemy.orm import Session, selectinload
 from starlette.responses import JSONResponse
 
@@ -59,7 +61,7 @@ class Provider(AwareTimestampsMixin, BaseModel):
 
     @field_validator("job", mode="before")
     @classmethod
-    def get_job(cls, job_id: str) -> SchedulerJob:
+    def get_job(cls, job_id: str) -> SchedulerJob | None:
         """Get the job instance from the scheduler."""
         return scheduler.get_job(job_id)
 
@@ -76,6 +78,7 @@ class Job(AwareDatetimesMixin, BaseModel):
     id: str
     next_run_time: AwareDatetime
     schedule: str = Field(validation_alias="trigger")
+    jitter: int
 
     @field_validator("schedule", mode="before")
     @classmethod
@@ -90,11 +93,66 @@ class ProviderUpdate(BaseModel):
     configuration: dict[str, str]
     note: str | None = None
 
+    @field_validator("configuration")
+    @classmethod
+    def validate_configuration(
+        cls, configuration: dict[str, str], info: ValidationInfo
+    ) -> dict[str, str]:
+        """Validate the provider specific configuration."""
+        class_uid = info.context.get("class_uid") if info.context else None
+        if class_uid:
+            try:
+                configuration = (
+                    ProviderType.get_class(class_uid)
+                    .validate_configuration(configuration)
+                    .model_dump()
+                )  # this won't throw a ProviderUnknownWarning since class_uid is already validated
+            except ProviderInvalidConfigurationWarning as invalid_warning:
+                raise invalid_warning.__cause__ or PydanticCustomError(
+                    "invalid_configuration", str(invalid_warning)
+                ) from invalid_warning
+        return configuration
 
-class NewProvider(ProviderUpdate):
+
+class NewProvider(BaseModel):
     """Provider creation data model."""
 
+    # keep this order for correct order of validation steps
     class_uid: str
+    configuration: dict[str, str]
+    note: str | None = None
+
+    @field_validator("class_uid")
+    @classmethod
+    def validate_class_uid(cls, class_uid: str) -> str:
+        """Validate the provider class uid."""
+        try:
+            ProviderType.get_class(class_uid)
+        except ProviderUnknownClassWarning as unknown_warning:
+            raise PydanticCustomError(
+                "unknown_provider", str(unknown_warning)
+            ) from unknown_warning
+        return class_uid
+
+    @field_validator("configuration")
+    @classmethod
+    def validate_configuration(
+        cls, configuration: dict[str, str], info: ValidationInfo
+    ) -> dict[str, str]:
+        """Validate the provider specific configuration."""
+        class_uid = info.data.get("class_uid")
+        if class_uid:
+            try:
+                configuration = (
+                    ProviderType.get_class(class_uid)
+                    .validate_configuration(configuration)
+                    .model_dump()
+                )  # this won't throw a ProviderUnknownWarning since class_uid is already validated
+            except ProviderInvalidConfigurationWarning as invalid_warning:
+                raise invalid_warning.__cause__ or PydanticCustomError(
+                    "invalid_configuration", str(invalid_warning)
+                ) from invalid_warning
+        return configuration
 
 
 class RegionInfo(BaseModel):
@@ -194,10 +252,6 @@ async def list_available_providers(
     status_code=status.HTTP_201_CREATED,
     response_model=Provider,
     responses={
-        status.HTTP_400_BAD_REQUEST: {
-            "model": common.HTTP400Error,
-            "description": "If the given data is invalid.",
-        },
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
             "description": "If the object doesn't exist.",
@@ -213,28 +267,9 @@ async def post_provider(
     new_provider: NewProvider, db_session: Session = database.depends_db_session
 ) -> database.Provider:
     """Set up a new provider."""
-    try:
-        provider_class = ProviderType.get_class(new_provider.class_uid)
-    except ProviderUnknownClassWarning as unknown_class_warning:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "message": "The given provider type is unknown",
-                "fields": [{"class_uid": new_provider.class_uid}],
-            },
-        ) from unknown_class_warning
-    try:
-        validated_configuration = provider_class.validate_configuration(
-            new_provider.configuration
-        ).model_dump()
-    except ProviderInvalidConfigurationWarning as invalid_warning:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=jsonable_encoder(invalid_warning.__cause__.errors()),
-        ) from invalid_warning
     if any(
-        provider.configuration == validated_configuration
-        for provider in db_session.query(database.Provider)
+        existing_provider.configuration == new_provider.configuration
+        for existing_provider in db_session.query(database.Provider)
         .filter(database.Provider.class_uid == new_provider.class_uid)
         .all()
     ):
@@ -243,8 +278,7 @@ async def post_provider(
             detail="The given provider configuration already exists",
         )
     provider = database.Provider(
-        **new_provider.model_dump(exclude={"configuration"}),
-        configuration=validated_configuration,
+        **new_provider.model_dump(),
     )
     db_session.add(provider)
     db_session.commit()
@@ -263,10 +297,6 @@ async def post_provider(
     "/{provider_id}",
     response_model=Provider,
     responses={
-        status.HTTP_400_BAD_REQUEST: {
-            "model": common.HTTP400Error,
-            "description": "If the given data is invalid.",
-        },
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
             "description": "If the object doesn't exist.",
@@ -280,7 +310,7 @@ async def post_provider(
 )
 async def patch_provider(
     provider_id: int,
-    provider_update: ProviderUpdate,
+    request: Request,
     db_session: Session = database.depends_db_session,
 ) -> database.Provider:
     """Update a provider."""
@@ -297,28 +327,12 @@ async def patch_provider(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
         )
-    try:
-        provider_class = provider.get_provider_class()
-    except ProviderUnknownClassWarning as unknown_class_warning:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "message": "The given provider type is unknown",
-                "fields": [{"class_uid": provider.class_uid}],
-            },
-        ) from unknown_class_warning
-    try:
-        validated_configuration = provider_class.validate_configuration(
-            provider_update.configuration
-        ).model_dump()
-    except ProviderInvalidConfigurationWarning as invalid_warning:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=jsonable_encoder(invalid_warning.__cause__.errors()),
-        ) from invalid_warning
+    provider_update = ProviderUpdate.model_validate(
+        await request.json(), context={"class_uid": provider.class_uid}
+    )
     if any(
-        provider.configuration == validated_configuration
-        for provider in db_session.query(database.Provider)
+        other_provider.configuration == provider_update.configuration
+        for other_provider in db_session.query(database.Provider)
         .filter(database.Provider.class_uid == provider.class_uid)
         .filter(database.Provider.id != provider.id)
         .all()
@@ -327,7 +341,8 @@ async def patch_provider(
             status_code=status.HTTP_409_CONFLICT,
             detail="The given provider configuration already exists",
         )
-    provider.configuration = validated_configuration
+    for key, value in provider_update.model_dump().items():
+        setattr(provider, key, value)
     db_session.commit()
     scheduler.add_job(
         "cata_log.jobs:fetch_provider",
