@@ -22,7 +22,7 @@ from zoneinfo import ZoneInfo
 from apscheduler.job import Job as SchedulerJob
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
-from fastapi import APIRouter, Body, HTTPException, responses, status
+from fastapi import APIRouter, HTTPException, responses, status
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from pydantic.fields import FieldInfo
@@ -307,6 +307,9 @@ def post_provider(
     return provider
 
 
+# def validate_configuration(provider_id: int, provider_update: ProviderUpdate) -> ProviderUpdate:
+
+
 @router.patch(
     "/{provider_id}",
     response_model=Provider,
@@ -324,7 +327,7 @@ def post_provider(
 )
 def patch_provider(
     provider_id: int,
-    body: dict = Body(...),  # noqa: B008 # standard fastapi stuff
+    provider_update: ProviderUpdate,
     db_session: Session = database.depends_db_session,
 ) -> database.Provider:
     """Update a provider."""
@@ -343,7 +346,7 @@ def patch_provider(
         )
     try:
         provider_update = ProviderUpdate.model_validate(
-            body, context={"class_uid": provider.class_uid}
+            provider_update.model_dump(), context={"class_uid": provider.class_uid}
         )
     except ValidationError as validation_error:
         raise RequestValidationError(validation_error.errors()) from validation_error
