@@ -19,16 +19,19 @@
 from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
+from apscheduler.job import Job as SchedulerJob
+from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from fastapi import APIRouter, HTTPException, responses, status
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field, field_validator
 from pydantic.fields import FieldInfo
+from pydantic.types import AwareDatetime
 from sqlalchemy.orm import Session, selectinload
 from starlette.responses import JSONResponse
 
 from cata_log import constants, database
-from cata_log.api.mixins import AwareTimestampsMixin
+from cata_log.api.mixins import AwareDatetimesMixin, AwareTimestampsMixin
 from cata_log.api.v1 import common
 from cata_log.exceptions import (
     ProviderInvalidConfigurationWarning,
@@ -52,12 +55,33 @@ class Provider(AwareTimestampsMixin, BaseModel):
     note: str | None
     configuration: dict[str, str]
     status: constants.StatusEnum
+    job: Job | None = Field(validation_alias="job_id")
+
+    @field_validator("job", mode="before")
+    @classmethod
+    def get_job(cls, job_id: str) -> SchedulerJob:
+        """Get the job instance from the scheduler."""
+        return scheduler.get_job(job_id)
 
 
 class FullProvider(Provider):
     """Full provider data model."""
 
     catalogs: list[Catalog]
+
+
+class Job(AwareDatetimesMixin, BaseModel):
+    """Job data model."""
+
+    id: str
+    next_run_time: AwareDatetime
+    schedule: str = Field(validation_alias="trigger")
+
+    @field_validator("schedule", mode="before")
+    @classmethod
+    def get_schedule_from_trigger(cls, trigger: CronTrigger) -> str:
+        """Get the crontab schedule as a string."""
+        return str(trigger)
 
 
 class ProviderUpdate(BaseModel):
@@ -224,6 +248,7 @@ async def post_provider(
     )
     db_session.add(provider)
     db_session.commit()
+    db_session.refresh(provider)
     scheduler.add_job(
         "cata_log.jobs:fetch_provider",
         args=[provider.id],
@@ -656,3 +681,55 @@ async def post_provider_update(
         replace_existing=True,
     )
     return {"detail": "Provider update scheduled."}
+
+
+@router.post(
+    "/{provider_id}/job/add",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
+    response_model=Provider,
+    operation_id="add-provider-job-v1",
+)
+async def post_provider_add_job(
+    provider_id: int, db_session: Session = database.depends_db_session
+) -> database.Provider:
+    """Add the provider's job."""
+    provider = db_session.get(database.Provider, provider_id)
+    if not provider:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
+        )
+    provider.add_job()
+    db_session.commit()
+    return provider
+
+
+@router.post(
+    "/{provider_id}/job/remove",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
+    response_model=Provider,
+    operation_id="remove-provider-job-v1",
+)
+async def post_provider_remove_job(
+    provider_id: int, db_session: Session = database.depends_db_session
+) -> database.Provider:
+    """Remove the provider's job."""
+    provider = db_session.get(database.Provider, provider_id)
+    if not provider:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
+        )
+    provider.remove_job()
+    db_session.commit()
+    return provider
