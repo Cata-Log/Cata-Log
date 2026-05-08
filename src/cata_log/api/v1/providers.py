@@ -77,13 +77,19 @@ class Job(AwareDatetimesMixin, BaseModel):
     id: str
     next_run_time: AwareDatetime
     schedule: str = Field(validation_alias="trigger")
-    jitter: int
+    jitter: int | None = Field(validation_alias="trigger")
 
     @field_validator("schedule", mode="before")
     @classmethod
     def get_schedule_from_trigger(cls, trigger: CronTrigger) -> str:
         """Get the crontab schedule as a string."""
         return str(trigger)
+
+    @field_validator("jitter", mode="before")
+    @classmethod
+    def get_jitter_from_trigger(cls, trigger: CronTrigger) -> int | None:
+        """Get the crontab schedule as a string."""
+        return trigger.jitter
 
 
 class ProviderUpdate(BaseModel):
