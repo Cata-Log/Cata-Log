@@ -196,6 +196,8 @@ class ProviderInfo(BaseModel):
     description: str
     url: str
     region: RegionInfo
+    schedule: str
+    jitter: int
     class_uid: str = Field(validation_alias="uid")
     configuration: dict[str, ConfigInfo] = Field(validation_alias="Configuration")
 
@@ -206,6 +208,12 @@ class ProviderInfo(BaseModel):
     ) -> dict[str, FieldInfo]:
         """Get the config field infos from the configuration model."""
         return configuration_class.model_fields
+
+    @field_validator("schedule", mode="before")
+    @classmethod
+    def get_schedule_string(cls, schedule: CronTrigger) -> str:
+        """Get the config field infos from the configuration model."""
+        return str(schedule)
 
 
 @router.get("", response_model=list[Provider], operation_id="list-providers-v1")
