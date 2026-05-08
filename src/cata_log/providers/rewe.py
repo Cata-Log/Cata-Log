@@ -21,11 +21,12 @@ from datetime import datetime, time, timedelta
 from typing import override
 from urllib.parse import urljoin
 
+from pydantic import Field
+
 from cata_log.exceptions import PagesExhausted
 from cata_log.utils import dates, page_numbers
 
 from .base import Preview, Provider
-from .configuration import Configuration
 from .regions import Germany
 
 
@@ -37,17 +38,17 @@ class Rewe(Provider):
     description = "Rewe Katalog"
     url = "https://www.rewe.de/angebote/"
     region = Germany
-    configuration = (
-        Configuration(
-            name="markt_id",
-            helptext="""ID des Rewe Markts.
-        Öffne rewe.de und wähle deine Filiale.
-        Öffne den Web-Inspektor und suche im Webspeicher nach einem Cookie namens 'wksMarketsCookie'.
-        Der Cookie ist URL-encoded, normalerweise gibt es eine Option in dekodiert anzuzeigen.
-        Im Cookie ist ein Eintrag '"wwIdent":'. Die folgende Zahl (ohne ") ist die Markt-ID.
-        """,
-        ),
-    )
+
+    class Configuration(Provider.Configuration):
+        markt_id: str = Field(
+            description="""ID des Rewe Markts.
+                Öffne rewe.de und wähle deine Filiale.
+                Öffne den Web-Inspektor und suche im Webspeicher nach einem Cookie namens 'wksMarketsCookie'.
+                Der Cookie ist URL-encoded, normalerweise gibt es eine Option in dekodiert anzuzeigen.
+                Im Cookie ist ein Eintrag '"wwIdent":'. Die folgende Zahl (ohne ") ist die Markt-ID.
+                """
+        )
+
     first_page_number = 0
 
     overview_url_format = "https://view.publitas.com/rewe-markt/rewe_{relevant_datetime:%Y}_wk{week_number:02}_{markt_id}/spreads.json"
@@ -57,9 +58,9 @@ class Rewe(Provider):
     def _get_catalog_data(self) -> None:
         self.catalog_data = self._client.get(
             self.overview_url_format.format(
+                markt_id=self._configuration.markt_id,
                 week_number=dates.get_calendar_week_number(self._relevant_datetime),
                 relevant_datetime=self._relevant_datetime,
-                **self._configuration,
             )
         ).json()
 

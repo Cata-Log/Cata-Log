@@ -106,7 +106,11 @@ parametrize-names-type = "tuple"
 parametrize-values-row-type = "tuple"
 parametrize-values-type = "list"
 
+
 [lint.per-file-ignores]
+"/**/providers/**" = [  # ignores for all provider files
+  "D106",     # no docstrings for classes required
+]
 "/**/test/**" = [  # ignores for all test files
   "ARG001", # unused args required for fixture usage
   "SLF001", # private accessed

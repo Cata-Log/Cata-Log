@@ -27,13 +27,13 @@ from typing import ClassVar, Self, final, override
 
 import httpx
 from fake_useragent import UserAgent
+from pydantic import BaseModel, ValidationError
 
 from cata_log.exceptions import (
     CatalogUnavailableWarning,
     NetworkError,
     PagesExhausted,
     ProviderBrokenWarning,
-    ProviderIncompleteConfigurationWarning,
     ProviderInvalidConfigurationWarning,
     ProviderMisconfiguredOrBrokenWarning,
     ProviderRegistrationWarning,
@@ -43,7 +43,6 @@ from cata_log.exceptions import (
 from cata_log.settings import settings
 from cata_log.utils.page_numbers import PageNumber, page_numbering
 
-from .configuration import Configuration
 from .regions import Region
 
 
@@ -65,12 +64,13 @@ class Provider(abc.ABC):
     """The number of the first page in the providers api"""
     page_file_extension: str = ".jpg"
     """The file extension of page files from the providers api"""
-    configuration: tuple[Configuration, ...] = ()
-    """The configuration parameters with helptexts for this provider"""
     schedule: str = "0 4 * * *"
     """The crontab schedule for fetching this provider"""
     jitter: int = 3600
     """Jitter for the schedule timing in seconds."""
+
+    class Configuration(BaseModel):
+        """The configuration for this provider."""
 
     @final
     @override
@@ -82,7 +82,6 @@ class Provider(abc.ABC):
         self._logger = logging.getLogger(
             self.__module__ + "." + self.__class__.__name__
         )
-
         self._configuration = self.validate_configuration(configuration)
         self._relevant_datetime = self.get_relevant_datetime()
         self._client = httpx.Client(
@@ -137,7 +136,7 @@ class Provider(abc.ABC):
     @override
     def __str__(self) -> str:
         """String representation of this provider."""
-        return f"Catalog {self.id}"
+        return f"Provider {self.name}"
 
     def get_relevant_datetime(self) -> datetime:
         """Get the datetime that defines the catalog offered by this provider.
@@ -263,23 +262,6 @@ class Provider(abc.ABC):
 
     @final
     @classmethod
-    def info(cls) -> dict[str, str | dict[str, str] | list[dict[str, str | None]]]:
-        """Get user-relevant info about this provider.
-
-        Returns:
-            A dictionary containing class attributes of this provider class.
-        """
-        return {
-            "name": cls.name,
-            "description": cls.description,
-            "url": cls.url,
-            "region": cls.region.info(),
-            "class_uid": cls.uid,
-            "configuration": [config.info() for config in cls.configuration],
-        }
-
-    @final
-    @classmethod
     def get_class(cls, class_uid: str) -> type[Provider]:
         """Get the provider class to a given class-id.
 
@@ -321,7 +303,7 @@ class Provider(abc.ABC):
     @classmethod
     def validate_configuration(
         cls, configuration_dict: dict[str, str]
-    ) -> dict[str, str]:
+    ) -> Configuration:
         """Validate a given configuration and return the validated version.
 
         Args:
@@ -331,31 +313,14 @@ class Provider(abc.ABC):
             The validated configuration.
 
         Raises:
-            ProviderConfigurationIncompleteWarning: If the given configuration is incomplete.
-            ProviderBadConfigurationWarning: If the given configuration is invalid.
+            ProviderConfigurationInvalidWarning: If the given configuration is incomplete or otherwise invalid.
         """
-        validated_configuration: dict[str, str] = {}
-        missing_configurations: list[str] = []
-        bad_configurations: list[str] = []
-        for config in cls.configuration:
-            config_value = configuration_dict.get(config.name, config.default)
-            if config_value is None:
-                missing_configurations.append(config.name)
-            else:
-                try:
-                    config.parse_as(config_value)
-                except ValueError, TypeError:
-                    bad_configurations.append(config.name)
-                else:
-                    validated_configuration[config.name] = config_value
-        if missing_configurations:
-            raise ProviderIncompleteConfigurationWarning(
-                missing_configurations=missing_configurations
+        try:
+            validated_configuration = cls.Configuration.model_validate(
+                configuration_dict
             )
-        if bad_configurations:
-            raise ProviderInvalidConfigurationWarning(
-                bad_configurations=bad_configurations
-            )
+        except ValidationError as validation_error:
+            raise ProviderInvalidConfigurationWarning from validation_error
         return validated_configuration
 
     @final

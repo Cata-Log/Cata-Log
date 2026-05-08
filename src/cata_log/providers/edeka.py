@@ -20,10 +20,11 @@ from calendar import Day
 from datetime import datetime, time, timedelta
 from typing import override
 
+from pydantic import Field
+
 from cata_log.utils.page_numbers import PageNumber
 
 from .base import Provider
-from .configuration import Configuration
 from .regions import Germany
 
 
@@ -34,31 +35,29 @@ class EdekaMarkt(Provider):
     name = "Edeka-Markt"
     description = "Edeka Markt Angebote"
     url = "https://www.edeka-wochenangebote.de/"
-    configuration = (
-        Configuration(
-            name="region",
-            helptext="""Name der Region.
-            Öffne edeka.de und öffne den Onlinekatalog deines Marktes.
-            Öffne den Web-Inspektor und gehe auf den Netzwerk-Tab.
-            Lade die Seite neu.
-            Suche die bk_1.jpg Datei und ihre URL.
-            Diese ist wie folgt aufgebaut: https://blaetterkatalog.edeka.de/{region}/{edeka_markt}/blaetterkatalog/thumbnails/bk_0.jpg
-            Die beiden Platzhalter stehen für Region und Marktnamen.
-            """,
-        ),
-        Configuration(
-            name="edeka_markt",
-            helptext="""Name des Edeka Marktes.
-            Öffne edeka.de und öffne den Onlinekatalog deines Marktes.
-            Öffne den Web-Inspektor und gehe auf den Netzwerk-Tab.
-            Lade die Seite neu.
-            Suche die bk_1.jpg Datei und ihre URL.
-            Diese ist wie folgt aufgebaut: https://blaetterkatalog.edeka.de/{region}/{edeka_markt}/blaetterkatalog/thumbnails/bk_0.jpg
-            Die beiden Platzhalter stehen für Region und Marktnamen.
-            """,
-        ),
-    )
     region = Germany
+
+    class Configuration(Provider.Configuration):
+        region: str = Field(
+            description="""Name der Region.
+                Öffne edeka.de und öffne den Onlinekatalog deines Marktes.
+                Öffne den Web-Inspektor und gehe auf den Netzwerk-Tab.
+                Lade die Seite neu.
+                Suche die bk_1.jpg Datei und ihre URL.
+                Diese ist wie folgt aufgebaut: https://blaetterkatalog.edeka.de/{region}/{edeka_markt}/blaetterkatalog/thumbnails/bk_0.jpg
+                Die beiden Platzhalter stehen für Region und Marktnamen.
+                """,
+        )
+        edeka_markt: str = Field(
+            description="""Name des Edeka Marktes.
+                Öffne edeka.de und öffne den Onlinekatalog deines Marktes.
+                Öffne den Web-Inspektor und gehe auf den Netzwerk-Tab.
+                Lade die Seite neu.
+                Suche die bk_1.jpg Datei und ihre URL.
+                Diese ist wie folgt aufgebaut: https://blaetterkatalog.edeka.de/{region}/{edeka_markt}/blaetterkatalog/thumbnails/bk_0.jpg
+                Die beiden Platzhalter stehen für Region und Marktnamen.
+                """
+        )
 
     url_format = "https://blaetterkatalog.edeka.de/{region}/{edeka_markt}/blaetterkatalog/normal/bk_{page_number}.jpg"
 
@@ -69,7 +68,11 @@ class EdekaMarkt(Provider):
     @override
     def _get_page(self, page_number: PageNumber) -> bytes:
         response = self._client.get(
-            self.url_format.format(**self._configuration, page_number=page_number),
+            self.url_format.format(
+                region=self._configuration.region,
+                edeka_markt=self._configuration.edeka_markt,
+                page_number=page_number,
+            ),
         )
         return response.content
 

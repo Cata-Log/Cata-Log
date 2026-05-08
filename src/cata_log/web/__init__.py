@@ -38,16 +38,13 @@ with resources.path("cata_log.web", "templates") as path:
 @router.get("/", response_class=HTMLResponse)
 def get_providers_webpage(request: Request) -> HTMLResponse:
     """Get the providers web interface."""
-    available_providers = [
-        catalog_class.info() for catalog_class in Provider.get_classes()
-    ]
     with database.DBSession() as db_session:
         providers = db_session.query(database.Provider).all()
 
     return templates.TemplateResponse(
         request,
         name="providers.html.jinja",
-        context={"available_providers": available_providers, "providers": providers},
+        context={"available_providers": Provider.get_classes(), "providers": providers},
     )
 
 

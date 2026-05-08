@@ -31,19 +31,6 @@ class Region(abc.ABC):
     language_code: str
     is_rtl: bool = False
 
-    @classmethod
-    def info(cls) -> dict[str, str]:
-        """Get info about the region.
-
-        Returns:
-            A dictionary of the region classes attributes.
-        """
-        return {
-            "timezone": str(cls.timezone),
-            "language_code": cls.language_code,
-            "local_name": cls.local_name,
-        }
-
 
 class Germany(Region):
     """Region class for germany."""

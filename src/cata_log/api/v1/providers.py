@@ -17,10 +17,13 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 from apscheduler.triggers.date import DateTrigger
 from fastapi import APIRouter, HTTPException, responses, status
-from pydantic import BaseModel
+from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel, Field, field_validator
+from pydantic.fields import FieldInfo
 from sqlalchemy.orm import Session, selectinload
 from starlette.responses import JSONResponse
 
@@ -28,7 +31,6 @@ from cata_log import constants, database
 from cata_log.api.mixins import AwareTimestampsMixin
 from cata_log.api.v1 import common
 from cata_log.exceptions import (
-    ProviderIncompleteConfigurationWarning,
     ProviderInvalidConfigurationWarning,
     ProviderUnknownClassWarning,
 )
@@ -65,12 +67,10 @@ class ProviderUpdate(BaseModel):
     note: str | None = None
 
 
-class NewProvider(BaseModel):
+class NewProvider(ProviderUpdate):
     """Provider creation data model."""
 
     class_uid: str
-    configuration: dict[str, str]
-    note: str | None = None
 
 
 class RegionInfo(BaseModel):
@@ -80,14 +80,25 @@ class RegionInfo(BaseModel):
     language_code: str
     timezone: str
 
+    @field_validator("timezone", mode="before")
+    @classmethod
+    def get_timezone_name(cls, timezone: ZoneInfo) -> str:
+        """Get timezone's name."""
+        return timezone.key
+
 
 class ConfigInfo(BaseModel):
     """Configuration info data model."""
 
-    name: str
-    helptext: str
-    default: str | None
-    parse_as: str
+    description: str = ""
+    default: object | None = None
+    type: str = Field(validation_alias="annotation")
+
+    @field_validator("type", mode="before")
+    @classmethod
+    def get_type_name(cls, annotation: type) -> str:
+        """Get the type name of the config."""
+        return annotation.__name__
 
 
 class ProviderInfo(BaseModel):
@@ -97,8 +108,16 @@ class ProviderInfo(BaseModel):
     description: str
     url: str
     region: RegionInfo
-    class_uid: str
-    configuration: list[ConfigInfo]
+    class_uid: str = Field(validation_alias="uid")
+    configuration: dict[str, ConfigInfo] = Field(validation_alias="Configuration")
+
+    @field_validator("configuration", mode="before")
+    @classmethod
+    def get_configuration_schema(
+        cls, configuration_class: type[ProviderType.Configuration]
+    ) -> dict[str, FieldInfo]:
+        """Get the config field infos from the configuration model."""
+        return configuration_class.model_fields
 
 
 @router.get("", response_model=list[Provider], operation_id="list-providers-v1")
@@ -125,14 +144,14 @@ async def list_providers(
 )
 async def list_available_providers(
     query: str | None = None, region: str | None = None
-) -> list[dict[str, str | dict[str, str] | list[dict[str, str | None]]]]:
+) -> list[type[ProviderType]]:
     """List all available providers."""
     if region:
         region = region.lower()
     if query:
         query = query.lower()
     return [
-        catalog_class.info()
+        catalog_class
         for catalog_class in ProviderType.get_classes()
         if (not query and not region)
         or (region and (region in catalog_class.region.local_name.lower()))
@@ -183,22 +202,11 @@ async def post_provider(
     try:
         validated_configuration = provider_class.validate_configuration(
             new_provider.configuration
-        )
-    except ProviderIncompleteConfigurationWarning as incomplete_warning:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "message": "The given provider configuration is incomplete",
-                "fields": [{"configuration": incomplete_warning.bad_configurations}],
-            },
-        ) from incomplete_warning
+        ).model_dump()
     except ProviderInvalidConfigurationWarning as invalid_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "message": "The given provider configuration is invalid",
-                "fields": [{"configuration": invalid_warning.bad_configurations}],
-            },
+            detail=jsonable_encoder(invalid_warning.__cause__.errors()),
         ) from invalid_warning
     if any(
         provider.configuration == validated_configuration
@@ -277,22 +285,11 @@ async def patch_provider(
     try:
         validated_configuration = provider_class.validate_configuration(
             provider_update.configuration
-        )
-    except ProviderIncompleteConfigurationWarning as incomplete_warning:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "message": "The given provider configuration is incomplete",
-                "fields": [{"configuration": incomplete_warning.bad_configurations}],
-            },
-        ) from incomplete_warning
+        ).model_dump()
     except ProviderInvalidConfigurationWarning as invalid_warning:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "message": "The given provider configuration is invalid",
-                "fields": [{"configuration": invalid_warning.bad_configurations}],
-            },
+            detail=jsonable_encoder(invalid_warning.__cause__.errors()),
         ) from invalid_warning
     if any(
         provider.configuration == validated_configuration
@@ -353,15 +350,15 @@ async def get_provider(
 )
 async def get_available_provider(
     provider_class_uid: str,
-) -> dict[str, str | dict[str, str] | list[dict[str, str | None]]]:
+) -> type[ProviderType]:
     """Get a single provider."""
     try:
-        provider = ProviderType.get_class(provider_class_uid)
+        provider_class = ProviderType.get_class(provider_class_uid)
     except ProviderUnknownClassWarning as warning:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Provider not available"
         ) from warning
-    return provider.info()
+    return provider_class
 
 
 @router.delete(

@@ -19,11 +19,12 @@
 from datetime import datetime, timedelta
 from typing import override
 
+from pydantic import Field
+
 from cata_log.exceptions import CatalogUnavailableWarning, PagesExhausted
 from cata_log.utils.page_numbers import PageNumber
 
 from .base import Preview, Provider
-from .configuration import Configuration
 from .regions import Germany
 
 
@@ -33,18 +34,18 @@ class KauflandWoche(Provider):
     uid = "kaufland-de"
     name = "Kaufland"
     description = "Kaufland Angebote"
-    configuration = (
-        Configuration(
-            name="filial_id",
-            helptext="""ID der Kaufland-Filiale.
+
+    class Configuration(Provider.Configuration):
+        filial_id: str = Field(
+            default="0",
+            description="""ID der Kaufland-Filiale.
             Öffne filiale.kaufland.de und wähle deine Filiale aus.
             Öffne den Web-Inspektor und suche im Webspeicher nach einem Cookie namens 'x-aem-variant.
             Der Wert des Cookies beginnt mit DE.
             Die Zahl danach ist die Filial-ID.
             """,
-            default="0",
-        ),
-    )
+        )
+
     url = "https://filiale.kaufland.de/prospekte.html"
     region = Germany
     first_page_number = 0
@@ -55,7 +56,7 @@ class KauflandWoche(Provider):
     def _get_catalog_data(self) -> None:
         overview_response = self._client.get(
             self.overview_url_template.format(
-                **self._configuration,
+                filial_id=self._configuration.filial_id,
                 language_code_lower=self.region.language_code.lower(),
                 language_code_upper=self.region.language_code.upper(),
             )
@@ -101,7 +102,7 @@ class KauflandWochePreview(Preview, KauflandWoche):
     def _get_catalog_data(self) -> None:
         overview_response = self._client.get(
             self.overview_url_template.format(
-                **self._configuration,
+                filial_id=self._configuration.filial_id,
                 language_code_lower=self.region.language_code.lower(),
                 language_code_upper=self.region.language_code.upper(),
             )

@@ -19,11 +19,12 @@
 from datetime import datetime, timedelta
 from typing import override
 
+from pydantic import Field
+
 from cata_log.exceptions import CatalogUnavailableWarning, PagesExhausted
 from cata_log.utils.page_numbers import PageNumber
 
 from .base import Preview, Provider
-from .configuration import Configuration
 from .regions import Germany, Italy
 
 
@@ -35,18 +36,17 @@ class LidlDeutschland(Provider):
     description = "Lidl Angebote"
     url = "https://www.lidl.de/c/online-prospekte/s10005610"
     region = Germany
-    configuration = (
-        Configuration(
-            name="region_id",
-            helptext="""ID der Lidl Region.
-            Öffne lidl.de und wähle deine Filiale.
-            Öffne den Web-Inspektor und suche im Webspeicher nach einem Cookie namens 'wh'.
-            Der Wert dieses Cookies ist eine Zahl, die Region-ID.
-            """,
-            default="0",
-        ),
-    )
     first_page_number = 0
+
+    class Configuration(Provider.Configuration):
+        region_id: str = Field(
+            default="0",
+            description="""ID der Lidl Region.
+                Öffne lidl.de und wähle deine Filiale.
+                Öffne den Web-Inspektor und suche im Webspeicher nach einem Cookie namens 'wh'.
+                Der Wert dieses Cookies ist eine Zahl, die Region-ID.
+                """,
+        )
 
     overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={region_id}&client_locale=lidl/{language_code_lower}-{language_code_upper}"
     flyer_index = 0
@@ -55,7 +55,7 @@ class LidlDeutschland(Provider):
     def _get_catalog_data(self) -> None:
         overview_response = self._client.get(
             self.overview_url_template.format(
-                **self._configuration,
+                region_id=self._configuration.region_id,
                 language_code_lower=self.region.language_code.lower(),
                 language_code_upper=self.region.language_code.upper(),
             )

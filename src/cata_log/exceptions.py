@@ -63,17 +63,6 @@ class ProviderMisconfiguredWarning(ProviderWarning):
         super().__init__(*args)
 
 
-class ProviderIncompleteConfigurationWarning(ProviderMisconfiguredWarning):
-    """An error indicating that the provider configuration is incomplete."""
-
-    @override
-    def __init__(self, missing_configurations: Sequence[str] | None = None) -> None:
-        super().__init__(
-            "Provider configuration is incomplete.",
-            bad_configurations=missing_configurations,
-        )
-
-
 class ProviderInvalidConfigurationWarning(ProviderMisconfiguredWarning):
     """An error indicating that a provider configuration is invalid."""
 
