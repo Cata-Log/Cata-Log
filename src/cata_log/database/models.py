@@ -413,9 +413,9 @@ class PageFile(ModelBase, TimestampMixin):
                     )
                     or ""
                 )
-            db_session.add(pagefile)
-            db_session.flush()
-            pagefile.path.write_bytes(page_bytes)
+                db_session.add(pagefile)
+                db_session.flush()
+                image.save(pagefile.path, optimize=True, save_all=True)
         return pagefile
 
     def set_new_path(self, extension: str) -> None:
