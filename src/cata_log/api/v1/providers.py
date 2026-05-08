@@ -748,3 +748,32 @@ async def post_provider_remove_job(
     provider.remove_job()
     db_session.commit()
     return provider
+
+
+@router.get(
+    "/{provider_id}/job",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "If the object doesn't exist.",
+        },
+    },
+    response_model=Job,
+    operation_id="get-provider-job-v1",
+)
+async def get_provider_job(
+    provider_id: int, db_session: Session = database.depends_db_session
+) -> SchedulerJob:
+    """Remove the provider's job."""
+    provider = db_session.get(database.Provider, provider_id)
+    if not provider:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
+        )
+    job = scheduler.get_job(provider.job_id)
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
+    return job
