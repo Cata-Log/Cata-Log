@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import logging.config
 from importlib import resources
 
 import alembic.command
@@ -23,21 +24,24 @@ import uvicorn
 from alembic.config import Config
 
 if __name__ == "__main__":
-    from cata_log import logging, scheduler
+    import cata_log.logging
+    import cata_log.scheduler
     from cata_log.settings import settings
+
+    logging.config.dictConfig(cata_log.logging.CATA_LOG_LOGGING_CONFIG)
 
     with resources.path("cata_log.migrations", "alembic.ini") as path:
         alembic_config = Config(path)
     alembic.command.upgrade(config=alembic_config, revision="head")
 
-    scheduler.scheduler.start()
+    cata_log.scheduler.scheduler.start()
 
     uvicorn.run(
         app="cata_log.app:app",
         host=str(settings.host),
         port=settings.port,
         forwarded_allow_ips=settings.forwarded_allow_ips,
-        log_config=logging.LOGGING_CONFIG,
+        log_config=cata_log.logging.UVICORN_LOGGING_CONFIG,
         log_level=settings.log_level,
         reload=settings.debug,
         workers=settings.workers,

@@ -31,7 +31,61 @@ COMMON_LOGGER_CONFIG = {
     "propagate": True,
 }
 
-LOGGING_CONFIG = {
+CATA_LOG_LOGGING_CONFIG = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "console": {
+            "format": "{asctime} ({levelname}) - {name}: {message}",
+            "style": "{",
+        },
+        "json": {
+            "()": "pythonjsonlogger.json.JsonFormatter",
+            "format": "{asctime}{levelname}{name}{module}{funcName}{lineno}{message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "console",
+        },
+        "root-logfile": {
+            "filename": str(settings.logs_path / "root.log"),
+            **COMMON_FILEHANDLER_CONFIG,
+        },
+        "cata-log-logfile": {
+            "filename": str(settings.logs_path / "cata-log.log"),
+            **COMMON_FILEHANDLER_CONFIG,
+        },
+        "apscheduler-logfile": {
+            "filename": str(settings.logs_path / "apscheduler.log"),
+            **COMMON_FILEHANDLER_CONFIG,
+        },
+        "alembic-logfile": {
+            "filename": str(settings.logs_path / "alembic.log"),
+            **COMMON_FILEHANDLER_CONFIG,
+        },
+        "sqlalchemy-logfile": {
+            "filename": str(settings.logs_path / "sqlalchemy.log"),
+            **COMMON_FILEHANDLER_CONFIG,
+        },
+    },
+    "root": {
+        "handlers": ["console", "root-logfile"],
+        "level": settings.log_level,
+    },
+    "loggers": {
+        "alembic": {"handlers": ["alembic-logfile"], **COMMON_LOGGER_CONFIG},
+        "sqlalchemy": {"handlers": ["sqlalchemy-logfile"], **COMMON_LOGGER_CONFIG},
+        "apscheduler": {"handlers": ["apscheduler-logfile"], **COMMON_LOGGER_CONFIG},
+        "cata_log": {"handlers": ["cata-log-logfile"], **COMMON_LOGGER_CONFIG},
+        "httpx": {"handlers": ["cata-log-logfile"], **COMMON_LOGGER_CONFIG},
+    },
+}
+
+UVICORN_LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
@@ -63,22 +117,6 @@ LOGGING_CONFIG = {
             "filename": str(settings.logs_path / "access.log"),
             **COMMON_FILEHANDLER_CONFIG,
         },
-        "cata-log-logfile": {
-            "filename": str(settings.logs_path / "cata-log.log"),
-            **COMMON_FILEHANDLER_CONFIG,
-        },
-        "apscheduler-logfile": {
-            "filename": str(settings.logs_path / "apscheduler.log"),
-            **COMMON_FILEHANDLER_CONFIG,
-        },
-        "alembic-logfile": {
-            "filename": str(settings.logs_path / "alembic.log"),
-            **COMMON_FILEHANDLER_CONFIG,
-        },
-        "sqlalchemy-logfile": {
-            "filename": str(settings.logs_path / "sqlalchemy.log"),
-            **COMMON_FILEHANDLER_CONFIG,
-        },
     },
     "root": {
         "handlers": ["console", "root-logfile"],
@@ -86,15 +124,11 @@ LOGGING_CONFIG = {
     },
     "loggers": {
         "uvicorn": {"handlers": ["uvicorn-logfile"], "level": "INFO"},
+        "uvicorn.error": {"handlers": ["uvicorn-logfile"], "level": "INFO"},
         "uvicorn.access": {
             "handlers": ["access-logfile"],
             "level": "INFO",
             "propagate": False,
         },
-        "alembic": {"handlers": ["alembic-logfile"], **COMMON_LOGGER_CONFIG},
-        "sqlalchemy": {"handlers": ["sqlalchemy-logfile"], **COMMON_LOGGER_CONFIG},
-        "apscheduler": {"handlers": ["apscheduler-logfile"], **COMMON_LOGGER_CONFIG},
-        "cata_log": {"handlers": ["cata-log-logfile"], **COMMON_LOGGER_CONFIG},
-        "httpx": {"handlers": ["cata-log-logfile"], **COMMON_LOGGER_CONFIG},
     },
 }
