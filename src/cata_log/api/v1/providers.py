@@ -23,7 +23,8 @@ from apscheduler.job import Job as SchedulerJob
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from fastapi import APIRouter, Body, HTTPException, responses, status
-from pydantic import BaseModel, Field, field_validator
+from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel, Field, ValidationError, field_validator
 from pydantic.fields import FieldInfo
 from pydantic.types import AwareDatetime
 from pydantic_core import PydanticCustomError
@@ -332,9 +333,12 @@ def patch_provider(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
         )
-    provider_update = ProviderUpdate.model_validate(
-        body, context={"class_uid": provider.class_uid}
-    )
+    try:
+        provider_update = ProviderUpdate.model_validate(
+            body, context={"class_uid": provider.class_uid}
+        )
+    except ValidationError as validation_error:
+        raise RequestValidationError(validation_error.errors()) from validation_error
     if any(
         other_provider.configuration == provider_update.configuration
         for other_provider in db_session.query(database.Provider)
