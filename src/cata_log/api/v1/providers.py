@@ -33,8 +33,8 @@ from sqlalchemy.orm import Session, selectinload
 from starlette.responses import JSONResponse
 
 from cata_log import constants, database
+from cata_log.api import common
 from cata_log.api.mixins import AwareDatetimesMixin, AwareTimestampsMixin
-from cata_log.api.v1 import common
 from cata_log.exceptions import (
     ProviderInvalidConfigurationWarning,
     ProviderUnknownClassWarning,

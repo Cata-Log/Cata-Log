@@ -21,7 +21,6 @@ import secrets
 from fastapi import Depends, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from pydantic import BaseModel
 
 from cata_log.settings import settings
 
@@ -30,12 +29,6 @@ http_basic_security = HTTPBasic(auto_error=False)
 depends_http_basic_security = Depends(http_basic_security)
 
 UNPROTECTED_PATHS = ("/health",)
-
-
-class HTTP401Error(BaseModel):
-    """Response model for a HTTP 401 error."""
-
-    detail: str
 
 
 def get_credentials() -> tuple[str, str | None]:

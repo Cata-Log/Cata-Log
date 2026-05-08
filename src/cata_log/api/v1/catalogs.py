@@ -25,8 +25,8 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql import func
 
 from cata_log import database
+from cata_log.api import common
 from cata_log.api.mixins import AwareTimestampsMixin
-from cata_log.api.v1 import common
 
 from .pages import Page
 

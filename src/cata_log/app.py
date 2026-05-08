@@ -29,13 +29,14 @@ from cata_log import (
     static,
     web,
 )
+from cata_log.api import common
 from cata_log.exceptions import HealthCheckFailedError
 
 app = FastAPI(
     dependencies=[Depends(security.verify_credentials)],
     responses={
         status.HTTP_401_UNAUTHORIZED: {
-            "model": security.HTTP401Error,
+            "model": common.HTTPStatusError,
             "description": "If the request is not authorized.",
         },
     },

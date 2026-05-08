@@ -23,8 +23,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from cata_log import database
+from cata_log.api import common
 from cata_log.api.mixins import AwareTimestampsMixin
-from cata_log.api.v1 import common
 
 router = APIRouter(prefix="/pages", tags=["pages"])
 
