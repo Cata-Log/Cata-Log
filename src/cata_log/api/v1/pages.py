@@ -53,7 +53,7 @@ class Page(AwareTimestampsMixin, BaseModel):
     response_model=list[Page],
     operation_id="list-pages-v1",
 )
-async def list_pages(
+def list_pages(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Page]:
     """List all pages."""
@@ -76,7 +76,7 @@ async def list_pages(
     },
     operation_id="get-page-v1",
 )
-async def get_page(
+def get_page(
     page_id: int, db_session: Session = database.depends_db_session
 ) -> database.Page:
     """Get a single page."""
@@ -98,7 +98,7 @@ async def get_page(
     },
     operation_id="download-page-v1",
 )
-async def download_page(
+def download_page(
     page_id: int,
     filename: str | None = None,
     db_session: Session = database.depends_db_session,
@@ -132,7 +132,7 @@ async def download_page(
     },
     operation_id="embed-page-v1",
 )
-async def embed_page(
+def embed_page(
     page_id: int,
     filename: str | None = None,
     db_session: Session = database.depends_db_session,

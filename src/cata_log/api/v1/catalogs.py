@@ -49,7 +49,7 @@ class FullCatalog(Catalog):
 
 
 @router.get("", response_model=list[Catalog], operation_id="list-catalogs-v1")
-async def list_catalogs(
+def list_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
     """List all catalogs."""
@@ -64,7 +64,7 @@ async def list_catalogs(
 @router.get(
     "/latest", response_model=list[Catalog], operation_id="list-latest-catalogs-v1"
 )
-async def list_latest_catalogs(
+def list_latest_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
     """List the latest catalog for every provider."""
@@ -88,7 +88,7 @@ async def list_latest_catalogs(
 @router.get(
     "/previews", response_model=list[Catalog], operation_id="list-preview-catalogs-v1"
 )
-async def list_previews_catalogs(
+def list_previews_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
     """List all preview catalogs."""
@@ -104,7 +104,7 @@ async def list_previews_catalogs(
 @router.get(
     "/current", response_model=list[Catalog], operation_id="list-current-catalogs-v1"
 )
-async def list_current_catalogs(
+def list_current_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
     """List all current catalogs."""
@@ -122,7 +122,7 @@ async def list_current_catalogs(
 @router.get(
     "/outdated", response_model=list[Catalog], operation_id="list-outdated-catalogs-v1"
 )
-async def list_outdated_catalogs(
+def list_outdated_catalogs(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Catalog]:
     """List all outdated catalogs."""
@@ -146,7 +146,7 @@ async def list_outdated_catalogs(
     },
     operation_id="get-catalog-v1",
 )
-async def get_catalog(
+def get_catalog(
     catalog_id: int, db_session: Session = database.depends_db_session
 ) -> database.Catalog:
     """Get a single catalog."""
@@ -170,7 +170,7 @@ async def get_catalog(
     },
     operation_id="download-catalog-v1",
 )
-async def download_catalog(
+def download_catalog(
     catalog_id: int,
     filename: str | None = None,
     db_session: Session = database.depends_db_session,
@@ -201,7 +201,7 @@ async def download_catalog(
     },
     operation_id="get-catalog-pages-v1",
 )
-async def get_catalog_pages(
+def get_catalog_pages(
     catalog_id: int, db_session: Session = database.depends_db_session
 ) -> list[database.Page]:
     """Get catalog pages."""
@@ -224,7 +224,7 @@ async def get_catalog_pages(
     },
     operation_id="get-catalog-page-v1",
 )
-async def get_catalog_page(
+def get_catalog_page(
     catalog_id: int, page_number: int, db_session: Session = database.depends_db_session
 ) -> database.Page:
     """Get a single catalog page by its page number."""
@@ -251,7 +251,7 @@ async def get_catalog_page(
     },
     operation_id="download-catalog-page-v1",
 )
-async def download_catalog_page(
+def download_catalog_page(
     catalog_id: int,
     page_number: int,
     filename: str | None = None,
@@ -287,7 +287,7 @@ async def download_catalog_page(
     },
     operation_id="embed-catalog-page-v1",
 )
-async def embed_catalog_page(
+def embed_catalog_page(
     catalog_id: int,
     page_number: int,
     filename: str | None = None,

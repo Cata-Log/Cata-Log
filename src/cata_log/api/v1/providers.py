@@ -22,8 +22,7 @@ from zoneinfo import ZoneInfo
 from apscheduler.job import Job as SchedulerJob
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
-from fastapi import APIRouter, HTTPException, responses, status
-from fastapi.requests import Request
+from fastapi import APIRouter, Body, HTTPException, responses, status
 from pydantic import BaseModel, Field, field_validator
 from pydantic.fields import FieldInfo
 from pydantic.types import AwareDatetime
@@ -203,7 +202,7 @@ class ProviderInfo(BaseModel):
 
 
 @router.get("", response_model=list[Provider], operation_id="list-providers-v1")
-async def list_providers(
+def list_providers(
     db_session: Session = database.depends_db_session,
 ) -> list[database.Provider]:
     """List all providers."""
@@ -224,7 +223,7 @@ async def list_providers(
     response_model=list[ProviderInfo],
     operation_id="list-available-providers-v1",
 )
-async def list_available_providers(
+def list_available_providers(
     query: str | None = None, region: str | None = None
 ) -> list[type[ProviderType]]:
     """List all available providers."""
@@ -263,7 +262,7 @@ async def list_available_providers(
     },
     operation_id="setup-provider-v1",
 )
-async def post_provider(
+def post_provider(
     new_provider: NewProvider, db_session: Session = database.depends_db_session
 ) -> database.Provider:
     """Set up a new provider."""
@@ -308,9 +307,9 @@ async def post_provider(
     },
     operation_id="update-provider-v1",
 )
-async def patch_provider(
+def patch_provider(
     provider_id: int,
-    request: Request,
+    body: dict = Body(...),  # noqa: B008 # standard fastapi stuff
     db_session: Session = database.depends_db_session,
 ) -> database.Provider:
     """Update a provider."""
@@ -328,7 +327,7 @@ async def patch_provider(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
         )
     provider_update = ProviderUpdate.model_validate(
-        await request.json(), context={"class_uid": provider.class_uid}
+        body, context={"class_uid": provider.class_uid}
     )
     if any(
         other_provider.configuration == provider_update.configuration
@@ -365,7 +364,7 @@ async def patch_provider(
     },
     operation_id="get-provider-v1",
 )
-async def get_provider(
+def get_provider(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> database.Provider:
     """Get a single provider."""
@@ -388,7 +387,7 @@ async def get_provider(
     },
     operation_id="get-available-provider-v1",
 )
-async def get_available_provider(
+def get_available_provider(
     provider_class_uid: str,
 ) -> type[ProviderType]:
     """Get a single provider."""
@@ -412,7 +411,7 @@ async def get_available_provider(
     },
     operation_id="delete-provider-v1",
 )
-async def delete_provider(
+def delete_provider(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> None:
     """Delete a single provider. This also deletes all its catalogs and their pages."""
@@ -430,7 +429,7 @@ async def delete_provider(
     response_model=list[Catalog],
     operation_id="list-provider-catalogs-v1",
 )
-async def list_provider_catalogs(
+def list_provider_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> list[database.Catalog]:
     """List all catalogs of a provider."""
@@ -448,7 +447,7 @@ async def list_provider_catalogs(
     response_model=Catalog,
     operation_id="get-latest-provider-catalog-v1",
 )
-async def get_latest_provider_catalog(
+def get_latest_provider_catalog(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> database.Catalog:
     """Get the latest catalog of a provider."""
@@ -470,7 +469,7 @@ async def get_latest_provider_catalog(
     "/{provider_id}/catalogs/latest/download",
     operation_id="download-latest-provider-catalog-v1",
 )
-async def download_latest_provider_catalog(
+def download_latest_provider_catalog(
     provider_id: int,
     filename: str | None = None,
     db_session: Session = database.depends_db_session,
@@ -501,7 +500,7 @@ async def download_latest_provider_catalog(
     response_model=list[Page],
     operation_id="get-latest-provider-catalog-pages-v1",
 )
-async def list_latest_provider_catalog_pages(
+def list_latest_provider_catalog_pages(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> list[database.Page]:
     """Get the pages of the latest catalog of a provider."""
@@ -521,7 +520,7 @@ async def list_latest_provider_catalog_pages(
     response_model=Page,
     operation_id="get-latest-provider-catalog-page-v1",
 )
-async def get_latest_provider_catalog_page(
+def get_latest_provider_catalog_page(
     provider_id: int,
     page_number: int,
     db_session: Session = database.depends_db_session,
@@ -547,7 +546,7 @@ async def get_latest_provider_catalog_page(
     response_model=Page,
     operation_id="download-latest-provider-catalog-page-v1",
 )
-async def download_latest_provider_catalog_page(
+def download_latest_provider_catalog_page(
     provider_id: int,
     page_number: int,
     filename: str | None = None,
@@ -580,7 +579,7 @@ async def download_latest_provider_catalog_page(
     response_model=Page,
     operation_id="embed-latest-provider-catalog-page-v1",
 )
-async def embed_latest_provider_catalog_page(
+def embed_latest_provider_catalog_page(
     provider_id: int,
     page_number: int,
     filename: str | None = None,
@@ -613,7 +612,7 @@ async def embed_latest_provider_catalog_page(
     response_model=list[Catalog],
     operation_id="list-provider-current-catalogs-v1",
 )
-async def list_provider_current_catalogs(
+def list_provider_current_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> list[database.Catalog]:
     """List all current catalogs of a provider."""
@@ -634,7 +633,7 @@ async def list_provider_current_catalogs(
     response_model=list[Catalog],
     operation_id="list-provider-preview-catalogs-v1",
 )
-async def list_provider_preview_catalogs(
+def list_provider_preview_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> list[database.Catalog]:
     """List all preview catalogs of a provider."""
@@ -653,7 +652,7 @@ async def list_provider_preview_catalogs(
     response_model=list[Catalog],
     operation_id="list-provider-outdated-catalogs-v1",
 )
-async def list_provider_outdated_catalogs(
+def list_provider_outdated_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> list[database.Catalog]:
     """List all outdated catalogs of a provider."""
@@ -679,7 +678,7 @@ async def list_provider_outdated_catalogs(
     response_class=JSONResponse,
     operation_id="request-provider-update-v1",
 )
-async def post_provider_update(
+def post_provider_update(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> dict[str, str]:
     """Trigger an update of a providers catalogs."""
@@ -710,7 +709,7 @@ async def post_provider_update(
     response_model=Provider,
     operation_id="add-provider-job-v1",
 )
-async def post_provider_add_job(
+def post_provider_add_job(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> database.Provider:
     """Add the provider's job."""
@@ -736,7 +735,7 @@ async def post_provider_add_job(
     response_model=Provider,
     operation_id="remove-provider-job-v1",
 )
-async def post_provider_remove_job(
+def post_provider_remove_job(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> database.Provider:
     """Remove the provider's job."""
@@ -762,7 +761,7 @@ async def post_provider_remove_job(
     response_model=Job,
     operation_id="get-provider-job-v1",
 )
-async def get_provider_job(
+def get_provider_job(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> SchedulerJob:
     """Remove the provider's job."""
