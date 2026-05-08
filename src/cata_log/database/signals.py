@@ -17,19 +17,11 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 
-import contextlib
 import logging
 
-from apscheduler.jobstores.sqlalchemy import JobLookupError
-from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import Connection, Engine, delete, event, orm
 from sqlalchemy.engine.interfaces import DBAPIConnection
 from sqlalchemy.pool.base import _ConnectionRecord
-
-from cata_log.exceptions import (
-    ProviderUnknownClassWarning,
-)
-from cata_log.scheduler import scheduler
 
 from . import models
 
@@ -84,28 +76,11 @@ def after_provider_insert(
     target: models.Provider,
 ) -> None:
     """Event setting up a providers task after its insertion."""
-    try:
-        provider_class = target.get_provider_class()
-    except ProviderUnknownClassWarning:
-        logger.exception(
-            "No provider class found for newly inserted provider instance!",
-            extra={"provider_id": target.id, "provider_class_uid": target.class_uid},
-        )
-        return
-    cron_trigger = CronTrigger.from_crontab(
-        provider_class.schedule, timezone=provider_class.region.timezone
-    )
-    cron_trigger.jitter = provider_class.jitter
-    job = scheduler.add_job(
-        name=f"{target.class_uid}-{target.configuration}",
-        func="cata_log.jobs:fetch_provider",
-        args=[target.id],
-        trigger=cron_trigger,
-    )
+    target.add_job()
     connection.execute(
         models.Provider.__table__.update()
         .where(models.Provider.id == target.id)
-        .values(job_id=job.id)
+        .values(job_id=target.job_id)
     )
     logger.debug(
         "Success adding task to a newly inserted provider.",
@@ -120,8 +95,7 @@ def after_provider_delete(
     target: models.Provider,
 ) -> None:
     """Event cleaning up a providers task after deleting the provider."""
-    with contextlib.suppress(JobLookupError):
-        scheduler.remove_job(target.job_id)
+    target.remove_job()
     logger.debug(
         "Success cleaning up periodictask of a deleted provider.",
         extra={"provider_id": target.id, "job_id": target.job_id},

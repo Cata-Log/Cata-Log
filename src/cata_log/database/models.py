@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import contextlib
 import logging
 import mimetypes
 from datetime import UTC, datetime
@@ -25,6 +26,8 @@ from io import BytesIO
 from pathlib import Path
 
 import opds
+from apscheduler.jobstores.base import JobLookupError
+from apscheduler.triggers.cron import CronTrigger
 from ebooklib import epub
 from PIL import Image
 from sqlalchemy import (
@@ -41,9 +44,11 @@ from sqlalchemy.sql import select
 from cata_log.constants import StatusEnum
 from cata_log.exceptions import (
     NetworkError,
+    ProviderUnknownClassWarning,
     ProviderWarning,
 )
 from cata_log.providers import Provider as ProviderType
+from cata_log.scheduler import scheduler
 from cata_log.settings import settings
 
 from .mixins import TimestampMixin
@@ -62,8 +67,8 @@ class Provider(ModelBase, TimestampMixin):
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     class_uid: orm.Mapped[str] = orm.mapped_column()
     configuration: orm.Mapped[dict[str, str]] = orm.mapped_column(JSON)
-    note: orm.Mapped[str] = orm.mapped_column(nullable=True)
-    job_id: orm.Mapped[int] = orm.mapped_column(nullable=True, unique=True)
+    note: orm.Mapped[str] = orm.mapped_column(default="")
+    job_id: orm.Mapped[int | None] = orm.mapped_column(nullable=True, unique=True)
     catalogs: orm.Mapped[list[Catalog]] = orm.relationship(
         back_populates="provider", cascade="all, delete-orphan"
     )
@@ -164,6 +169,39 @@ class Provider(ModelBase, TimestampMixin):
             )
             self.status = StatusEnum.HEALTHY
         db_session.commit()
+
+    def add_job(self) -> None:
+        """Add the job for this provider."""
+        if not self.job_id:
+            try:
+                provider_class = self.get_provider_class()
+            except ProviderUnknownClassWarning:
+                logger.exception(
+                    "No provider class found for newly inserted provider instance!",
+                    extra={
+                        "provider_id": self.id,
+                        "provider_class_uid": self.class_uid,
+                    },
+                )
+                return
+            cron_trigger = CronTrigger.from_crontab(
+                provider_class.schedule, timezone=provider_class.region.timezone
+            )
+            cron_trigger.jitter = provider_class.jitter
+            job = scheduler.add_job(
+                name=f"{self.class_uid}-{self.configuration}",
+                func="cata_log.jobs:fetch_provider",
+                args=[self.id],
+                trigger=cron_trigger,
+            )
+            self.job_id = job.id
+
+    def remove_job(self) -> None:
+        """Remove the job of this provider."""
+        if self.job_id:
+            with contextlib.suppress(JobLookupError):
+                scheduler.remove_job(self.job_id)
+            self.job_id = None
 
 
 class Catalog(ModelBase, TimestampMixin):
