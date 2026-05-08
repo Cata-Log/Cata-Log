@@ -141,7 +141,7 @@ def list_outdated_catalogs(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "If the object doesn't exist.",
+            "description": "Object doesn't exist.",
         },
     },
     operation_id="get-catalog-v1",
@@ -165,7 +165,7 @@ def get_catalog(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "If the object doesn't exist.",
+            "description": "Object doesn't exist.",
         },
     },
     operation_id="download-catalog-v1",
@@ -196,7 +196,7 @@ def download_catalog(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "If the object doesn't exist.",
+            "description": "Object doesn't exist.",
         },
     },
     operation_id="get-catalog-pages-v1",
@@ -219,7 +219,7 @@ def get_catalog_pages(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "If the object doesn't exist.",
+            "description": "Object doesn't exist.",
         },
     },
     operation_id="get-catalog-page-v1",
@@ -246,7 +246,7 @@ def get_catalog_page(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "If the object doesn't exist.",
+            "description": "Object doesn't exist.",
         },
     },
     operation_id="download-catalog-page-v1",
@@ -282,7 +282,7 @@ def download_catalog_page(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "If the object doesn't exist.",
+            "description": "Object doesn't exist.",
         },
     },
     operation_id="embed-catalog-page-v1",

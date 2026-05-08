@@ -71,7 +71,7 @@ def list_pages(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "If the object doesn't exist.",
+            "description": "Object doesn't exist.",
         },
     },
     operation_id="get-page-v1",
@@ -93,7 +93,7 @@ def get_page(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "If the object doesn't exist.",
+            "description": "Object doesn't exist.",
         },
     },
     operation_id="download-page-v1",
@@ -127,7 +127,7 @@ def download_page(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "If the object doesn't exist.",
+            "description": "Object doesn't exist.",
         },
     },
     operation_id="embed-page-v1",
