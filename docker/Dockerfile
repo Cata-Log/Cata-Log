@@ -5,10 +5,9 @@
 ARG PYTHON_VERSION=3.14
 ARG ALPINE_VERSION=3.23
 
-ARG STORAGE_PATH=/mnt/storage/
+ARG DATA_PATH=/mnt/
 ARG LOGS_PATH=/var/log/cata-log/
-ARG DATABASE_PATH=/mnt/db
-ARG PLUGIN_PATH=/mnt/plugins
+
 
 ##    stage 1    ##
 ## convert pyproject.toml to requirements file for python dependencies ##
@@ -44,20 +43,19 @@ LABEL org.opencontainers.image.title="Cata-Log Server"
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-ARG STORAGE_PATH
-ARG DATABASE_PATH
+ARG DATA_PATH
 ARG LOGS_PATH
-ARG PLUGIN_PATH
 
 # set default settings for dockerized usage
-ENV CATA_LOG_DATABASE_PATH=${DATABASE_PATH} \
-    CATA_LOG_LOGS_PATH=${LOGS_PATH} \
-    CATA_LOG_PLUGIN_PATH=${PLUGIN_PATH} \
-    CATA_LOG_STORAGE_PATH=${STORAGE_PATH}
+ENV CATA_LOG_DATA_PATH=${DATA_PATH} \
+    CATA_LOG_STORAGE_PATH=${DATA_PATH}/storage \
+    CATA_LOG_DATABASE_PATH=${DATA_PATH}/db \
+    CATA_LOG_PLUGIN_PATH=${DATA_PATH}/plugins \
+    CATA_LOG_LOGS_PATH=${LOGS_PATH}
 
-EXPOSE 2424
+VOLUME ${DATA_PATH}/storage ${DATA_PATH}/db ${DATA_PATH}/plugins ${LOGS_PATH}
 
-VOLUME ${STORAGE_PATH} ${LOGS_PATH} ${DATABASE_PATH} ${PLUGIN_PATH}
+EXPOSE 8000
 
 # installation
 WORKDIR /opt/
@@ -66,6 +64,7 @@ WORKDIR /opt/
 COPY --from=uv-prestage /requirements.txt ./
 
 RUN pip install --no-cache-dir --requirement requirements.txt && \
+    rm -rf /root/.cache && \
     rm -f requirements.txt && \
     rm -rf /tmp/*
 
@@ -73,6 +72,7 @@ RUN pip install --no-cache-dir --requirement requirements.txt && \
 COPY pyproject.toml src/ ./
 
 RUN pip install --no-cache-dir . && \
+    rm -rf /root/.cache && \
     rm -rf /tmp/* && \
     rm -rf ./*
 
