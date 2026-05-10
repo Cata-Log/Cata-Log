@@ -370,6 +370,7 @@ class PageFile(ModelBase, TimestampMixin):
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     path: orm.Mapped[Path] = orm.mapped_column(PathType, unique=True)
+    original_sha256: orm.Mapped[str] = orm.mapped_column()
     sha256: orm.Mapped[str] = orm.mapped_column()
     size: orm.Mapped[int] = orm.mapped_column()
     height: orm.Mapped[int] = orm.mapped_column()
@@ -394,26 +395,32 @@ class PageFile(ModelBase, TimestampMixin):
             page_bytes: The content of the pagefile.
             path: The path for the pagefile.
         """
-        sha256_hash = sha256(page_bytes).hexdigest()
-        pagefile = db_session.query(cls).filter(cls.sha256 == sha256_hash).first()
+        original_sha256 = sha256(page_bytes).hexdigest()
+        pagefile = (
+            db_session.query(cls).filter(cls.original_sha256 == original_sha256).first()
+        )
         if not pagefile:
             pagefile = cls(
-                sha256=sha256_hash,
-                size=len(page_bytes),
-                path=str(uuid.uuid4()) + ".webp",
+                original_sha256=original_sha256,
+                path=settings.storage_path / (str(uuid.uuid4()) + ".webp"),
             )
             with Image.open(BytesIO(page_bytes)) as image:
                 pagefile.width, pagefile.height = image.size
-                db_session.add(pagefile)
-                db_session.flush()
+                webp_image_io = BytesIO()
                 image.save(
-                    pagefile.path,
+                    webp_image_io,
                     format="WEBP",
                     lossless=False,
                     quality=80,
                     method=0,
                     save_all=True,
                 )
+            webp_image_bytes = webp_image_io.read()
+            pagefile.sha256 = sha256(webp_image_bytes).hexdigest()
+            pagefile.size = len(webp_image_bytes)
+            db_session.add(pagefile)
+            db_session.flush()
+            pagefile.path.write_bytes(webp_image_bytes)
         return pagefile
 
     @classmethod

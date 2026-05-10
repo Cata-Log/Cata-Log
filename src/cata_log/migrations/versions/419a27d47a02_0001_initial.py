@@ -27,6 +27,7 @@ def upgrade() -> None:
         "pagefiles",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("path", cata_log.database.types.PathType(), nullable=False),
+        sa.Column("original_sha256", sa.String(), nullable=False),
         sa.Column("sha256", sa.String(), nullable=False),
         sa.Column("size", sa.Integer(), nullable=False),
         sa.Column("height", sa.Integer(), nullable=False),
