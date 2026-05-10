@@ -415,6 +415,7 @@ class PageFile(ModelBase, TimestampMixin):
                     method=0,
                     save_all=True,
                 )
+            webp_image_io.seek(0)
             webp_image_bytes = webp_image_io.read()
             pagefile.sha256 = sha256(webp_image_bytes).hexdigest()
             pagefile.size = len(webp_image_bytes)
