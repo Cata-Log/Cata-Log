@@ -14,7 +14,6 @@ services:
       - CATA_LOG_PASSWORD=SafE_pAs5w0rd # setting no password makes authentication impossible #gitleaks:allow
       - CATA_LOG_PUBLIC_GET= # set this to make all GET endpoints unprotected
       - CATA_LOG_REQUEST_TIMEOUT=10
-      - CATA_LOG_MAX_RETRIES=3
       - CATA_LOG_RETRY_DELAY=180
       - CATA_LOG_EXPIRATION_DAYS=14
       - CATA_LOG_LOG_LEVEL=INFO

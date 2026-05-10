@@ -51,18 +51,22 @@ def retry_on_network_error_listener(event: JobExecutionEvent) -> None:
 
     Args: event: The jobevent.
     """
-    logger.critical("listener event match")
     if event.exception and isinstance(event.exception, NetworkError):
-        logger.critical("listener triggered")
+        logger.debug("Retry listener triggered by network error.")
         job: Job | None = scheduler.get_job(event.job_id)
         if job:
-            logger.critical("Job %s ran into networkerror", job.id)
             scheduler.add_job(
                 job.func,
                 args=job.args,
                 id=job.id + "-retry",
-                trigger=DateTrigger(event.scheduled_run_time + timedelta(seconds=10)),
+                trigger=DateTrigger(
+                    event.scheduled_run_time + timedelta(seconds=settings.retry_delay)
+                ),
                 replace_existing=True,
+            )
+            logger.info(
+                "Job retry scheduled",
+                extra={"job_id": job.id, "job_retry_time": job.next_run_time},
             )
 
 
