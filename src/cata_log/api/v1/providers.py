@@ -688,7 +688,7 @@ def list_provider_outdated_catalogs(
 
 
 @router.post(
-    "/{provider_id}/update",
+    "/{provider_id}/job/run",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_404_NOT_FOUND: {
@@ -697,12 +697,12 @@ def list_provider_outdated_catalogs(
         },
     },
     response_class=JSONResponse,
-    operation_id="request-provider-update-v1",
+    operation_id="run-provider-job-v1",
 )
-def post_provider_update(
+def post_provider_job_run(
     provider_id: int, db_session: Session = database.depends_db_session
 ) -> dict[str, str]:
-    """Trigger an update of a providers catalogs."""
+    """Run the providers job to update its catalog."""
     provider = db_session.get(database.Provider, provider_id)
     if not provider:
         raise HTTPException(
