@@ -50,9 +50,7 @@ ARG LOGS_PATH
 ARG PLUGIN_PATH
 
 # set default settings for dockerized usage
-ENV CATA_LOG_HOST="0.0.0.0" \
-    CATA_LOG_PORT=2424 \
-    CATA_LOG_DATABASE_PATH=${DATABASE_PATH} \
+ENV CATA_LOG_DATABASE_PATH=${DATABASE_PATH} \
     CATA_LOG_LOGS_PATH=${LOGS_PATH} \
     CATA_LOG_PLUGIN_PATH=${PLUGIN_PATH} \
     CATA_LOG_STORAGE_PATH=${STORAGE_PATH}
@@ -80,6 +78,6 @@ RUN pip install --no-cache-dir . && \
 
 WORKDIR /
 
-ENTRYPOINT [ "python3", "-m" , "cata_log"]
+ENTRYPOINT [ "python3", "-m" , "cata_log", "--host", "0.0.0.0", "--port", "8000"]
 
 HEALTHCHECK --interval=60s --timeout=30s --start-period=3s --retries=3 CMD [ "wget", "--quiet", "http://0.0.0.0:8000/health", "--output-document" , "/dev/null"]

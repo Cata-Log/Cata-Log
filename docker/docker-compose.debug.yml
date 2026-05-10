@@ -8,7 +8,7 @@ services:
       - /path/to/cata-log/log:/var/log/cata-log
       - /path/to/cata-log/plugins:/mnt/plugins
     ports:
-      - 2424:2424
+      - 2424:8000
     environment:
       - CATA_LOG_PASSWORD=test1234 # gitleaks:allow
       - CATA_LOG_LOG_LEVEL=DEBUG
