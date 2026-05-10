@@ -35,8 +35,9 @@ class PageFile(AwareTimestampsMixin, BaseModel):
     id: int
     sha256: str
     size: int
+    width: int
+    height: int
     name: str
-    media_type: str
 
 
 class Page(AwareTimestampsMixin, BaseModel):

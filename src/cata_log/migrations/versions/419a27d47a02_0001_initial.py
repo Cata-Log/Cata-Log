@@ -29,6 +29,8 @@ def upgrade() -> None:
         sa.Column("path", cata_log.database.types.PathType(), nullable=False),
         sa.Column("sha256", sa.String(), nullable=False),
         sa.Column("size", sa.Integer(), nullable=False),
+        sa.Column("height", sa.Integer(), nullable=False),
+        sa.Column("width", sa.Integer(), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),

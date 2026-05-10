@@ -18,10 +18,8 @@
 
 import contextlib
 import logging
-import mimetypes
 import uuid
 from datetime import UTC, datetime
-from functools import cached_property
 from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
@@ -279,7 +277,7 @@ class Catalog(ModelBase, TimestampMixin):
             entry.links.append(
                 opds.ThumbnailLink(
                     href=f"/api/v1/pages/{self.pages[0].id}/download",
-                    media_type=self.pages[0].file.media_type,
+                    media_type="image/webp",
                 ),
             )
         return entry
@@ -374,6 +372,8 @@ class PageFile(ModelBase, TimestampMixin):
     path: orm.Mapped[Path] = orm.mapped_column(PathType, unique=True)
     sha256: orm.Mapped[str] = orm.mapped_column()
     size: orm.Mapped[int] = orm.mapped_column()
+    height: orm.Mapped[int] = orm.mapped_column()
+    width: orm.Mapped[int] = orm.mapped_column()
     pages: orm.Mapped[list[Page]] = orm.relationship(
         back_populates="file",
         passive_deletes="all",  # essential to make ondelete=RESTRICT work: https://stackoverflow.com/questions/55968951/sqlalchemy-fk-ondelete-does-not-restrict
@@ -384,14 +384,6 @@ class PageFile(ModelBase, TimestampMixin):
     def name(self) -> str:
         """The name of the stored file."""
         return self.path.name
-
-    @cached_property
-    def media_type(self) -> str:
-        """The mimetype of the stored file."""
-        return (
-            mimetypes.guess_file_type(self.name, strict=False)[0]
-            or "application/octet-stream"
-        )
 
     @classmethod
     def get_or_create(cls, db_session: orm.Session, page_bytes: bytes) -> PageFile:
@@ -405,27 +397,24 @@ class PageFile(ModelBase, TimestampMixin):
         sha256_hash = sha256(page_bytes).hexdigest()
         pagefile = db_session.query(cls).filter(cls.sha256 == sha256_hash).first()
         if not pagefile:
-            pagefile = cls(sha256=sha256_hash, size=len(page_bytes))
+            pagefile = cls(
+                sha256=sha256_hash,
+                size=len(page_bytes),
+                path=str(uuid.uuid4()) + ".webp",
+            )
             with Image.open(BytesIO(page_bytes)) as image:
-                pagefile.set_new_path(
-                    extension=mimetypes.guess_extension(
-                        image.get_format_mimetype() or "", strict=False
-                    )
-                    or ""
-                )
+                pagefile.width, pagefile.height = image.size
                 db_session.add(pagefile)
                 db_session.flush()
-                image.save(pagefile.path, optimize=True, save_all=True)
+                image.save(
+                    pagefile.path,
+                    format="WEBP",
+                    lossless=False,
+                    quality=80,
+                    method=0,
+                    save_all=True,
+                )
         return pagefile
-
-    def set_new_path(self, extension: str) -> None:
-        """Set a new path.
-
-        Args:
-            extension: The extension of the filepath.
-        """
-        filename = str(uuid.uuid4()) + extension
-        self.path = settings.storage_path / filename
 
     @classmethod
     def cleanup(cls, db_session: orm.Session) -> None:
