@@ -57,7 +57,7 @@ class Provider(AwareTimestampsMixin, BaseModel):
     note: str | None
     configuration: dict[str, str]
     status: constants.StatusEnum
-    job: Job | None = Field(validation_alias="job_id")
+    job: Job | None = Field(validation_alias="job_id", default=None)
 
     @field_validator("job", mode="before")
     @classmethod
@@ -78,7 +78,7 @@ class Job(AwareDatetimesMixin, BaseModel):
     id: str
     next_run_time: AwareDatetime
     schedule: str = Field(validation_alias="trigger")
-    jitter: int | None = Field(validation_alias="trigger")
+    jitter: int = Field(validation_alias="trigger", default=0)
 
     @field_validator("schedule", mode="before")
     @classmethod
