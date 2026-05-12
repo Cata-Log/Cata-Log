@@ -38,7 +38,7 @@ from cata_log.exceptions import (
     ProviderUnknownClassWarning,
     ProviderWarning,
 )
-from cata_log.settings import settings
+from cata_log.settings import get_settings
 from cata_log.utils.page_numbers import PageNumber, page_numbering
 
 from .regions import Region
@@ -88,7 +88,7 @@ class Provider(abc.ABC):
                     lambda r, *_, **__: r.raise_for_status(),
                 ]
             },
-            timeout=settings.request_timeout,
+            timeout=get_settings().request_timeout,
         )
         self.get_catalog_data()
 

@@ -22,7 +22,7 @@ from fastapi import Depends, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from cata_log.settings import settings
+from cata_log.settings import get_settings
 
 http_basic_security = HTTPBasic(auto_error=False)
 
@@ -37,6 +37,7 @@ def get_credentials() -> tuple[str, str | None]:
     Returns:
         Username and password.
     """
+    settings = get_settings()
     return settings.username, settings.password
 
 
@@ -50,7 +51,7 @@ def verify_credentials(
         request: The request that needs to be authenticated.
         credentials: The user-given credentials.
     """
-    if settings.public_get and request.method == "GET":
+    if get_settings().public_get and request.method == "GET":
         return
     if request.url.path in UNPROTECTED_PATHS:
         return

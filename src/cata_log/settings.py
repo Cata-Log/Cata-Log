@@ -16,18 +16,25 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-from argparse import ArgumentParser
+import functools
 from ipaddress import IPv4Address
 from pathlib import Path
-from typing import Any, Self
+from typing import Any
 
 from platformdirs import user_data_path, user_log_path
 from pydantic import Field, IPvAnyAddress, NonNegativeInt, PositiveInt, field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Enum listing all configuration defaults."""
+    """Configuration for the Cata-Log server. You can configure the settings with these command-line arguments or environment variables starting with CATA_LOG_."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="CATA_LOG_",
+        cli_kebab_case=True,
+        cli_parse_args=True,
+        cli_ignore_unknown_args=False,
+    )
 
     username: str = Field(default="admin", description="Username for authentication")
     password: str = Field(
@@ -94,11 +101,6 @@ class Settings(BaseSettings):
         default=1, description="Number of webworker processes to run."
     )
 
-    class Config:
-        """Config metadata for pydantic model."""
-
-        env_prefix = "CATA_LOG_"
-
     @field_validator("*", mode="after")
     @classmethod
     def ensure_dirs(cls, value: Any) -> Any:  # noqa: ANN401 # no reason to be precise here
@@ -111,30 +113,8 @@ class Settings(BaseSettings):
             value.mkdir(exist_ok=True, parents=True)
         return value
 
-    @classmethod
-    def load(cls) -> Self:
-        """Load settings from args or env.
 
-        Returns:
-            The settings instance.
-        """
-        parser = ArgumentParser(
-            prog="Cata-Log",
-            description="Start the Cata-Log server. You can configure the settings with the command-line arguments or with environment variables starting with CATA_LOG_.",
-        )
-        for name, field in cls.model_fields.items():
-            arg_name = "--" + name.replace("_", "-")
-
-            parser.add_argument(
-                arg_name,
-                type=field.annotation or str,
-                default=None,
-                help=f"default: {field.default}; {field.description}",
-            )
-        args = parser.parse_args()
-        return cls(
-            **{key: value for key, value in vars(args).items() if value is not None}
-        )
-
-
-settings = Settings.load()
+@functools.lru_cache
+def get_settings() -> Settings:
+    """Get the current settings."""
+    return Settings()

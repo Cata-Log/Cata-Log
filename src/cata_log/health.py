@@ -27,7 +27,7 @@ from sqlalchemy.sql import text
 from cata_log.database import DBSession
 from cata_log.exceptions import HealthCheckFailedError
 from cata_log.scheduler import scheduler
-from cata_log.settings import settings
+from cata_log.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +125,7 @@ def check_storage_io() -> None:
     Raises;
         HealthCheckFailedError: If an error occurs in IO with the storage.
     """
+    settings = get_settings()
     try:
         (settings.storage_path / "testfile").write_text("test")
         (settings.storage_path / "testfile").unlink()

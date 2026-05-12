@@ -26,7 +26,9 @@ from alembic.config import Config
 if __name__ == "__main__":
     import cata_log.logging
     import cata_log.scheduler
-    from cata_log.settings import settings
+    from cata_log.settings import get_settings
+
+    settings = get_settings()
 
     logging.config.dictConfig(cata_log.logging.CATA_LOG_LOGGING_CONFIG)
 
@@ -43,6 +45,6 @@ if __name__ == "__main__":
         forwarded_allow_ips=settings.forwarded_allow_ips,
         log_config=cata_log.logging.UVICORN_LOGGING_CONFIG,
         log_level=settings.log_level,
-        reload=settings.debug,
+        reload=settings.dev_mode,
         workers=settings.workers,
     )

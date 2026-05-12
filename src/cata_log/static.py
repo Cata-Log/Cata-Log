@@ -21,11 +21,13 @@ from importlib import resources
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from cata_log.settings import settings
+from cata_log.settings import get_settings
 
 app = FastAPI(openapi_url=None)
 
-app.mount("/pages", StaticFiles(directory=settings.storage_path), name="static-pages")
+app.mount(
+    "/pages", StaticFiles(directory=get_settings().storage_path), name="static-pages"
+)
 
 with resources.path("cata_log.web", "static/js") as path:
     app.mount(

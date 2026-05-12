@@ -49,7 +49,7 @@ from cata_log.exceptions import (
 )
 from cata_log.providers import Provider as ProviderType
 from cata_log.scheduler import scheduler
-from cata_log.settings import settings
+from cata_log.settings import get_settings
 
 from .mixins import TimestampMixin
 from .types import PathType
@@ -408,7 +408,7 @@ class PageFile(ModelBase, TimestampMixin):
         if not pagefile:
             pagefile = cls(
                 original_sha256=original_sha256,
-                path=settings.storage_path / (str(uuid.uuid4()) + ".webp"),
+                path=get_settings().storage_path / (str(uuid.uuid4()) + ".webp"),
             )
             with Image.open(BytesIO(page_bytes)) as image:
                 pagefile.width, pagefile.height = image.size
@@ -438,7 +438,7 @@ class PageFile(ModelBase, TimestampMixin):
             db_session: A database session.
         """
         used_paths = set(db_session.execute(select(cls.path)).scalars().all())
-        for storage_filepath in settings.storage_path.iterdir():
+        for storage_filepath in get_settings().storage_path.iterdir():
             if storage_filepath.is_dir() or storage_filepath.resolve() in used_paths:
                 continue
             storage_filepath.unlink(missing_ok=True)

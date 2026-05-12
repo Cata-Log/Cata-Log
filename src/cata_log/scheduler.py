@@ -27,9 +27,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.date import DateTrigger
 
 from cata_log.exceptions import NetworkError
-from cata_log.settings import settings
+from cata_log.settings import get_settings
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 JOB_DATABASE_URL = f"sqlite:///{settings.database_path / 'jobs.sqlite3'}"
 

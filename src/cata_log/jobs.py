@@ -23,7 +23,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from cata_log import database
 from cata_log.scheduler import scheduler
-from cata_log.settings import settings
+from cata_log.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def fetch_provider(provider_id: int) -> None:
 def cleanup_catalogs() -> None:
     """Job to cleanup outdated catalogs."""
     with database.DBSession() as db_session:
-        expiration_days = settings.expiration_days
+        expiration_days = get_settings().expiration_days
         if expiration_days:
             expiration_date = datetime.now(tz=UTC) - timedelta(days=expiration_days)
             database.Catalog.cleanup(db_session, expiration_date)
