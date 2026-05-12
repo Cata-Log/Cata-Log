@@ -12,15 +12,53 @@
         {% endblock catalog_title %}
 
     </h2>
-    <p>Valid {{ catalog.valid_since.date() }} - {{ catalog.valid_until.date() }}</p>
+    <p>
+        Valid <i>{{ catalog.valid_since.date() }}</i> - <i>{{ catalog.valid_until.date() }}</i>
+    </p>
     </hblock>
-    <div class="grid">
-        <button type="button" id="prev-button">&lt;</button>
-        <img id="page-image" src="" alt="" height="80vh" />
-        <button type="button" id="next-button">&gt;</button>
+    <div class="d-md-none d-block">
+        <div style="width: fit-content">
+            <div class="row">
+                <div class="col-12" style="width: fit-content">
+                    <img id="page-image" src="" alt="" style="max-height: 90vh; width: auto;" />
+                </div>
+            </div>
+            <div role="group">
+                <button class="btn btn-spark" type="button" id="prev-button">&lt;</button>
+                <button class="btn btn-spark" type="button" id="next-button">&gt;</button>
+            </div>
+        </div>
+    </div>
+    <div class="row d-none d-md-flex">
+        <div class="col-1">
+            <button class="btn btn-spark"
+                    type="button"
+                    id="prev-double-button"
+                    style="height: -webkit-fill-available">&lt;</button>
+        </div>
+        <div class="col-5">
+            <img id="left-page-image"
+                 src=""
+                 alt=""
+                 style="max-height: 90vh;
+                        width: auto" />
+        </div>
+        <div class="col-5">
+            <img id="right-page-image"
+                 src=""
+                 alt=""
+                 style="max-height: 90vh;
+                        width: auto" />
+        </div>
+        <div class="col-1">
+            <button class="btn btn-spark"
+                    type="button"
+                    id="next-double-button"
+                    style="height: -webkit-fill-available">&gt;</button>
+        </div>
     </div>
     <div>
-        <small>Cached {{ catalog.created_at }}</small>
+        <small>Cached <i>{{ catalog.created_at }}</i></small>
     </div>
 {% endblock main_content %}
 

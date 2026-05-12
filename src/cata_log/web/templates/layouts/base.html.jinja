@@ -8,7 +8,7 @@
               content="© 2025 David Aderbauer & The Cata-Log Contributors." />
         <meta name="license" content="AGPLv3" />
         <link rel="stylesheet"
-              href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.green.min.css" />
+              href="https://unpkg.com/@digicreon/mucss/dist/mu.orange.css" />
         <title>Cata-Log
 
             {% block page_title %}
@@ -16,8 +16,8 @@
 
         </title>
     </head>
-    <body class="container" id="top">
-        <header>
+    <body id="top">
+        <header class="container">
             <nav>
                 <ul>
                     <li>
@@ -52,13 +52,13 @@
             </nav>
 
         </header>
-        <main>
+        <main class="container">
 
             {% block main_content %}
             {% endblock main_content %}
 
         </main>
-        <footer>
+        <footer class="container">
             <hr />
             <nav>
                 <ul>

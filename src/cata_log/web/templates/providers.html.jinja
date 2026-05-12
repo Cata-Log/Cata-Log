@@ -5,8 +5,8 @@
 {% endblock page_title %}
 
 {% block main_content %}
-    <div class="grid">
-        <div>
+    <div class="row">
+        <div class="col-6">
             <article>
                 <h3>Add A Provider</h3>
 
@@ -24,15 +24,17 @@
                 </div>
             </article>
         </div>
-        <article>
+        <article class="col-6">
             <h3>Available Providers</h3>
-            <div class="overflow-auto">
-                {% for provider_info in available_providers %}
+            <aside class="sticky-top" style="overflow-y: auto; max-height: 90vh;">
+                <div class="overflow-auto">
+                    {% for provider_info in available_providers %}
 
-                    {% include "partials/_provider_info.html.jinja" %}
+                        {% include "partials/_provider_info.html.jinja" %}
 
-                {% endfor %}
-            </div>
+                    {% endfor %}
+                </div>
+            </aside>
         </article>
     </div>
 {% endblock main_content %}

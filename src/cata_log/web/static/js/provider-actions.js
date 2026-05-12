@@ -1,6 +1,6 @@
 document.querySelectorAll(".delete-provider-button").forEach((deleteButton) => {
-  deleteButton.addEventListener("click", () => {
-    provider_id = this.dataset.id;
+  deleteButton.addEventListener("click", (event) => {
+    provider_id = event.target.dataset.id;
     deleteRequest = new Request(`/api/v1/providers/${provider_id}`, {
       method: "DELETE",
     });
@@ -18,9 +18,9 @@ document.querySelectorAll(".delete-provider-button").forEach((deleteButton) => {
 document
   .querySelectorAll(".schedule-provider-update-button")
   .forEach((updateButton) => {
-    updateButton.addEventListener("click", () => {
-      provider_id = this.dataset.id;
-      updateRequest = new Request(`/api/v1/providers/${provider_id}/update`, {
+    updateButton.addEventListener("click", (event) => {
+      provider_id = event.target.dataset.id;
+      updateRequest = new Request(`/api/v1/providers/${provider_id}/job/run`, {
         method: "POST",
       });
       fetch(updateRequest)
@@ -36,3 +36,25 @@ document
         .catch((e) => console.error(e));
     });
   });
+
+document.querySelectorAll(".provider-job-switch").forEach((jobSwitch) => {
+  jobSwitch.addEventListener("change", (event) => {
+    provider_id = event.target.dataset.id;
+    endpoint = event.target.checked ? "add" : "remove";
+    toggleRequest = new Request(
+      `/api/v1/providers/${provider_id}/job/${endpoint}`,
+      {
+        method: "POST",
+      },
+    );
+    fetch(toggleRequest)
+      .then((response) => {
+        if (response.ok) {
+          jobSwitch.blur();
+        } else {
+          console.error(`Error toggling job for provider ${provider_id}`);
+        }
+      })
+      .catch((e) => console.error(e));
+  });
+});

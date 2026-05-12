@@ -1,38 +1,49 @@
 <article id="provider-{{ provider.id }}">
     <header>
-        {{ provider.get_provider_class().name.title() }}
+        <nav>
+            <h4>{{ provider.get_provider_class().name.title() }}</h4>
+            <span class="badge badge-{% if provider.status in ['healthy', 'unavailable'] %}success{% else %}error{% endif %}">{{ provider.status | title }}</span>
+            <button class="btn btn-sm btn-outline btn-secondary delete-provider-button"
+                    data-tooltip="Delete this provider"
+                    data-placement="left"
+                    data-id="{{ provider.id }}">X</button>
+        </nav>
     </header>
 
-    {% if provider.note %}<div>{{ provider.note }}</div>{% endif %}
 
-    <nav>
-        <ul>
-            {{ provider.status | title }}
-        </ul>
-        <ul>
-            <div role="group">
-                <button class="outline secondary schedule-provider-update-button"
-                        data-id="{{ provider.id }}">Update</button>
-                <button class="outline secondary delete-provider-button"
-                        data-id="{{ provider.id }}">X</button>
-            </div>
-        </ul>
-    </nav>
-
-
-    {% if provider.configuration %}
-        <div>
-            <h6>Configuration</h6>
-            <ul>
-                {% for config_key, config_value in provider.configuration.items() %}
-                    <li>
-                        <strong>{{ config_key }}</strong>: {{ config_value }}
-                    </li>
-                {% endfor %}
-            </ul>
+    <div class="row">
+        <div class="col-7">
+            {% if provider.configuration %}
+                <div>
+                    <h6>Configuration</h6>
+                    <ul>
+                        {% for config_key, config_value in provider.configuration.items() %}
+                            <li>
+                                <strong>{{ config_key }}</strong>: {{ config_value }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
         </div>
-    {% endif %}
-    <footer>
-        <a href="{{ url_for('get_provider_catalog_webpage', provider_id=provider.id) }}">Latest Catalog</a>
+        <button data-tooltip="Cache this provider's flyer now."
+                data-placement="left"
+                class="col-2 btn btn-sm btn-outline btn-secondary schedule-provider-update-button"
+                data-id="{{ provider.id }}">Update</button>
+        <label class="col-3"
+               data-tooltip="En- or disable caching for this provider."
+               data-placement="left">
+            <input class="provider-job-switch"
+                   data-id="{{ provider.id }}"
+                   type="checkbox"
+                   role="switch"
+                   {% if provider.job_id %}checked{% endif %} />
+        </label>
+    </div>
+
+
+    <footer class="row">
+        <a class="col-6 offset-3"
+           href="{{ url_for('get_provider_catalog_webpage', provider_id=provider.id) }}">Latest Catalog</a>
     </footer>
 </article>

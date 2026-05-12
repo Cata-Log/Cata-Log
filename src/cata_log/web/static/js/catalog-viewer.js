@@ -1,7 +1,72 @@
-provider_id = document.getElementById("provider-id").dataset.id;
-page_url = `/api/v1/providers/${provider_id}/catalogs/latest/pages/{page_number}/embed`;
+const provider_id = document.getElementById("provider-id").dataset.id;
 
-page_number = 0;
+class Page {
+  url = `/api/v1/providers/${provider_id}/catalogs/latest/pages/{page_number}/embed`;
+
+  constructor(number) {
+    this.number = number;
+  }
+  next() {
+    return new Page(this.number + 1);
+  }
+  prev() {
+    if (this.number === 0) {
+      return this;
+    }
+    return new Page(this.number - 1);
+  }
+  preload() {
+    let link = document.createElement("link");
+    link.as = "image";
+    link.rel = "preload";
+    link.href = this.url.replace("{page_number}", this.number);
+    document.head.append(link);
+  }
+  show() {
+    pageImage.src = this.url.replace("{page_number}", this.number);
+    pageImage.alt = `Page ${this.number}`;
+  }
+}
+
+class DoublePage extends Page {
+  constructor(number) {
+    super(number);
+    this.leftNumber = 2 * number;
+    this.rightNumber = 2 * number + 1;
+  }
+  next() {
+    return new DoublePage(this.number + 1);
+  }
+  prev() {
+    if (this.number === 0) {
+      return this;
+    }
+    return new DoublePage(this.number - 1);
+  }
+  preload() {
+    let leftLink = document.createElement("link");
+    leftLink.as = "image";
+    leftLink.rel = "preload";
+    leftLink.href = this.url.replace("{page_number}", this.leftNumber);
+    document.head.append(leftLink);
+
+    let rightLink = document.createElement("link");
+    rightLink.as = "image";
+    rightLink.rel = "preload";
+    rightLink.href = this.url.replace("{page_number}", this.rightNumber);
+    document.head.append(rightLink);
+  }
+  show() {
+    rightPageImage.src = this.url.replace("{page_number}", this.rightNumber);
+    rightPageImage.alt = `Page ${this.rightNumber}`;
+
+    leftPageImage.src = this.url.replace("{page_number}", this.leftNumber);
+    leftPageImage.alt = `Page ${this.leftNumber}`;
+  }
+}
+
+currentPage = new Page(0);
+currentDoublePage = new DoublePage(0);
 
 pageImage = document.getElementById("page-image");
 if (pageImage === null) {
@@ -9,40 +74,37 @@ if (pageImage === null) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  showPage();
-  preloadNextPage();
+  currentPage.show();
+  currentPage.next().preload();
 });
 
 document.getElementById("next-button").addEventListener("click", () => {
-  showNextPage();
-  preloadNextPage();
+  currentPage = currentPage.next();
+  currentPage.show();
+  currentPage.next().preload();
 });
 document.getElementById("prev-button").addEventListener("click", () => {
-  showPrevPage();
+  currentPage = currentPage.prev();
+  currentPage.show();
 });
 
-function preloadNextPage() {
-  link = document.createElement("link");
-  link.as = "image";
-  link.rel = "preload";
-  link.href = page_url.replace("{page_number}", page_number + 1);
-  document.head.append(link);
+leftPageImage = document.getElementById("left-page-image");
+rightPageImage = document.getElementById("right-page-image");
+if (leftPageImage === null || rightPageImage === null) {
+  console.error("page image frame not found!");
 }
 
-function showPage() {
-  pageImage.src = page_url.replace("{page_number}", page_number);
-  pageImage.alt = `Page ${page_number}`;
-}
+document.addEventListener("DOMContentLoaded", () => {
+  currentDoublePage.show();
+  currentDoublePage.next().preload();
+});
 
-function showNextPage() {
-  page_number++;
-  showPage();
-}
-
-function showPrevPage() {
-  if (page_number === 0) {
-    return;
-  }
-  page_number--;
-  showPage();
-}
+document.getElementById("next-double-button").addEventListener("click", () => {
+  currentDoublePage = currentDoublePage.next();
+  currentDoublePage.show();
+  currentDoublePage.next().preload();
+});
+document.getElementById("prev-double-button").addEventListener("click", () => {
+  currentDoublePage = currentDoublePage.prev();
+  currentDoublePage.show();
+});
