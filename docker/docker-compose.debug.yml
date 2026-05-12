@@ -12,5 +12,5 @@ services:
     environment:
       - CATA_LOG_PASSWORD=test1234 # gitleaks:allow
       - CATA_LOG_LOG_LEVEL=DEBUG
-      - CATA_LOG_DEBUG=True
+      - CATA_LOG_DEV_MODE=True
     restart: unless-stopped

@@ -54,7 +54,9 @@ class Settings(BaseSettings):
         default=user_log_path("cata-log", appauthor=False, ensure_exists=False),
         description="Path to the logfiles.",
     )
-    debug: bool = Field(default=False, description="Whether to run in debug mode.")
+    dev_mode: bool = Field(
+        default=False, description="Whether to run in development mode."
+    )
     public_get: bool = Field(
         default=False,
         description="Set this to allow access to all GET endpoints without authentication.",

@@ -19,7 +19,7 @@ services:
       - CATA_LOG_LOG_LEVEL=INFO
       - CATA_LOG_LOG_FILE_BACKUP_COUNT=10
       - CATA_LOG_LOG_FILE_MAXSIZE=2097152
-      - CATA_LOG_DEBUG= # set this for debug mode
+      - CATA_LOG_DEV_MODE= # set this only in development
     restart: unless-stopped
     depends_on:
       db:
