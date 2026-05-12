@@ -20,6 +20,7 @@ from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
 from apscheduler.job import Job as SchedulerJob
+from apscheduler.triggers.base import BaseTrigger
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from fastapi import APIRouter, HTTPException, responses, status
@@ -30,7 +31,6 @@ from pydantic.types import AwareDatetime
 from pydantic_core import PydanticCustomError
 from pydantic_core.core_schema import ValidationInfo
 from sqlalchemy.orm import Session, selectinload
-from starlette.responses import JSONResponse
 
 from cata_log import constants, database
 from cata_log.api import common
@@ -57,13 +57,7 @@ class Provider(AwareTimestampsMixin, BaseModel):
     note: str | None
     configuration: dict[str, str]
     status: constants.StatusEnum
-    job: Job | None = Field(validation_alias="job_id", default=None)
-
-    @field_validator("job", mode="before")
-    @classmethod
-    def get_job(cls, job_id: str) -> SchedulerJob | None:
-        """Get the job instance from the scheduler."""
-        return scheduler.get_job(job_id)
+    job: Job | None
 
 
 class FullProvider(Provider):
@@ -78,19 +72,19 @@ class Job(AwareDatetimesMixin, BaseModel):
     id: str
     next_run_time: AwareDatetime
     schedule: str = Field(validation_alias="trigger")
-    jitter: int = Field(validation_alias="trigger", default=0)
+    jitter: int = Field(validation_alias="trigger")
 
     @field_validator("schedule", mode="before")
     @classmethod
-    def get_schedule_from_trigger(cls, trigger: CronTrigger) -> str:
+    def get_schedule_from_trigger(cls, trigger: BaseTrigger) -> str:
         """Get the crontab schedule as a string."""
         return str(trigger)
 
     @field_validator("jitter", mode="before")
     @classmethod
-    def get_jitter_from_trigger(cls, trigger: CronTrigger) -> int | None:
+    def get_jitter_from_trigger(cls, trigger: BaseTrigger) -> int:
         """Get the crontab schedule as a string."""
-        return trigger.jitter
+        return (trigger.jitter if isinstance(trigger, CronTrigger) else 0) or 0
 
 
 class ProviderUpdate(BaseModel):
@@ -696,26 +690,25 @@ def list_provider_outdated_catalogs(
             "description": "Object doesn't exist.",
         },
     },
-    response_class=JSONResponse,
+    response_model=Job,
     operation_id="run-provider-job-v1",
 )
 def post_provider_job_run(
     provider_id: int, db_session: Session = database.depends_db_session
-) -> dict[str, str]:
+) -> SchedulerJob:
     """Run the providers job to update its catalog."""
     provider = db_session.get(database.Provider, provider_id)
     if not provider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
         )
-    scheduler.add_job(
+    return scheduler.add_job(
         "cata_log.jobs:fetch_provider",
         args=[provider_id],
         trigger=DateTrigger(),
         id=f"fetch-provider-{provider_id}-user-triggered-one-off",
         replace_existing=True,
     )
-    return {"detail": "Provider update scheduled."}
 
 
 @router.post(
@@ -791,7 +784,7 @@ def get_provider_job(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
         )
-    job = scheduler.get_job(provider.job_id)
+    job = provider.job
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"

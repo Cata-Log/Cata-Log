@@ -25,6 +25,7 @@ from io import BytesIO
 from pathlib import Path
 
 import opds
+from apscheduler.job import Job
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.triggers.cron import CronTrigger
 from ebooklib import epub
@@ -174,7 +175,7 @@ class Provider(ModelBase, TimestampMixin):
                 provider_class = self.get_provider_class()
             except ProviderUnknownClassWarning:
                 logger.exception(
-                    "No provider class found for newly inserted provider instance!",
+                    "No provider class found for provider instance!",
                     extra={
                         "provider_id": self.id,
                         "provider_class_uid": self.class_uid,
@@ -199,6 +200,11 @@ class Provider(ModelBase, TimestampMixin):
             with contextlib.suppress(JobLookupError):
                 scheduler.remove_job(self.job_id)
             self.job_id = None
+
+    @property
+    def job(self) -> Job | None:
+        """The job of this provider."""
+        return scheduler.get_job(self.job_id)
 
 
 class Catalog(ModelBase, TimestampMixin):
