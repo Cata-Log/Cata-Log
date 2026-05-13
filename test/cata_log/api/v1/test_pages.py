@@ -22,7 +22,7 @@ from urllib.parse import urljoin
 import pytest
 
 from cata_log import security
-from cata_log.api.v1 import common
+from cata_log.api import common
 
 
 def test_list_pages(full_database, fake_page, client):
@@ -41,7 +41,7 @@ def test_list_pages__noauth(full_database, noauth_client):
     response = noauth_client.get("/api/v1/pages")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -50,7 +50,7 @@ def test_list_pages__bad_auth(full_database, bad_auth_client):
     response = bad_auth_client.get("/api/v1/pages")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -81,7 +81,7 @@ def test_get_page__noauth(fake_page, noauth_client):
     response = noauth_client.get(f"/api/v1/pages/{fake_page.id}")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -90,7 +90,7 @@ def test_get_page__bad_auth(fake_page, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/pages/{fake_page.id}")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -133,7 +133,7 @@ def test_download_page__noauth(fake_page, noauth_client):
     response = noauth_client.get(f"/api/v1/pages/{fake_page.id}/download")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -142,7 +142,7 @@ def test_download_page__bad_auth(fake_page, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/pages/{fake_page.id}/download")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -193,7 +193,7 @@ def test_embed_page__noauth(fake_page, noauth_client):
     response = noauth_client.get(f"/api/v1/pages/{fake_page.id}/embed")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -202,7 +202,7 @@ def test_embed_page__bad_auth(fake_page, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/pages/{fake_page.id}/embed")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 

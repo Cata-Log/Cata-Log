@@ -16,28 +16,52 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import os
+import sys
+from io import BytesIO
+from types import MappingProxyType
+
+from PIL import Image
+
+sys.argv = [
+    "python3 -m cata_log",
+]
+os.environ["CATA_LOG_DATA_PATH"] = "/tmp/mnt/"
+os.environ["CATA_LOG_STORAGE_PATH"] = "/tmp/mnt/storage/"
+os.environ["CATA_LOG_DATABASE_PATH"] = "/tmp/mnt/db/"
+os.environ["CATA_LOG_PLUGIN_PATH"] = "/tmp/mnt/plugins/"
+os.environ["CATA_LOG_LOGS_PATH"] = "/tmp/var/log/cata-log/"
+
+# ruff: noqa: E402 # must set environment before importing from cata_log
 import base64
 import enum
-import os
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
-from types import MappingProxyType
 from typing import override
 
 import pytest
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
 from httpx import HTTPStatusError, Request, Response, TransportError
-from pyfakefs.fake_filesystem_unittest import Patcher
+from pydantic import Field
 from sqlalchemy import StaticPool, create_engine, orm
 
-from cata_log import constants, database, exceptions
+from cata_log import database, exceptions
 from cata_log.exceptions import PagesExhausted
 from cata_log.providers import Provider
 from cata_log.providers.base import Preview
-from cata_log.providers.configuration import Configuration
 from cata_log.providers.regions import Germany
-from cata_log.settings import settings
+from cata_log.scheduler import scheduler
+from cata_log.settings import get_settings
+
+
+@pytest.fixture(autouse=True)
+def temp_settings_paths(monkeypatch, tmp_path):
+    monkeypatch.setenv("CATA_LOG_DATA_PATH", str(tmp_path / "mnt/"))
+    monkeypatch.setenv("CATA_LOG_STORAGE_PATH", str(tmp_path / "mnt/storage/"))
+    monkeypatch.setenv("CATA_LOG_DATABASE_PATH", str(tmp_path / "mnt/db/"))
+    monkeypatch.setenv("CATA_LOG_PLUGIN_PATH", str(tmp_path / "mnt/plugins/"))
+    monkeypatch.setenv("CATA_LOG_LOGS_PATH", str(tmp_path / "var/log/cata-log/"))
+    get_settings.cache_clear()
 
 
 @pytest.fixture
@@ -76,20 +100,27 @@ def db_session(LocalSession):
         yield db_session
 
 
+@pytest.fixture(autouse=True)
+def started_scheduler():
+    if not scheduler.running:
+        scheduler.start()
+    return scheduler
+
+
 @pytest.fixture
-def fake_username(faker):
+def fake_username(monkeypatch, faker):
     fake_username = faker.user_name()
-    os.environ["USERNAME"] = fake_username
-    yield fake_username
-    del os.environ["USERNAME"]
+    monkeypatch.setenv("CATA_LOG_USERNAME", fake_username)
+    get_settings.cache_clear()
+    return fake_username
 
 
 @pytest.fixture
-def fake_password(faker):
+def fake_password(monkeypatch, faker):
     fake_password = faker.password()
-    os.environ["PASSWORD"] = fake_password
-    yield fake_password
-    del os.environ["PASSWORD"]
+    monkeypatch.setenv("CATA_LOG_PASSWORD", fake_password)
+    get_settings.cache_clear()
+    return fake_password
 
 
 @pytest.fixture
@@ -104,15 +135,14 @@ def fake_credentials_encoded(fake_credentials):
 
 
 @pytest.fixture
-def public_get():
-    os.environ["PUBLIC_GET"] = "true"
-    yield
-    del os.environ["PUBLIC_GET"]
+def public_get(monkeypatch):
+    monkeypatch.setenv("CATA_LOG_PUBLIC_GET", "true")
+    get_settings.cache_clear()
 
 
 @pytest.fixture
-def fastapi_app(fake_fs):
-    from cata_log.main import app  # noqa: PLC0415
+def fastapi_app():
+    from cata_log.app import app  # noqa: PLC0415
 
     yield app
 
@@ -138,35 +168,12 @@ def client(fake_credentials_encoded, noauth_client):
 
 
 @pytest.fixture
-def fake_fs(monkeypatch):
-    """A mock Linux filesystem for realistic testing.
-
-    Contains directories at the STORAGE_PATH and LOG_DIRECTORY_PATH.
-    """
-    with Patcher() as patcher:
-        if not patcher.fs:
-            raise OSError("Generator could not create a fakefs!")
-
-        patcher.fs.create_dir(constants.STORAGE_PATH)
-        monkeypatch.setattr(
-            "cata_log.constants.STORAGE_PATH", Path(str(settings.storage_path))
-        )
-        patcher.fs.create_dir(settings.logs_path)
-        patcher.fs.add_real_directory(Path(constants.__file__).parent.parent.parent)
-        patcher.fs.add_real_directory(
-            Path(constants.__file__).parent, target_path="/opt/cata_log"
-        )
-        patcher.fs.add_real_file("pyproject.toml")
-        yield patcher.fs
-
-
-@pytest.fixture
 def fake_provider(db_session, provider_test_class):
     fake_provider = database.Provider(
         class_uid=provider_test_class.uid,
         configuration=provider_test_class.validate_configuration(
             provider_test_class.default_configuration
-        ),
+        ).model_dump(),
     )
     db_session.add(fake_provider)
     db_session.commit()
@@ -242,8 +249,8 @@ def fake_latest_catalog(fake_catalog_preview):
 
 
 @pytest.fixture
-def fake_file(faker, fake_fs):
-    path = constants.STORAGE_PATH / "0.jpg"
+def fake_file(faker):
+    path = get_settings().storage_path / "0.jpg"
     path.write_text(faker.text())
     return path
 
@@ -251,7 +258,12 @@ def fake_file(faker, fake_fs):
 @pytest.fixture
 def fake_pagefile(faker, db_session, fake_file):
     fake_pagefile = database.PageFile(
-        path=str(fake_file), size=faker.random.randint(1, 1000), sha256=faker.sha256()
+        path=str(fake_file),
+        size=faker.random.randint(1, 1000),
+        sha256=faker.sha256(),
+        original_sha256=faker.sha256(),
+        height=faker.random.randint(100, 1000),
+        width=faker.random.randint(100, 1000),
     )
     db_session.add(fake_pagefile)
     db_session.commit()
@@ -339,61 +351,69 @@ def provider_test_class(_session_faker):
         url = "https://test.provider.it/catalog"
         region = Germany
         first_page_number = 0
-        configuration = (
-            Configuration(
-                name="side_effect",
-                helptext="set the side effect of a method execution",
+
+        class Configuration(Provider.Configuration):
+            side_effect: SideEffects = Field(
                 default=SideEffects.DONOTHING,
-            ),
-            Configuration(
-                name="pass_get_catalog_data",
-                helptext="whether to pass in _get_catalog_data",
-                default="",
-                parse_as=bool,
-            ),
-            Configuration(
-                name="required_config", helptext="helptext for required config"
-            ),
-            Configuration(
-                name="optional_config",
-                helptext="helptext for optional config",
+                description="set the side effect of a method execution",
+            )
+
+            pass_get_catalog_data: bool = Field(
+                default=False,
+                description="whether to pass in _get_catalog_data",
+            )
+
+            required_config: str = Field(description="helptext for required config")
+
+            optional_config: str = Field(
                 default="default_config",
-            ),
-            Configuration(
-                name="typed_config", helptext="helptext for typed config", parse_as=int
-            ),
-            Configuration(
-                name="optional_typed_config",
-                helptext="helptext for typed optional config",
-                default="14.5",
-                parse_as=float,
-            ),
-        )
+                description="helptext for optional config",
+            )
+
+            typed_config: int = Field(
+                description="helptext for typed config",
+            )
+
+            optional_typed_config: float = Field(
+                default=14.5,
+                description="helptext for typed optional config",
+            )
+
         default_configuration = MappingProxyType(
-            {config.name: "1" for config in configuration if config.default is None}
+            {
+                config_name: (config_field.annotation or str)("0")
+                for config_name, config_field in Configuration.model_fields.items()
+                if config_field.is_required()
+            }
         )
 
         @override
         def _get_page(self, page_number):
-            SideEffects.run(self._configuration["side_effect"])
+            SideEffects.run(self._configuration.side_effect)
             if page_number >= 10:
                 raise PagesExhausted
-            return _session_faker.text().encode()
+            with Image.new(
+                mode="RGB", size=(10, 25), color=_session_faker.color()
+            ) as fake_image:
+                fake_image_bytes_io = BytesIO()
+                fake_image.save(fake_image_bytes_io, format="JPEG")
+            fake_image_bytes_io.seek(0)
+            return fake_image_bytes_io.read()
 
         @override
         def _get_catalog_data(self):
-            if self._configuration["pass_get_catalog_data"]:
+            if self._configuration.pass_get_catalog_data:
                 return
-            SideEffects.run(self._configuration["side_effect"])
+            SideEffects.run(self._configuration.side_effect)
 
         @override
         def _get_valid_since(self):
-            SideEffects.run(self._configuration["side_effect"])
+            SideEffects.run(self._configuration.side_effect)
             return _session_faker.date_time()
 
         @override
         def _get_valid_until(self):
-            SideEffects.run(self._configuration["side_effect"])
+            SideEffects.run(self._configuration.side_effect)
             return self._get_valid_since() + _session_faker.time_delta()
 
     return TestProvider

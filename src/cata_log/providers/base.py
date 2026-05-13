@@ -21,7 +21,7 @@ import logging
 from collections.abc import Generator
 from datetime import datetime, timedelta
 from types import TracebackType
-from typing import ClassVar, Self, final, override
+from typing import Any, ClassVar, Self, final, override
 
 import httpx
 from fake_useragent import UserAgent
@@ -298,7 +298,7 @@ class Provider(abc.ABC):
     @final
     @classmethod
     def validate_configuration(
-        cls, configuration_dict: dict[str, str]
+        cls, configuration_dict: dict[str, Any]
     ) -> Configuration:
         """Validate a given configuration and return the validated version.
 

@@ -17,13 +17,16 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import UTC, datetime
+from hashlib import sha256
 
 import pytest
 import sqlalchemy.exc
+from PIL import Image
 from sqlalchemy.sql import text
 
 from cata_log import database, exceptions
-from cata_log.constants import STORAGE_PATH, StatusEnum
+from cata_log.constants import StatusEnum
+from cata_log.settings import get_settings
 from test.cata_log.conftest import SideEffects
 
 
@@ -32,7 +35,7 @@ def test_sqlite_pragmas(LocalSession):
         assert db_session.execute(text("PRAGMA foreign_keys;")).scalar() == 1
 
 
-def test_Provider_insertion(LocalSession, scheduler, provider_test_class):
+def test_Provider_insertion(LocalSession, started_scheduler, provider_test_class):
     with LocalSession() as db_session:
         provider = database.Provider(
             class_uid=provider_test_class.uid,
@@ -46,7 +49,7 @@ def test_Provider_insertion(LocalSession, scheduler, provider_test_class):
         assert provider.class_uid == provider_test_class.uid
         assert provider.configuration == provider_test_class.default_configuration
         assert provider.job_id
-        job = scheduler.get_job(provider.job_id)
+        job = started_scheduler.get_job(provider.job_id)
         assert job
         assert job.func.__name__ == "fetch_provider"
         assert len(job.args) == 1
@@ -96,13 +99,8 @@ def test_Provider_unique_together_constraint(LocalSession, fake_provider):
         SideEffects.DONOTHING,
     ],
 )
-def test_Provider_fetch_catalog__success(
-    db_session, fake_fs, fake_provider, side_effect
-):
-    fake_provider.configuration = {
-        **fake_provider.configuration,
-        "side_effect": side_effect,
-    }
+def test_Provider_fetch_catalog__success(db_session, fake_provider, side_effect):
+    fake_provider.configuration["side_effect"] = side_effect
     db_session.commit()
 
     fake_provider.fetch_catalog(db_session)
@@ -112,8 +110,11 @@ def test_Provider_fetch_catalog__success(
     assert len(fake_provider.catalogs) == 1
     assert len(fake_provider.catalogs[0].pages) == 10
     for page in fake_provider.catalogs[0].pages:
-        with page.file.path.open() as page_file:
-            assert page_file.read()
+        assert page.file.sha256 == sha256(page.file.path.read_bytes()).hexdigest()
+        with Image.open(page.file.path) as page_image:
+            assert page_image.height == page.file.height
+            assert page_image.width == page.file.width
+            assert page_image.format == "WEBP"
 
 
 @pytest.mark.parametrize(
@@ -197,9 +198,12 @@ def test_Catalog_deletion(db_session, fake_catalog, full_database):
 def test_PageFile_insertion(faker, LocalSession):
     with LocalSession() as db_session:
         pagefile = database.PageFile(
-            path=STORAGE_PATH / "testfile.jpg",
+            path=get_settings().storage_path / "testfile.jpg",
             sha256=faker.sha256(),
+            original_sha256=faker.sha256(),
             size=faker.random.randint(1, 2000),
+            width=faker.random.randint(100, 1000),
+            height=faker.random.randint(100, 1000),
         )
         db_session.add(pagefile)
         db_session.commit()
@@ -207,7 +211,10 @@ def test_PageFile_insertion(faker, LocalSession):
 
         assert pagefile.id
         assert pagefile.sha256
-        assert pagefile.path == STORAGE_PATH / "testfile.jpg"
+        assert pagefile.original_sha256
+        assert pagefile.width
+        assert pagefile.height
+        assert pagefile.path == get_settings().storage_path / "testfile.jpg"
         assert pagefile.created_at
         assert pagefile.updated_at
 

@@ -18,9 +18,9 @@
 
 import pytest
 from apscheduler.triggers.cron import CronTrigger
+from pydantic import BaseModel
 
 from cata_log.providers import Provider
-from cata_log.providers.configuration import Configuration
 from cata_log.providers.regions import Region
 
 
@@ -41,11 +41,6 @@ def test_registered_classes__attributes(provider_class):
     assert isinstance(provider_class.jitter, int)
     assert provider_class.jitter < 86400
     assert isinstance(provider_class.first_page_number, int)
-    assert isinstance(provider_class.configuration, tuple)
-    for config in provider_class.configuration:
-        assert isinstance(config, Configuration)
-    for config in provider_class.configuration:
-        if config.default:
-            config.parse_as(config.default)
+    assert issubclass(provider_class.Configuration, BaseModel)
     assert provider_class.uid
     assert provider_class.uid in Provider._registry

@@ -17,21 +17,12 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from copy import deepcopy
-from unittest.mock import MagicMock
 from urllib.parse import urljoin
 
 import pytest
-from celery.app.task import Task
 
-from cata_log import database, security
-from cata_log.api.v1 import common
-
-
-@pytest.fixture
-def mock_fetch_provider_task(monkeypatch):
-    mock_task = MagicMock(spec=Task)
-    monkeypatch.setattr("cata_log.api.v1.providers.fetch_provider", mock_task)
-    return mock_task
+from cata_log import database
+from cata_log.api import common
 
 
 def test_list_providers(full_database, client):
@@ -46,7 +37,7 @@ def test_list_providers__noauth(full_database, noauth_client):
     response = noauth_client.get("/api/v1/providers")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -55,7 +46,7 @@ def test_list_providers__bad_auth(full_database, bad_auth_client):
     response = bad_auth_client.get("/api/v1/providers")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -82,7 +73,7 @@ def test_list_available_providers__noauth(noauth_client):
     response = noauth_client.get("/api/v1/providers/available")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -91,7 +82,7 @@ def test_list_available_providers__bad_auth(bad_auth_client):
     response = bad_auth_client.get("/api/v1/providers/available")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -118,7 +109,7 @@ def test_list_provider_catalogs__noauth(full_database, fake_provider, noauth_cli
     response = noauth_client.get(f"/api/v1/providers/{fake_provider.id}/catalogs")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -129,7 +120,7 @@ def test_list_provider_catalogs__bad_auth(
     response = bad_auth_client.get(f"/api/v1/providers/{fake_provider.id}/catalogs")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -166,7 +157,7 @@ def test_list_provider_current_catalog__noauth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -179,7 +170,7 @@ def test_list_provider_current_catalog__bad_auth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -218,7 +209,7 @@ def test_list_provider_previews_catalogs__noauth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -231,7 +222,7 @@ def test_list_provider_previews_catalogs__bad_auth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -270,7 +261,7 @@ def test_list_provider_outdated_catalogs__noauth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -283,7 +274,7 @@ def test_list_provider_outdated_catalogs__bad_auth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -320,7 +311,7 @@ def test_get_latest_provider_catalog__noauth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -333,7 +324,7 @@ def test_get_latest_provider_catalog__bad_auth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -379,7 +370,7 @@ def test_list_latest_provider_catalog_pages__noauth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -392,7 +383,7 @@ def test_list_latest_provider_catalog_pages__bad_auth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -439,7 +430,7 @@ def test_get_latest_provider_catalog_page__noauth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -452,7 +443,7 @@ def test_get_latest_provider_catalog_page__bad_auth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -501,7 +492,7 @@ def test_download_latest_provider_catalog__noauth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -514,7 +505,7 @@ def test_download_latest_provider_catalog__bad_auth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -557,7 +548,7 @@ def test_download_latest_provider_catalog_page__noauth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -570,7 +561,7 @@ def test_download_latest_provider_catalog_page__bad_auth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -645,7 +636,7 @@ def test_embed_latest_provider_catalog_page__noauth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -658,7 +649,7 @@ def test_embed_latest_provider_catalog_page__bad_auth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -715,7 +706,7 @@ def test_get_provider__noauth(fake_provider, noauth_client):
     response = noauth_client.get(f"/api/v1/providers/{fake_provider.id}")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -724,7 +715,7 @@ def test_get_provider__bad_auth(fake_provider, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/providers/{fake_provider.id}")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -759,7 +750,7 @@ def test_get_available_provider__noauth(provider_test_class, noauth_client):
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -770,7 +761,7 @@ def test_get_available_provider__bad_auth(provider_test_class, bad_auth_client):
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -792,7 +783,7 @@ def test_get_available_provider__not_found(client):
 
     assert response.status_code == 404
     common.HTTPStatusError.model_validate(response.json())
-    assert response.json() == {"detail": "Provider not found"}
+    assert response.json() == {"detail": "Provider not available"}
 
 
 def test_delete_provider(LocalSession, fake_provider, client):
@@ -807,7 +798,7 @@ def test_delete_provider__noauth(LocalSession, fake_provider, noauth_client):
     response = noauth_client.delete(f"/api/v1/providers/{fake_provider.id}")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -816,7 +807,7 @@ def test_delete_provider__bad_auth(LocalSession, fake_provider, bad_auth_client)
     response = bad_auth_client.delete(f"/api/v1/providers/{fake_provider.id}")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -827,7 +818,7 @@ def test_delete_provider__noauth__public_get(
     response = noauth_client.delete(f"/api/v1/providers/{fake_provider.id}")
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
 
@@ -840,7 +831,7 @@ def test_delete_provider__not_found(client):
     assert response.json() == {"detail": "Provider not found"}
 
 
-def test_patch_provider(LocalSession, fake_provider, client, mock_fetch_provider_task):
+def test_patch_provider(LocalSession, fake_provider, client):
     old_configuration = deepcopy(fake_provider.configuration)
 
     response = client.patch(
@@ -864,10 +855,9 @@ def test_patch_provider(LocalSession, fake_provider, client, mock_fetch_provider
         provider = db_session.get(database.Provider, fake_provider.id)
     assert provider.class_uid == data["class_uid"]
     assert provider.configuration == data["configuration"]
-    mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
 
-def test_patch_provider__noauth(fake_provider, noauth_client, mock_fetch_provider_task):
+def test_patch_provider__noauth(fake_provider, noauth_client):
     response = noauth_client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
@@ -879,15 +869,12 @@ def test_patch_provider__noauth(fake_provider, noauth_client, mock_fetch_provide
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__bad_auth(
-    fake_provider, bad_auth_client, mock_fetch_provider_task
-):
+def test_patch_provider__bad_auth(fake_provider, bad_auth_client):
     response = bad_auth_client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
@@ -899,15 +886,12 @@ def test_patch_provider__bad_auth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__noauth__public_get(
-    fake_provider, noauth_client, public_get, mock_fetch_provider_task
-):
+def test_patch_provider__noauth__public_get(fake_provider, noauth_client, public_get):
     response = noauth_client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
@@ -919,13 +903,12 @@ def test_patch_provider__noauth__public_get(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__not_found(client, mock_fetch_provider_task):
+def test_patch_provider__not_found(client):
     response = client.patch(
         "/api/v1/providers/230",
         json={"configuration": {"markt_id": "marktqwertz"}},
@@ -934,23 +917,17 @@ def test_patch_provider__not_found(client, mock_fetch_provider_task):
     assert response.status_code == 404
     common.HTTPStatusError.model_validate(response.json())
     assert response.json() == {"detail": "Provider not found"}
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__missing_config(
-    fake_provider, client, mock_fetch_provider_task
-):
+def test_patch_provider__missing_config(fake_provider, client):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={"configuration": {}},
     )
-
-    assert response.status_code == 400
-    common.HTTP400Error.model_validate(response.json())
-    mock_fetch_provider_task.delay.assert_not_called()
+    assert response.status_code == 422
 
 
-def test_patch_provider__bad_config(fake_provider, client, mock_fetch_provider_task):
+def test_patch_provider__bad_config(fake_provider, client):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
@@ -961,12 +938,10 @@ def test_patch_provider__bad_config(fake_provider, client, mock_fetch_provider_t
         },
     )
 
-    assert response.status_code == 400
-    common.HTTP400Error.model_validate(response.json())
-    mock_fetch_provider_task.delay.assert_not_called()
+    assert response.status_code == 422
 
 
-def test_patch_provider__extra_config(fake_provider, client, mock_fetch_provider_task):
+def test_patch_provider__extra_config(fake_provider, client):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={
@@ -981,12 +956,9 @@ def test_patch_provider__extra_config(fake_provider, client, mock_fetch_provider
     assert response.status_code == 200
     assert "extra" not in response.json()["configuration"]
     assert response.json()["configuration"]["optional_config"] == "config abc"
-    mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
 
-def test_patch_provider__bad_class_uid(
-    db_session, fake_provider, client, mock_fetch_provider_task
-):
+def test_patch_provider__bad_class_uid(db_session, fake_provider, client):
     fake_provider.class_uid = "no-class"
     db_session.commit()
 
@@ -995,14 +967,10 @@ def test_patch_provider__bad_class_uid(
         json={"configuration": {}},
     )
 
-    assert response.status_code == 400
-    common.HTTP400Error.model_validate(response.json())
-    mock_fetch_provider_task.delay.assert_not_called()
+    assert response.status_code == 422
 
 
-def test_patch_provider__duplicate(
-    db_session, fake_provider, client, mock_fetch_provider_task
-):
+def test_patch_provider__duplicate(db_session, fake_provider, client):
     other_provider = database.Provider(
         class_uid=fake_provider.class_uid,
         configuration={**fake_provider.configuration, "optional_config": "test opt"},
@@ -1020,10 +988,9 @@ def test_patch_provider__duplicate(
     assert response.status_code == 409
     assert fake_provider.configuration != other_provider.configuration
     common.HTTPStatusError.model_validate(response.json())
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_patch_provider__no_change(fake_provider, client, mock_fetch_provider_task):
+def test_patch_provider__no_change(fake_provider, client):
     response = client.patch(
         url=f"/api/v1/providers/{fake_provider.id}",
         json={"configuration": fake_provider.configuration},
@@ -1031,12 +998,9 @@ def test_patch_provider__no_change(fake_provider, client, mock_fetch_provider_ta
 
     assert response.status_code == 200
     assert response.json()["configuration"] == fake_provider.configuration
-    mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
 
-def test_post_provider(
-    LocalSession, client, provider_test_class, mock_fetch_provider_task
-):
+def test_post_provider(LocalSession, client, provider_test_class):
     response = client.post(
         url="/api/v1/providers",
         json={
@@ -1044,24 +1008,23 @@ def test_post_provider(
             "configuration": dict(provider_test_class.default_configuration),
         },
     )
-
     assert response.status_code == 201
     data = response.json()
     assert data["class_uid"] == provider_test_class.uid
-    assert data["configuration"] == provider_test_class.validate_configuration(
-        provider_test_class.default_configuration
+    assert (
+        data["configuration"]
+        == provider_test_class.validate_configuration(
+            dict(provider_test_class.default_configuration)
+        ).model_dump()
     )
     with LocalSession() as db_session:
         new_provider = db_session.get(database.Provider, data["id"])
         assert new_provider
         assert new_provider.class_uid == data["class_uid"]
         assert new_provider.configuration == data["configuration"]
-    mock_fetch_provider_task.delay.assert_called_once_with(data["id"])
 
 
-def test_post_provider__noauth(
-    noauth_client, provider_test_class, mock_fetch_provider_task
-):
+def test_post_provider__noauth(noauth_client, provider_test_class):
     response = noauth_client.post(
         url="/api/v1/providers",
         json={
@@ -1071,15 +1034,12 @@ def test_post_provider__noauth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_post_provider__bad_auth(
-    bad_auth_client, provider_test_class, mock_fetch_provider_task
-):
+def test_post_provider__bad_auth(bad_auth_client, provider_test_class):
     response = bad_auth_client.post(
         url="/api/v1/providers",
         json={
@@ -1089,15 +1049,12 @@ def test_post_provider__bad_auth(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_post_provider__bad_config(
-    LocalSession, client, provider_test_class, mock_fetch_provider_task
-):
+def test_post_provider__bad_config(LocalSession, client, provider_test_class):
     response = client.post(
         url="/api/v1/providers",
         json={
@@ -1109,16 +1066,12 @@ def test_post_provider__bad_config(
         },
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 422
     with LocalSession() as db_session:
         assert not db_session.query(database.Provider).all()
-    common.HTTP400Error.model_validate(response.json())
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_post_provider__missing_config(
-    LocalSession, client, provider_test_class, mock_fetch_provider_task
-):
+def test_post_provider__missing_config(LocalSession, client, provider_test_class):
     response = client.post(
         url="/api/v1/providers",
         json={
@@ -1127,15 +1080,13 @@ def test_post_provider__missing_config(
         },
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 422
     with LocalSession() as db_session:
         assert not db_session.query(database.Provider).all()
-    common.HTTP400Error.model_validate(response.json())
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
 def test_post_provider__noauth__public_get(
-    noauth_client, public_get, provider_test_class, mock_fetch_provider_task
+    noauth_client, public_get, provider_test_class
 ):
     response = noauth_client.post(
         url="/api/v1/providers",
@@ -1146,15 +1097,12 @@ def test_post_provider__noauth__public_get(
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_post_provider__extra_config(
-    client, provider_test_class, mock_fetch_provider_task
-):
+def test_post_provider__extra_config(client, provider_test_class):
     response = client.post(
         url="/api/v1/providers",
         json={
@@ -1169,28 +1117,26 @@ def test_post_provider__extra_config(
     assert response.status_code == 201
     assert "extra" not in response.json()["configuration"]
     data = response.json()
-    assert data["configuration"] == provider_test_class.validate_configuration(
-        provider_test_class.default_configuration
+    assert (
+        data["configuration"]
+        == provider_test_class.validate_configuration(
+            provider_test_class.default_configuration
+        ).model_dump()
     )
-    mock_fetch_provider_task.delay.assert_called_once_with(data["id"])
 
 
-def test_post_provider__bad_class_uid(LocalSession, client, mock_fetch_provider_task):
+def test_post_provider__bad_class_uid(LocalSession, client):
     response = client.post(
         url="/api/v1/providers",
         json={"class_uid": "lu9%z", "configuration": {}},
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 422
     with LocalSession() as db_session:
         assert not db_session.query(database.Provider).all()
-    common.HTTP400Error.model_validate(response.json())
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_post_provider__duplicate(
-    LocalSession, fake_provider, client, mock_fetch_provider_task
-):
+def test_post_provider__duplicate(LocalSession, fake_provider, client):
     response = client.post(
         url="/api/v1/providers",
         json={
@@ -1202,65 +1148,53 @@ def test_post_provider__duplicate(
     assert response.status_code == 409
     with LocalSession() as db_session:
         assert len(db_session.query(database.Provider).all()) == 1
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_update_provider(fake_provider, client, mock_fetch_provider_task):
+def test_run_provider_job(fake_provider, client):
     response = client.post(
-        url=f"/api/v1/providers/{fake_provider.id}/update",
+        url=f"/api/v1/providers/{fake_provider.id}/job/run",
     )
 
     assert response.status_code == 200
-    mock_fetch_provider_task.delay.assert_called_once_with(fake_provider.id)
 
 
-def test_update_provider__noauth(
-    fake_provider, noauth_client, mock_fetch_provider_task
-):
+def test_run_provider_job__noauth(fake_provider, noauth_client):
     response = noauth_client.post(
-        url=f"/api/v1/providers/{fake_provider.id}/update",
+        url=f"/api/v1/providers/{fake_provider.id}/job/run",
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_update_provider__bad_auth(
-    fake_provider, bad_auth_client, mock_fetch_provider_task
-):
+def test_run_provider_job__bad_auth(fake_provider, bad_auth_client):
     response = bad_auth_client.post(
-        url=f"/api/v1/providers/{fake_provider.id}/update",
+        url=f"/api/v1/providers/{fake_provider.id}/job/run",
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_update_provider__noauth__public_get(
-    fake_provider, noauth_client, public_get, mock_fetch_provider_task
-):
+def test_run_provider_job__noauth__public_get(fake_provider, noauth_client, public_get):
     response = noauth_client.post(
-        url=f"/api/v1/providers/{fake_provider.id}/update",
+        url=f"/api/v1/providers/{fake_provider.id}/job/run",
     )
 
     assert response.status_code == 401
-    security.HTTP401Error.model_validate(response.json())
+    common.HTTPStatusError.model_validate(response.json())
     assert "WWW-Authenticate" in response.headers
     assert response.headers["WWW-Authenticate"] == "Basic"
-    mock_fetch_provider_task.delay.assert_not_called()
 
 
-def test_update_provider__not_found(client, mock_fetch_provider_task):
+def test_run_provider_job__not_found(client):
     response = client.post(
-        url="/api/v1/providers/987/update",
+        url="/api/v1/providers/987/job/run",
     )
 
     assert response.status_code == 404
     common.HTTPStatusError.model_validate(response.json())
-    mock_fetch_provider_task.delay.assert_not_called()

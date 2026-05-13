@@ -17,6 +17,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
+from pydantic import ValidationError
 
 from cata_log import exceptions
 from cata_log.providers import Provider
@@ -389,32 +390,37 @@ def test_get_page__preview(
         {
             "required_config": "asdf",
             "optional_config": "test",
-            "typed_config": "4",
-            "optional_typed_config": "2.31",
+            "typed_config": 4,
+            "optional_typed_config": 2.31,
         },
         {
             "required_config": "",
             "optional_config": "test",
-            "typed_config": "0",
-            "optional_typed_config": "2.31",
+            "typed_config": 0,
+            "optional_typed_config": 2.31,
         },
-        {"required_config": "asdf", "typed_config": "4"},
+        {"required_config": "asdf", "typed_config": 4},
         {
             "required_config": "asdf",
             "optional_config": "test",
-            "typed_config": "4",
-            "optional_typed_config": "2.31",
+            "typed_config": 4,
+            "optional_typed_config": 2.31,
             "extra_config": "rgn",
         },
     ],
 )
 def test_validate_configuration__success(provider_test_class, configuration):
-    validated_configuration = provider_test_class.validate_configuration(configuration)
+    validated_configuration = provider_test_class.validate_configuration(
+        configuration
+    ).model_dump()
 
-    for config in provider_test_class.configuration:
-        assert config.name in validated_configuration
-        assert validated_configuration[config.name] == configuration.get(
-            config.name, config.default
+    for (
+        config_name,
+        config_field,
+    ) in provider_test_class.Configuration.model_fields.items():
+        assert config_name in validated_configuration
+        assert validated_configuration[config_name] == configuration.get(
+            config_name, config_field.default
         )
 
 
@@ -425,34 +431,33 @@ def test_validate_configuration__success(provider_test_class, configuration):
             {
                 "required_config": "asdf",
                 "optional_config": "test",
-                "optional_typed_config": "2.31",
+                "optional_typed_config": 2.31,
             },
             ["typed_config"],
         ),
         (
             {
                 "optional_config": "test",
-                "typed_config": "4",
-                "optional_typed_config": "2.31",
+                "typed_config": 4,
+                "optional_typed_config": 2.31,
             },
             ["required_config"],
         ),
         (
-            {"optional_config": "test", "optional_typed_config": "2.31"},
+            {"optional_config": "test", "optional_typed_config": 2.31},
             ["required_config", "typed_config"],
         ),
-        ({"optional_typed_config": "2.31"}, ["required_config", "typed_config"]),
+        ({"optional_typed_config": 2.31}, ["required_config", "typed_config"]),
         ({}, ["required_config", "typed_config"]),
     ],
 )
 def test_validate_configuration__missing_field(
     provider_test_class, configuration, missing_configurations
 ):
-    with pytest.raises(exceptions.ProviderIncompleteConfigurationWarning) as exc_info:
+    with pytest.raises(exceptions.ProviderInvalidConfigurationWarning) as exc_info:
         provider_test_class.validate_configuration(configuration)
-
-    for missing_config in missing_configurations:
-        assert missing_config in exc_info.value.bad_configurations
+    assert exc_info.value.__cause__
+    assert isinstance(exc_info.value.__cause__, ValidationError)
 
 
 @pytest.mark.parametrize(
@@ -468,7 +473,7 @@ def test_validate_configuration__missing_field(
         (
             {
                 "required_config": "asdf",
-                "typed_config": "4",
+                "typed_config": 4,
                 "optional_typed_config": "badfloat",
             },
             ["optional_typed_config"],
@@ -488,6 +493,5 @@ def test_validate_configuration__invalid_field(
 ):
     with pytest.raises(exceptions.ProviderInvalidConfigurationWarning) as exc_info:
         provider_test_class.validate_configuration(configuration)
-
-    for bad_config in bad_configurations:
-        assert bad_config in exc_info.value.bad_configurations
+    assert exc_info.value.__cause__
+    assert isinstance(exc_info.value.__cause__, ValidationError)

@@ -17,6 +17,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import UTC, datetime
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from apscheduler.job import Job as SchedulerJob
@@ -55,7 +56,7 @@ class Provider(AwareTimestampsMixin, BaseModel):
     id: int
     class_uid: str
     note: str | None
-    configuration: dict[str, str]
+    configuration: dict[str, Any]
     status: constants.StatusEnum
     job: Job | None
 
@@ -70,7 +71,7 @@ class Job(AwareDatetimesMixin, BaseModel):
     """Job data model."""
 
     id: str
-    next_run_time: AwareDatetime
+    next_run_time: AwareDatetime | None = None
     schedule: str = Field(validation_alias="trigger")
     jitter: int = Field(validation_alias="trigger")
 
@@ -90,23 +91,27 @@ class Job(AwareDatetimesMixin, BaseModel):
 class ProviderUpdate(BaseModel):
     """Provider update data model."""
 
-    configuration: dict[str, str]
-    note: str | None = None
+    configuration: dict[str, Any] = {}
+    note: str = ""
 
     @field_validator("configuration")
     @classmethod
     def validate_configuration(
-        cls, configuration: dict[str, str], info: ValidationInfo
-    ) -> dict[str, str]:
+        cls, configuration: dict[str, Any], info: ValidationInfo
+    ) -> dict[str, Any]:
         """Validate the provider specific configuration."""
         class_uid = info.context.get("class_uid") if info.context else None
         if class_uid:
             try:
-                configuration = (
-                    ProviderType.get_class(class_uid)
-                    .validate_configuration(configuration)
-                    .model_dump()
-                )  # this won't throw a ProviderUnknownWarning since class_uid is already validated
+                provider_class = ProviderType.get_class(class_uid)
+            except ProviderUnknownClassWarning as unknown_warning:
+                raise PydanticCustomError(
+                    "unknown_provider", str(unknown_warning)
+                ) from unknown_warning
+            try:
+                configuration = provider_class.validate_configuration(
+                    configuration
+                ).model_dump()  # this won't throw a ProviderUnknownWarning since class_uid is already validated
             except ProviderInvalidConfigurationWarning as invalid_warning:
                 raise invalid_warning.__cause__ or PydanticCustomError(
                     "invalid_configuration", str(invalid_warning)
@@ -119,7 +124,7 @@ class NewProvider(BaseModel):
 
     # keep this order for correct order of validation steps
     class_uid: str
-    configuration: dict[str, str]
+    configuration: dict[str, Any]
     note: str | None = None
 
     @field_validator("class_uid")
@@ -137,8 +142,8 @@ class NewProvider(BaseModel):
     @field_validator("configuration")
     @classmethod
     def validate_configuration(
-        cls, configuration: dict[str, str], info: ValidationInfo
-    ) -> dict[str, str]:
+        cls, configuration: dict[str, Any], info: ValidationInfo
+    ) -> dict[str, Any]:
         """Validate the provider specific configuration."""
         class_uid = info.data.get("class_uid")
         if class_uid:
@@ -355,7 +360,7 @@ def patch_provider(
             status_code=status.HTTP_409_CONFLICT,
             detail="The given provider configuration already exists",
         )
-    for key, value in provider_update.model_dump().items():
+    for key, value in provider_update.model_dump(exclude_unset=True).items():
         setattr(provider, key, value)
     db_session.commit()
     scheduler.add_job(
