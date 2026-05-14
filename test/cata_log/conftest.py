@@ -156,8 +156,8 @@ def noauth_client(fake_credentials, fastapi_app):
 
 
 @pytest.fixture
-def bad_auth_client(faker, noauth_client):
-    noauth_client.headers = {"Authorization": f"Basic {faker.word()}"}
+def bad_auth_client(noauth_client):
+    noauth_client.headers = {"Authorization": "Basic thewrongauthentication"}
     return noauth_client
 
 
@@ -250,7 +250,7 @@ def fake_latest_catalog(fake_catalog_preview):
 
 @pytest.fixture
 def fake_file(faker):
-    path = get_settings().storage_path / "0.jpg"
+    path = get_settings().storage_path / (faker.uuid4() + ".webp")
     path.write_text(faker.text())
     return path
 
