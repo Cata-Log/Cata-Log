@@ -840,7 +840,8 @@ def test_patch_provider(LocalSession, fake_provider, client):
             "configuration": {
                 **old_configuration,
                 "optional_config": "some value",
-            }
+            },
+            "note": "new note",
         },
     )
 
@@ -855,6 +856,7 @@ def test_patch_provider(LocalSession, fake_provider, client):
         provider = db_session.get(database.Provider, fake_provider.id)
     assert provider.class_uid == data["class_uid"]
     assert provider.configuration == data["configuration"]
+    assert provider.note == data["note"]
 
 
 def test_patch_provider__noauth(fake_provider, noauth_client):
@@ -939,6 +941,23 @@ def test_patch_provider__bad_config(fake_provider, client):
     )
 
     assert response.status_code == 422
+
+
+def test_patch_provider__no_config(LocalSession, fake_provider, client):
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"note": "some note"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["class_uid"] == fake_provider.class_uid
+    assert data["configuration"] == fake_provider.configuration
+    with LocalSession() as db_session:
+        provider = db_session.get(database.Provider, fake_provider.id)
+    assert provider.class_uid == data["class_uid"]
+    assert provider.configuration == data["configuration"]
+    assert provider.note == data["note"]
 
 
 def test_patch_provider__extra_config(fake_provider, client):

@@ -343,23 +343,26 @@ def patch_provider(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found"
         )
-    try:
-        provider_update = ProviderUpdate.model_validate(
-            provider_update.model_dump(), context={"class_uid": provider.class_uid}
-        )
-    except ValidationError as validation_error:
-        raise RequestValidationError(validation_error.errors()) from validation_error
-    if any(
-        other_provider.configuration == provider_update.configuration
-        for other_provider in db_session.query(database.Provider)
-        .filter(database.Provider.class_uid == provider.class_uid)
-        .filter(database.Provider.id != provider.id)
-        .all()
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="The given provider configuration already exists",
-        )
+    if "configuration" in provider_update.model_dump(exclude_unset=True):
+        try:
+            provider_update = ProviderUpdate.model_validate(
+                provider_update.model_dump(), context={"class_uid": provider.class_uid}
+            )
+        except ValidationError as validation_error:
+            raise RequestValidationError(
+                validation_error.errors()
+            ) from validation_error
+        if any(
+            other_provider.configuration == provider_update.configuration
+            for other_provider in db_session.query(database.Provider)
+            .filter(database.Provider.class_uid == provider.class_uid)
+            .filter(database.Provider.id != provider.id)
+            .all()
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="The given provider configuration already exists",
+            )
     for key, value in provider_update.model_dump(exclude_unset=True).items():
         setattr(provider, key, value)
     db_session.commit()
