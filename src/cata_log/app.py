@@ -17,7 +17,6 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from fastapi import Depends, FastAPI, status
-from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
 from cata_log import (
@@ -30,47 +29,46 @@ from cata_log import (
     web,
 )
 from cata_log.api import common
-from cata_log.exceptions import HealthCheckFailedError
 
-app = FastAPI(
-    dependencies=[Depends(security.verify_credentials)],
-    responses={
-        status.HTTP_401_UNAUTHORIZED: {
-            "model": common.HTTPStatusError,
-            "description": "If the request is not authorized.",
+
+def create_fastapi_app() -> FastAPI:
+    """Create an instance of the Cata-Log fastapi app.
+
+    Returns:
+        The fastapi app.
+    """
+    app = FastAPI(
+        dependencies=[Depends(security.verify_credentials)],
+        responses={
+            status.HTTP_401_UNAUTHORIZED: {
+                "model": common.HTTPStatusError,
+                "description": "If the request is not authorized.",
+            },
         },
-    },
-    title="Cata-Log",
-    description="The Central Hub For Grocery Store Catalogs",
-    summary="API overview for Cata-Log",
-    version=__version__,
-    license_info={
-        "name": "AGPL version 3 or later",
-        "url": "https://www.gnu.org/licenses/agpl-3.0",
-    },
-    contact={
-        "name": "Github Repo",
-        "url": "https://github.com/cata-log/cata-log.git",
-    },
-    docs_url="/docs/swagger",
-    redoc_url="/docs/redoc",
-)
-app.add_route(
-    "/docs",
-    lambda _: RedirectResponse("/docs/swagger", status_code=status.HTTP_302_FOUND),
-)
+        title="Cata-Log",
+        description="The Central Hub For Grocery Store Catalogs",
+        summary="API overview for Cata-Log",
+        version=__version__,
+        license_info={
+            "name": "AGPL version 3 or later",
+            "url": "https://www.gnu.org/licenses/agpl-3.0",
+        },
+        contact={
+            "name": "Github Repo",
+            "url": "https://github.com/cata-log/cata-log.git",
+        },
+        docs_url="/docs/swagger",
+        redoc_url="/docs/redoc",
+    )
+    app.add_route(
+        "/docs",
+        lambda _: RedirectResponse("/docs/swagger", status_code=status.HTTP_302_FOUND),
+    )
 
+    app.mount("/static", static.create_staticfiles_app(), "static")
+    app.include_router(api.router)
+    app.include_router(web.router)
+    app.include_router(opds.router)
+    app.include_router(health.router)
 
-@app.get("/health", status_code=200, include_in_schema=False)
-def healthcheck() -> None:
-    """HTTP endpoint to trigger healthchecks."""
-    try:
-        health.check()
-    except HealthCheckFailedError as error:
-        raise HTTPException(detail=str(error), status_code=500) from error
-
-
-app.mount("/static", static.app, "static")
-app.include_router(api.router)
-app.include_router(web.router)
-app.include_router(opds.router)
+    return app

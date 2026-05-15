@@ -17,9 +17,11 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from copy import deepcopy
+from io import BytesIO
 from urllib.parse import urljoin
 
 import pytest
+from pypdf import PdfReader
 
 from cata_log import database
 from cata_log.api import common
@@ -482,6 +484,23 @@ def test_get_latest_provider_catalog_page__page_not_found(
     common.HTTPStatusError.model_validate(response.json())
     data = response.json()
     assert data["detail"] == "Page not found"
+
+
+def test_download_latest_provider_catalog(fake_provider, full_database, client):
+    response = client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/download",
+    )
+
+    assert response.status_code == 200
+    assert response.headers
+    assert "content-type" in response.headers
+    assert response.headers["content-type"] == "application/pdf"
+    assert "content-disposition" in response.headers
+    assert response.headers["content-disposition"].startswith("attachment")
+    assert response.content
+    pdf_reader = PdfReader(BytesIO(response.content), strict=True)
+    assert len(pdf_reader.pages) == 1
+    assert len(pdf_reader.pages[0].images) == 1
 
 
 def test_download_latest_provider_catalog__noauth(
@@ -1167,6 +1186,56 @@ def test_post_provider__duplicate(LocalSession, fake_provider, client):
     assert response.status_code == 409
     with LocalSession() as db_session:
         assert len(db_session.query(database.Provider).all()) == 1
+
+
+def test_get_provider_job(fake_provider, client):
+    response = client.get(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 200
+
+
+def test_get_provider_job__noauth(fake_provider, noauth_client):
+    response = noauth_client.get(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_provider_job__bad_auth(fake_provider, bad_auth_client):
+    response = bad_auth_client.get(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_provider_job__provider_not_found(client):
+    response = client.get(
+        url="/api/v1/providers/987/job",
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+
+
+def test_get_provider_job__no_job(client, fake_provider):
+    fake_provider.remove_job()
+
+    response = client.get(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
 
 
 def test_run_provider_job(fake_provider, client):

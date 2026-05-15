@@ -23,15 +23,25 @@ from fastapi.staticfiles import StaticFiles
 
 from cata_log.settings import get_settings
 
-app = FastAPI(openapi_url=None)
 
-app.mount(
-    "/pages", StaticFiles(directory=get_settings().storage_path), name="static-pages"
-)
+def create_staticfiles_app() -> FastAPI:
+    """Create an instance of the Cata-Log staticfiles fastapi sub-app.
 
-with resources.path("cata_log.web", "static/js") as path:
+    Returns:
+        The fastapi app.
+    """
+    app = FastAPI(openapi_url=None)
+
     app.mount(
-        "/js",
-        StaticFiles(directory=path),
-        name="static-js",
+        "/pages",
+        StaticFiles(directory=get_settings().storage_path),
+        name="static-pages",
     )
+    with resources.path("cata_log.web", "static/js") as path:
+        app.mount(
+            "/js",
+            StaticFiles(directory=path),
+            name="static-js",
+        )
+
+    return app

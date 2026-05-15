@@ -78,11 +78,16 @@ stubs = [
 ]
 test = [
     "faker>=40.8.0",
+    "faker-file>=0.19.1",
     "freezegun>=1.5.5",
+    "pypdf>=6.11.0",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     "pytest-html>=4.2.0",
     "pytest-httpx>=0.36.0",
+]
+tset = [
+    "pypdf>=6.11.0",
 ]
 
 [tool.setuptools]

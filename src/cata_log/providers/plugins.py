@@ -17,8 +17,11 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import importlib.util
+import logging
 
 from cata_log.settings import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 def load_plugins() -> None:
@@ -26,7 +29,10 @@ def load_plugins() -> None:
     for file in get_settings().plugin_path.glob("**/**.py"):
         module_name = file.stem
         spec = importlib.util.spec_from_file_location(module_name, file)
-        if spec is not None:
-            module = importlib.util.module_from_spec(spec)
-            if spec.loader:
-                spec.loader.exec_module(module)
+        if spec is None or spec.loader is None:
+            continue
+        module = importlib.util.module_from_spec(spec)
+        try:
+            spec.loader.exec_module(module)
+        except Exception:
+            logger.exception("Loading plugin %s resulted in an error!", module_name)

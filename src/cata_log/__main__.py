@@ -23,6 +23,8 @@ import alembic.command
 import uvicorn
 from alembic.config import Config
 
+from cata_log.app import create_fastapi_app
+
 if __name__ == "__main__":
     import cata_log.logging
     import cata_log.scheduler
@@ -39,7 +41,7 @@ if __name__ == "__main__":
     cata_log.scheduler.scheduler.start()
 
     uvicorn.run(
-        app="cata_log.app:app",
+        app=create_fastapi_app(),
         host=str(settings.host),
         port=settings.port,
         forwarded_allow_ips=settings.forwarded_allow_ips,

@@ -51,7 +51,7 @@ def cleanup_catalogs() -> None:
     """Job to cleanup outdated catalogs."""
     with database.DBSession() as db_session:
         expiration_days = get_settings().expiration_days
-        if expiration_days:
+        if expiration_days > 0:
             expiration_date = datetime.now(tz=UTC) - timedelta(days=expiration_days)
             database.Catalog.cleanup(db_session, expiration_date)
 

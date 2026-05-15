@@ -18,10 +18,6 @@
 
 import os
 import sys
-from io import BytesIO
-from types import MappingProxyType
-
-from PIL import Image
 
 sys.argv = [
     "python3 -m cata_log",
@@ -32,13 +28,23 @@ os.environ["CATA_LOG_DATABASE_PATH"] = "/tmp/mnt/db/"
 os.environ["CATA_LOG_PLUGIN_PATH"] = "/tmp/mnt/plugins/"
 os.environ["CATA_LOG_LOGS_PATH"] = "/tmp/var/log/cata-log/"
 
+
 # ruff: noqa: E402 # must set environment before importing from cata_log
 import base64
 import enum
 from datetime import UTC, datetime, timedelta
+from types import MappingProxyType
 from typing import override
 
 import pytest
+from faker_file.providers.bmp_file import GraphicBmpFileProvider
+from faker_file.providers.gif_file import GraphicGifFileProvider
+from faker_file.providers.ico_file import GraphicIcoFileProvider
+from faker_file.providers.image.pil_generator import PilImageGenerator
+from faker_file.providers.jpeg_file import GraphicJpegFileProvider
+from faker_file.providers.png_file import GraphicPngFileProvider
+from faker_file.providers.tiff_file import GraphicTiffFileProvider
+from faker_file.providers.webp_file import GraphicWebpFileProvider
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
 from httpx import HTTPStatusError, Request, Response, TransportError
@@ -46,6 +52,7 @@ from pydantic import Field
 from sqlalchemy import StaticPool, create_engine, orm
 
 from cata_log import database, exceptions
+from cata_log.app import create_fastapi_app
 from cata_log.exceptions import PagesExhausted
 from cata_log.providers import Provider
 from cata_log.providers.base import Preview
@@ -62,6 +69,27 @@ def temp_settings_paths(monkeypatch, tmp_path):
     monkeypatch.setenv("CATA_LOG_PLUGIN_PATH", str(tmp_path / "mnt/plugins/"))
     monkeypatch.setenv("CATA_LOG_LOGS_PATH", str(tmp_path / "var/log/cata-log/"))
     get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True, scope="session")
+def add_image_providers_to_faker(_session_faker):
+    _session_faker.add_provider(GraphicWebpFileProvider)
+    _session_faker.add_provider(GraphicPngFileProvider)
+    _session_faker.add_provider(GraphicJpegFileProvider)
+    _session_faker.add_provider(GraphicIcoFileProvider)
+    _session_faker.add_provider(GraphicBmpFileProvider)
+    _session_faker.add_provider(GraphicGifFileProvider)
+    _session_faker.add_provider(GraphicTiffFileProvider)
+    _session_faker.AVAILABLE_IMAGE_FORMATS = (
+        "webp",
+        "png",
+        "jpeg",
+        "ico",
+        "bmp",
+        "gif",
+        "tiff",
+    )
+    return _session_faker
 
 
 @pytest.fixture
@@ -84,12 +112,12 @@ def LocalSession(engine):
     return orm.sessionmaker(bind=engine)
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def patch_engine(monkeypatch, engine):
     monkeypatch.setattr("cata_log.database.engine", engine)
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def patch_DBSession(monkeypatch, LocalSession):
     monkeypatch.setattr("cata_log.database.DBSession", LocalSession)
 
@@ -142,11 +170,7 @@ def public_get(monkeypatch):
 
 @pytest.fixture
 def fastapi_app():
-    from cata_log.app import app  # noqa: PLC0415
-
-    yield app
-
-    del app
+    return create_fastapi_app()
 
 
 @pytest.fixture
@@ -157,7 +181,9 @@ def noauth_client(fake_credentials, fastapi_app):
 
 @pytest.fixture
 def bad_auth_client(noauth_client):
-    noauth_client.headers = {"Authorization": "Basic thewrongauthentication"}
+    noauth_client.headers = {
+        "Authorization": f"Basic {base64.b64encode(b'bad_user:noauthentication').decode('utf-8')}"
+    }
     return noauth_client
 
 
@@ -251,7 +277,9 @@ def fake_latest_catalog(fake_catalog_preview):
 @pytest.fixture
 def fake_file(faker):
     path = get_settings().storage_path / (faker.uuid4() + ".webp")
-    path.write_text(faker.text())
+    path.write_bytes(
+        faker.graphic_webp_file(raw=True, image_generator_cls=PilImageGenerator)
+    )
     return path
 
 
@@ -392,13 +420,10 @@ def provider_test_class(_session_faker):
             SideEffects.run(self._configuration.side_effect)
             if page_number >= 10:
                 raise PagesExhausted
-            with Image.new(
-                mode="RGB", size=(10, 25), color=_session_faker.color()
-            ) as fake_image:
-                fake_image_bytes_io = BytesIO()
-                fake_image.save(fake_image_bytes_io, format="JPEG")
-            fake_image_bytes_io.seek(0)
-            return fake_image_bytes_io.read()
+            return getattr(
+                _session_faker,
+                f"graphic_{_session_faker.random_element(_session_faker.AVAILABLE_IMAGE_FORMATS)}_file",
+            )(raw=True, image_generator_cls=PilImageGenerator)
 
         @override
         def _get_catalog_data(self):

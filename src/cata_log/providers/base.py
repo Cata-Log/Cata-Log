@@ -128,12 +128,6 @@ class Provider(abc.ABC):
         """
         self._client.close()
 
-    @final
-    @override
-    def __str__(self) -> str:
-        """String representation of this provider."""
-        return f"Provider {self.name}"
-
     def get_relevant_datetime(self) -> datetime:
         """Get the datetime that defines the catalog offered by this provider.
         The current datetime for current catalogs, a future datetime for preview catalogs.

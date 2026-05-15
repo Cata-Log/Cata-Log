@@ -19,14 +19,8 @@
 import xml.etree.ElementTree as ET
 from io import BytesIO
 
-import pytest
 from ebooklib import epub
 from fastapi import status
-
-
-@pytest.fixture(autouse=True)
-def patch_database(patch_engine, patch_DBSession):
-    """Patch the database."""
 
 
 def test_get_opds_catalog_overview(client, full_database):

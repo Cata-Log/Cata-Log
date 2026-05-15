@@ -22,6 +22,8 @@ import socket
 
 import psutil
 import sqlalchemy.exc
+from fastapi import APIRouter
+from fastapi.exceptions import HTTPException
 from sqlalchemy.sql import text
 
 from cata_log.database import DBSession
@@ -52,7 +54,7 @@ def check_memory() -> None:
         HealthCheckFailedError: If memory usage is high.
     """
     memory = psutil.virtual_memory()
-    if memory.used / memory.total > CRITICAL_RESOURCE_USAGE:
+    if memory.percent / 100 > CRITICAL_RESOURCE_USAGE:
         logger.critical(
             "Memory is becoming sparse! Used: %s, Total: %s", memory.used, memory.total
         )
@@ -65,10 +67,12 @@ def check_diskspace() -> None:
     Raises;
         HealthCheckFailedError: If disk usage is high.
     """
-    total, used, _ = shutil.disk_usage("/")
-    if used / total > CRITICAL_RESOURCE_USAGE:
+    disk_usage = shutil.disk_usage("/")
+    if disk_usage.used / disk_usage.total > CRITICAL_RESOURCE_USAGE:
         logger.critical(
-            "Disk space is becoming sparse! Used: %s, Total: %s", total, used
+            "Disk space is becoming sparse! Used: %s, Total: %s",
+            disk_usage.total,
+            disk_usage.used,
         )
         raise HealthCheckFailedError("Disk space is becoming sparse!")
 
@@ -147,3 +151,15 @@ def check() -> None:
     check_memory()
     check_internet()
     logger.info("Healthcheck passed successfully.")
+
+
+router = APIRouter(prefix="", include_in_schema=False)
+
+
+@router.get("/health", status_code=200)
+def healthcheck() -> None:
+    """HTTP endpoint to trigger healthchecks."""
+    try:
+        check()
+    except HealthCheckFailedError as error:
+        raise HTTPException(detail=str(error), status_code=500) from error

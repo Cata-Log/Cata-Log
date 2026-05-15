@@ -262,7 +262,7 @@ def test_get_valid_since__preview(
                     "pass_get_catalog_data": "True",
                     **preview_provider_test_class.default_configuration,
                 }
-            ).get_valid_until()
+            ).get_valid_since()
     else:
         result = preview_provider_test_class(
             {
@@ -270,7 +270,7 @@ def test_get_valid_since__preview(
                 "pass_get_catalog_data": "True",
                 **preview_provider_test_class.default_configuration,
             }
-        ).get_valid_until()
+        ).get_valid_since()
 
         assert result
 
