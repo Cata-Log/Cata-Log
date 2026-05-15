@@ -1238,6 +1238,119 @@ def test_get_provider_job__no_job(client, fake_provider):
     common.HTTPStatusError.model_validate(response.json())
 
 
+def test_delete_provider_job(fake_provider, db_session, client):
+    assert fake_provider.job_id
+
+    response = client.delete(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 200
+    db_session.refresh(fake_provider)
+    assert not fake_provider.job_id
+
+
+def test_delete_provider_job__noauth(fake_provider, noauth_client):
+    response = noauth_client.delete(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_delete_provider_job__bad_auth(fake_provider, bad_auth_client):
+    response = bad_auth_client.delete(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_delete_provider_job__provider_not_found(client):
+    response = client.delete(
+        url="/api/v1/providers/987/job",
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+
+
+def test_delete_provider_job__no_job(client, db_session, fake_provider):
+    fake_provider.remove_job()
+
+    response = client.delete(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 200
+    db_session.refresh(fake_provider)
+    assert not fake_provider.job_id
+
+
+def test_post_provider_job(fake_provider, db_session, client):
+    fake_provider.remove_job()
+    db_session.commit()
+
+    assert not fake_provider.job_id
+
+    response = client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 200
+    db_session.refresh(fake_provider)
+    assert fake_provider.job_id
+
+
+def test_post_provider_job__noauth(fake_provider, noauth_client):
+    response = noauth_client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_post_provider_job__bad_auth(fake_provider, bad_auth_client):
+    response = bad_auth_client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_post_provider_job__provider_not_found(client):
+    response = client.post(
+        url="/api/v1/providers/987/job",
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+
+
+def test_post_provider_job__with_job(client, db_session, fake_provider):
+    assert fake_provider.job_id
+
+    response = client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 200
+    db_session.refresh(fake_provider)
+    assert fake_provider.job_id
+
+
 def test_run_provider_job(fake_provider, client):
     response = client.post(
         url=f"/api/v1/providers/{fake_provider.id}/job/run",

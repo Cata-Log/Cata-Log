@@ -720,7 +720,7 @@ def post_provider_job_run(
 
 
 @router.post(
-    "/{provider_id}/job/add",
+    "/{provider_id}/job",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_404_NOT_FOUND: {
@@ -745,8 +745,8 @@ def post_provider_add_job(
     return provider
 
 
-@router.post(
-    "/{provider_id}/job/remove",
+@router.delete(
+    "/{provider_id}/job",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_404_NOT_FOUND: {
@@ -755,7 +755,7 @@ def post_provider_add_job(
         },
     },
     response_model=Provider,
-    operation_id="remove-provider-job-v1",
+    operation_id="delete-provider-job-v1",
 )
 def post_provider_remove_job(
     provider_id: int, db_session: Session = database.depends_db_session

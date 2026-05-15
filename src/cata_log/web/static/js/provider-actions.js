@@ -40,11 +40,10 @@ document
 document.querySelectorAll(".provider-job-switch").forEach((jobSwitch) => {
   jobSwitch.addEventListener("change", (event) => {
     provider_id = event.target.dataset.id;
-    endpoint = event.target.checked ? "add" : "remove";
-    toggleRequest = new Request(
-      `/api/v1/providers/${provider_id}/job/${endpoint}`,
+    endpoint = toggleRequest = new Request(
+      `/api/v1/providers/${provider_id}/job`,
       {
-        method: "POST",
+        method: event.target.checked ? "POST" : "DELETE",
       },
     );
     fetch(toggleRequest)
