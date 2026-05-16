@@ -17,7 +17,15 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from .action import Action
-from .aldi import AldiSued, AldiSuedPrepreview, AldiSuedPreview
+from .aldi_nord import (
+    AldiNord,
+    AldiNordPreview,
+)
+from .aldi_sued import (
+    AldiSued,
+    AldiSuedPrepreview,
+    AldiSuedPreview,
+)
 from .base import Provider
 from .edeka import EdekaMarkt
 from .hofer import Hofer, HoferPreview
@@ -39,6 +47,8 @@ from .rossmann import RossmannAngebote
 
 __all__ = [
     "Action",
+    "AldiNord",
+    "AldiNordPreview",
     "AldiSued",
     "AldiSuedPrepreview",
     "AldiSuedPreview",
