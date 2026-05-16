@@ -187,10 +187,7 @@ class Provider(abc.ABC):
                 raise ProviderMisconfiguredOrBrokenWarning from catalog_unavailable_error.__cause__
             raise
         except httpx.HTTPStatusError as status_error:
-            if (
-                status_error.response.status_code == httpx.codes.NOT_FOUND
-                and page_number != self.first_page_number
-            ):
+            if status_error.response.is_error and page_number != self.first_page_number:
                 self._logger.debug(
                     "Page %s appears to be the last page.",
                     page_number - 1,
