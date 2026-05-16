@@ -85,7 +85,7 @@ class Provider(abc.ABC):
             headers={"User-Agent": UserAgent().random},
             event_hooks={
                 "response": [
-                    lambda r, *_, **__: r.raise_for_status(),
+                    lambda r, *_, **__: r.raise_for_status() if r.is_error else None,
                 ]
             },
             timeout=get_settings().request_timeout,
