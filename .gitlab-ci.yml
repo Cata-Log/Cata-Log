@@ -6,6 +6,8 @@ default:
     - export DEBIAN_FRONTEND=noninteractive
     - export PYTHONPATH='src'
     - pip install --no-cache uv
+    - uv venv
+    - source .venv/bin/activate
 
 workflow:
   rules:

@@ -26,9 +26,11 @@ Don't forget to activate the venv
 source .venv/bin/activate
 ```
 
-You can install the editable package for development
+Lastly, install the editable package locally
 
-
+```bash
+uv pip install -e .
+```
 
 ## Debug
 
@@ -36,13 +38,7 @@ To browse the sqlite3 db for debugging, install [sqlitebrowser](https://github.c
 
 There is a debug docker-compose file that can be used to run the application in debug mode.
 
-Also you can install the editable package locally
-
-```bash
-uv pip install -e .
-```
-
-and run it
+Alternatively you can run the local package
 
 ```bash
 python3 -m cata_log
@@ -58,6 +54,8 @@ You can run them from the project root with
 ```bash
 pytest
 ```
+
+The cata_log package must be installed beforehand.
 
 ## Validation and Linting
 
