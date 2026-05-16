@@ -111,7 +111,6 @@ class Provider(abc.ABC):
         """Entrypoint for the context manager."""
         return self
 
-    @final
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
