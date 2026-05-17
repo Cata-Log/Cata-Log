@@ -20,6 +20,10 @@ from calendar import Day
 from datetime import datetime, time, timedelta
 from typing import override
 
+import httpx
+from httpx import HTTPStatusError
+
+from cata_log.exceptions import CatalogUnavailableWarning
 from cata_log.utils.dates import get_calendar_week_number
 from cata_log.utils.page_numbers import PageNumber
 
@@ -27,15 +31,15 @@ from .base import Provider
 from .regions import Germany
 
 
-class RossmannAngebote(Provider):
-    """Provider class for Rossmann Angebote catalog."""
+class RossmannBeilage(Provider):
+    """Provider class for Rossmann Beilage catalog."""
 
-    uid = "rossmann-de"
+    uid = "rossmann-beilage-de"
     name = "Rossmann-Angebote"
     description = "Rossmann Angebote"
     url = "https://www.rossmann.de/de/kataloge/angebote/index.html"
     region = Germany
-    schedule = "0 5 * * 0"
+    schedule = "0 5 * * 1-5"
 
     url_format = "https://www.rossmann.de/de/kataloge/angebote/catalogs/{relevant_datetime:%Y}_kw{week_number}_beilage/normal/bk_{page_number}.jpg"
 
@@ -45,13 +49,21 @@ class RossmannAngebote(Provider):
 
     @override
     def _get_page(self, page_number: PageNumber) -> bytes:
-        response = self._client.get(
-            self.url_format.format(
-                relevant_datetime=self._relevant_datetime,
-                week_number=get_calendar_week_number(self._relevant_datetime),
-                page_number=page_number,
-            ),
-        )
+        try:
+            response = self._client.get(
+                self.url_format.format(
+                    relevant_datetime=self._relevant_datetime,
+                    week_number=get_calendar_week_number(self._relevant_datetime),
+                    page_number=page_number,
+                ),
+            )
+        except HTTPStatusError as status_error:
+            if (
+                status_error.response.status_code == httpx.codes.NOT_FOUND
+                and page_number == self.first_page_number
+            ):
+                raise CatalogUnavailableWarning from status_error
+            raise
         return response.content
 
     @override
@@ -66,3 +78,13 @@ class RossmannAngebote(Provider):
     @override
     def _get_valid_until(self) -> datetime:
         return self._get_valid_since() + timedelta(days=7)
+
+
+class RossmannAktion(RossmannBeilage):
+    """Provider class for Rossmann Angebote catalog."""
+
+    uid = "rossmann-aktion-de"
+    name = "Rossmann-Aktionsangebote"
+    description = "Rossmann Aktionsangebote"
+
+    url_format = "https://www.rossmann.de/de/kataloge/angebote/catalogs/{relevant_datetime:%Y}_kw{week_number}_aktion/normal/bk_{page_number}.jpg"

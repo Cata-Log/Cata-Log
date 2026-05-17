@@ -29,7 +29,7 @@ from .aldi_sued import (
 from .base import Provider
 from .edeka import EdekaMarkt
 from .hofer import Hofer, HoferPreview
-from .kaufland import KauflandWoche, KauflandWochePreview
+from .kaufland import KauflandSonder, KauflandWoche, KauflandWochePreview
 from .kik import Kik
 from .lidl import (
     LidlDeutschland,
@@ -43,7 +43,7 @@ from .norma import Norma
 from .penny import Penny, PennyPreview
 from .plugins import load_plugins
 from .rewe import Rewe, RewePreview
-from .rossmann import RossmannAngebote
+from .rossmann import RossmannAktion, RossmannBeilage
 
 __all__ = [
     "Action",
@@ -55,6 +55,7 @@ __all__ = [
     "EdekaMarkt",
     "Hofer",
     "HoferPreview",
+    "KauflandSonder",
     "KauflandWoche",
     "KauflandWochePreview",
     "Kik",
@@ -72,7 +73,8 @@ __all__ = [
     "Provider",
     "Rewe",
     "RewePreview",
-    "RossmannAngebote",
+    "RossmannAktion",
+    "RossmannBeilage",
 ]
 
 load_plugins()

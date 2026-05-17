@@ -49,6 +49,9 @@ class LidlDeutschland(Provider):
         )
 
     overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={region_id}&client_locale=lidl/{language_code_lower}-{language_code_upper}"
+
+    subcategory_name = "Aktionsprospekte"
+    category_name = "Filial"
     flyer_index = 0
 
     @override
@@ -60,17 +63,39 @@ class LidlDeutschland(Provider):
                 language_code_upper=self.region.language_code.upper(),
             )
         )
-        flyer_json_response = self._client.get(
-            overview_response.json()["categories"][0]["subcategories"][0]["flyers"][
-                self.flyer_index
-            ]["flyerJson"]
+        overview_category = next(
+            (
+                category
+                for category in overview_response.json()["categories"]
+                if self.category_name in category["name"]
+            ),
+            None,
         )
+        if overview_category is None:
+            raise CatalogUnavailableWarning
+        overview_subcategory = next(
+            (
+                subcategory
+                for subcategory in overview_category["subcategories"]
+                if self.subcategory_name in subcategory["name"]
+            ),
+            None,
+        )
+        if overview_subcategory is None:
+            raise CatalogUnavailableWarning
+        try:
+            flyer_json_url = overview_subcategory["flyers"][self.flyer_index][
+                "flyerJson"
+            ]
+        except IndexError as index_error:
+            raise CatalogUnavailableWarning from index_error
+        flyer_json_response = self._client.get(flyer_json_url)
         self.flyer_json = flyer_json_response.json()
 
     @override
     def _get_page(self, page_number: PageNumber) -> bytes:
         try:
-            url = self.flyer_json["flyer"]["pages"][int(page_number)]["image"]
+            url = self.flyer_json["flyer"]["pages"][int(page_number)]["zoom"]
         except IndexError as error:
             raise PagesExhausted from error
         response = self._client.get(url)
@@ -98,13 +123,6 @@ class LidlDeutschlandPreview(Preview, LidlDeutschland):
     flyer_index = 1
     preview_timedelta = timedelta(days=7)
 
-    @override
-    def _get_catalog_data(self) -> None:
-        try:
-            super()._get_catalog_data()
-        except IndexError as index_error:
-            raise CatalogUnavailableWarning from index_error
-
 
 class LidlDeutschlandPrepreview(LidlDeutschlandPreview):
     """Provider class for Lidl preview catalog for second-next week."""
@@ -122,5 +140,3 @@ class LidlItalia(LidlDeutschland):
     uid = "lidl-it"
     region = Italy
     description = "Offerte Lidl"
-
-    overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={region_id}&client_locale=lidl/it-IT"

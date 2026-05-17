@@ -51,6 +51,8 @@ class KauflandWoche(Provider):
     first_page_number = 0
 
     overview_url_template = "https://endpoints.leaflets.schwarz/v4/overview/?region_id={filial_id}&client_locale=kaufland/{language_code_lower}-{language_code_upper}"
+    subcategory_name = "KDZ1"
+    flyer_index = 0
 
     @override
     def _get_catalog_data(self) -> None:
@@ -61,17 +63,31 @@ class KauflandWoche(Provider):
                 language_code_upper=self.region.language_code.upper(),
             )
         )
-        flyer_json_response = self._client.get(
-            overview_response.json()["categories"][0]["subcategories"][-2]["flyers"][0][
+        try:
+            overview_subcategory = next(
+                (
+                    subcategory
+                    for subcategory in overview_response.json()["categories"][0][
+                        "subcategories"
+                    ]
+                    if self.subcategory_name in subcategory["name"]
+                ),
+                None,
+            )
+            if overview_subcategory is None:
+                raise CatalogUnavailableWarning
+            flyer_json_url = overview_subcategory["flyers"][self.flyer_index][
                 "flyerJson"
             ]
-        )
+        except IndexError as index_error:
+            raise CatalogUnavailableWarning from index_error
+        flyer_json_response = self._client.get(flyer_json_url)
         self.flyer_json = flyer_json_response.json()
 
     @override
     def _get_page(self, page_number: PageNumber) -> bytes:
         try:
-            url = self.flyer_json["flyer"]["pages"][int(page_number)]["image"]
+            url = self.flyer_json["flyer"]["pages"][int(page_number)]["zoom"]
         except IndexError as error:
             raise PagesExhausted from error
         response = self._client.get(url)
@@ -98,21 +114,15 @@ class KauflandWochePreview(Preview, KauflandWoche):
     description = KauflandWoche.description + " im nächsten Katalog"
     preview_timedelta = timedelta(days=7)
 
-    @override
-    def _get_catalog_data(self) -> None:
-        overview_response = self._client.get(
-            self.overview_url_template.format(
-                filial_id=self._configuration.filial_id,
-                language_code_lower=self.region.language_code.lower(),
-                language_code_upper=self.region.language_code.upper(),
-            )
-        )
-        try:
-            flyer_json_response = self._client.get(
-                overview_response.json()["categories"][0]["subcategories"][-2][
-                    "flyers"
-                ][1]["flyerJson"]
-            )
-        except IndexError as index_error:
-            raise CatalogUnavailableWarning from index_error
-        self.flyer_json = flyer_json_response.json()
+    flyer_index = 1
+
+
+class KauflandSonder(KauflandWoche):
+    """Provider class for Kaufland Sonderangebote catalog."""
+
+    uid = "kaufland-sonder-de"
+    name = "Kaufland Sonderprospekt"
+    description = "Kaufland Sonderangebote"
+
+    flyer_index = 0
+    subcategory_name = "KDZ2"

@@ -55,11 +55,10 @@ class Netto(Provider):
     @override
     def _get_page(self, page_number: page_numbers.PageNumber) -> bytes:
         try:
-            page_url = self.catalog_data[int(page_number)]["pages"][0]["images"][
-                "at2400"
-            ]
+            page_data = self.catalog_data[int(page_number)]
         except IndexError as error:
             raise PagesExhausted from error
+        page_url = page_data["pages"][0]["images"]["at2400"]
         return self._client.get(urljoin(self.base_url, page_url)).content
 
     @override
