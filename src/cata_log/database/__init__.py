@@ -26,7 +26,10 @@ from cata_log.settings import get_settings
 
 from .models import Catalog, ModelBase, Page, PageFile, Provider
 
-DATABASE_URL = f"sqlite:///{get_settings().database_path / 'cata-log.sqlite3'}"
+DATABASE_URL = (
+    get_settings().external_database_url
+    or f"sqlite:///{get_settings().database_path / 'cata-log.sqlite3'}"
+)
 
 engine = create_engine(url=DATABASE_URL)
 

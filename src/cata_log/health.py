@@ -85,26 +85,28 @@ def check_database() -> None:
     """
     try:
         with DBSession() as db_session:
-            integrity_check_result = db_session.execute(
-                text("PRAGMA integrity_check;")
-            ).fetchall()
-            if integrity_check_result[0][0] != "ok":
-                logger.critical(
-                    "Database integrity check failed! Errors: %s",
-                    integrity_check_result,
-                )
-                raise HealthCheckFailedError("Database integrity check failed!")
-            foreign_key_check_result = db_session.execute(
-                text("PRAGMA foreign_key_check;")
-            ).fetchall()
-            if foreign_key_check_result:
-                logger.critical(
-                    "Database foreign key integrity check failed! Errors: %s",
-                    foreign_key_check_result,
-                )
-                raise HealthCheckFailedError(
-                    "Database foreign key integrity check failed!"
-                )
+            if db_session.get_bind().dialect.driver == "sqlite3":
+                integrity_check_result = db_session.execute(
+                    text("PRAGMA integrity_check;")
+                ).fetchall()
+                if integrity_check_result[0][0] != "ok":
+                    logger.critical(
+                        "Database integrity check failed! Errors: %s",
+                        integrity_check_result,
+                    )
+                    raise HealthCheckFailedError("Database integrity check failed!")
+                foreign_key_check_result = db_session.execute(
+                    text("PRAGMA foreign_key_check;")
+                ).fetchall()
+                if foreign_key_check_result:
+                    logger.critical(
+                        "Database foreign key integrity check failed! Errors: %s",
+                        foreign_key_check_result,
+                    )
+                    raise HealthCheckFailedError(
+                        "Database foreign key integrity check failed!"
+                    )
+            db_session.execute(text("SELECT 1"))
     except sqlalchemy.exc.SQLAlchemyError as database_error:
         logger.critical("Database is down!", exc_info=True)
         raise HealthCheckFailedError("Database is down!") from database_error

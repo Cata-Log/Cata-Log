@@ -61,6 +61,10 @@ class Settings(BaseSettings):
         default=user_log_path("cata-log", appauthor=False, ensure_exists=False),
         description="Path to the logfiles.",
     )
+    external_database_url: str = Field(
+        default="",
+        description="URL of an external database. Only set this is you want to use an external database.",
+    )
     dev_mode: bool = Field(
         default=False, description="Whether to run in development mode."
     )

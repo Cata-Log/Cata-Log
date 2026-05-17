@@ -1,0 +1,17 @@
+services:
+  cata-log:
+    image: dacid99/cata-log:latest
+    container_name: cata-log
+    volumes:
+      - /path/to/cata-log/storage:/mnt/storage
+      - /path/to/cata-log/db:/mnt/db
+      - /path/to/cata-log/log:/var/log/cata-log
+      - /path/to/cata-log/plugins:/mnt/plugins
+    ports:
+      - 2424:8000
+    environment:
+      - CATA_LOG_PASSWORD=SafE_pAs5w0rd # setting no password makes authentication impossible #gitleaks:allow
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy

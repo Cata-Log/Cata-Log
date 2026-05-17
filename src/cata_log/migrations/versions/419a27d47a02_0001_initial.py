@@ -27,8 +27,8 @@ def upgrade() -> None:
         "pagefiles",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("path", cata_log.database.types.PathType(), nullable=False),
-        sa.Column("original_sha256", sa.String(), nullable=False),
-        sa.Column("sha256", sa.String(), nullable=False),
+        sa.Column("original_sha256", sa.String(64), nullable=False),
+        sa.Column("sha256", sa.String(64), nullable=False),
         sa.Column("size", sa.Integer(), nullable=False),
         sa.Column("height", sa.Integer(), nullable=False),
         sa.Column("width", sa.Integer(), nullable=False),
@@ -50,10 +50,10 @@ def upgrade() -> None:
     op.create_table(
         "providers",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("class_uid", sa.String(), nullable=False),
+        sa.Column("class_uid", sa.String(127), nullable=False),
         sa.Column("configuration", sa.JSON(), nullable=False),
-        sa.Column("note", sa.String(), nullable=True),
-        sa.Column("job_id", sa.Integer(), nullable=True),
+        sa.Column("note", sa.Text(), nullable=True),
+        sa.Column("job_id", sa.String(255), nullable=True),
         sa.Column(
             "status",
             sa.Enum(

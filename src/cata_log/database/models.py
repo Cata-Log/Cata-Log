@@ -31,7 +31,6 @@ from apscheduler.triggers.cron import CronTrigger
 from ebooklib import epub
 from PIL import Image
 from sqlalchemy import (
-    JSON,
     DateTime,
     ForeignKey,
     UniqueConstraint,
@@ -40,6 +39,7 @@ from sqlalchemy import (
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import select
+from sqlalchemy.types import JSON, String, Text
 
 from cata_log.constants import StatusEnum
 from cata_log.exceptions import (
@@ -65,10 +65,12 @@ class Provider(ModelBase, TimestampMixin):
     """ORM model for a catalog provider."""
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
-    class_uid: orm.Mapped[str] = orm.mapped_column()
+    class_uid: orm.Mapped[str] = orm.mapped_column(String(127))
     configuration: orm.Mapped[dict[str, str]] = orm.mapped_column(JSON)
-    note: orm.Mapped[str] = orm.mapped_column(default="")
-    job_id: orm.Mapped[int | None] = orm.mapped_column(nullable=True, unique=True)
+    note: orm.Mapped[str] = orm.mapped_column(Text, default="")
+    job_id: orm.Mapped[str | None] = orm.mapped_column(
+        String(255), nullable=True, unique=True
+    )
     catalogs: orm.Mapped[list[Catalog]] = orm.relationship(
         back_populates="provider", cascade="all, delete-orphan"
     )
@@ -376,8 +378,8 @@ class PageFile(ModelBase, TimestampMixin):
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     path: orm.Mapped[Path] = orm.mapped_column(PathType, unique=True)
-    original_sha256: orm.Mapped[str] = orm.mapped_column()
-    sha256: orm.Mapped[str] = orm.mapped_column()
+    original_sha256: orm.Mapped[str] = orm.mapped_column(String(64))
+    sha256: orm.Mapped[str] = orm.mapped_column(String(64))
     size: orm.Mapped[int] = orm.mapped_column()
     height: orm.Mapped[int] = orm.mapped_column()
     width: orm.Mapped[int] = orm.mapped_column()

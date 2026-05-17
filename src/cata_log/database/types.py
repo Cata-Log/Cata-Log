@@ -28,7 +28,7 @@ from sqlalchemy.types import String, TypeDecorator
 class PathType(TypeDecorator):
     """Custom type for a database field with path behaviour."""
 
-    impl = String
+    impl = String(1024)
     cache_ok = True
 
     @override

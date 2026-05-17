@@ -20,7 +20,7 @@ WORKDIR /
 COPY pyproject.toml uv.lock ./
 
 RUN pip install --no-cache-dir uv && \
-    uv export --format requirements.txt --frozen --no-dev > /requirements.txt
+    uv export --format requirements.txt --all-extras --frozen --no-dev > /requirements.txt
 
 
 ##   stage 2   ##

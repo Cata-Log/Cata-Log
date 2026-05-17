@@ -34,12 +34,13 @@ def set_sqlite_pragma(
     connection_record: _ConnectionRecord,  # noqa: ARG001  # required for event decorator
 ) -> None:
     """Event setting pragmas on all engines after connecting to db."""
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL;")
-    cursor.execute("PRAGMA foreign_keys=ON;")
-    cursor.execute("PRAGMA busy_timeout=5000;")  # 5s
-    cursor.execute("PRAGMA synchronous=NORMAL;")
-    cursor.close()
+    if dbapi_connection.__class__.__module__ == "sqlite3":
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA foreign_keys=ON;")
+        cursor.execute("PRAGMA busy_timeout=5000;")  # 5s
+        cursor.execute("PRAGMA synchronous=NORMAL;")
+        cursor.close()
 
 
 @event.listens_for(models.PageFile, "after_delete")

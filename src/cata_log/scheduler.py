@@ -32,7 +32,10 @@ from cata_log.settings import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-JOB_DATABASE_URL = f"sqlite:///{settings.database_path / 'jobs.sqlite3'}"
+JOB_DATABASE_URL = (
+    get_settings().external_database_url
+    or f"sqlite:///{settings.database_path / 'jobs.sqlite3'}"
+)
 
 scheduler = BackgroundScheduler(
     jobstores={"default": SQLAlchemyJobStore(url=JOB_DATABASE_URL)},
