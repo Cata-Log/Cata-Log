@@ -32,4 +32,5 @@ Short identifiers for the flyer type are also common.
 If no, then the image URLs are most likely read from another document, typically a json file.
 That file must also be loaded from a server, so check the traffic again.
 
-In the worst case scenario, if you don't find a feasible way to retrieve the pages with a few http requests, you can fallback to requesting the entire flyer page and parse the page image urls from the html.
+In the worst case scenario, if you don't find a feasible way to retrieve the pages with a few http requests,
+you can fallback to requesting the entire flyer page and parse the page image urls from the html.

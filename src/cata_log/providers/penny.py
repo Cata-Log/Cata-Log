@@ -24,7 +24,6 @@ from typing import override
 
 import pypdfium2
 from pydantic import Field
-from pypdfium2._helpers.page import PdfiumError
 
 from cata_log.exceptions import PagesExhausted
 from cata_log.utils.page_numbers import PageNumber
@@ -85,7 +84,7 @@ class Penny(Provider):
     def _get_page(self, page_number: PageNumber) -> bytes:
         try:
             pdf_catalog_page = self.pdf_catalog.get_page(int(page_number))
-        except PdfiumError as error:
+        except pypdfium2.PdfiumError as error:
             raise PagesExhausted from error
         image_data_io = BytesIO()
         with pdf_catalog_page.render(scale=2).to_pil() as image:

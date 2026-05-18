@@ -7,7 +7,7 @@
 Configuration
 =============
 
-There are two ways to configure Cata-Log.
+There are two ways to configure your Cata-Log server.
 
 Command-line
 ------------
@@ -18,19 +18,25 @@ Run
 
     docker run dacid99/cata-log:latest --help
 
+or
+
+.. code-block:: console
+
+    python3 -m cata_log --help
+
 for an overview of the command line interface and the available options.
-
-.. note::
-
-    Settings via command line always override any environment configurations.
-
 
 Environment
 -----------
 
 Instead of passing the options via the command line you can set them in the environment as well.
 
-The names of the environment variables are the names of the corresponding cli options in uppercase with a prefix *CATA_LOG_*.
+.. note::
+
+    Settings via command line always override any environment configurations.
+
+The names of the environment variables are the names of the corresponding cli options in UPPER_CAMEL_CASE with prefix *CATA_LOG_*.
+So for example, *--request-timeout* becomes *CATA_LOG_REQUEST_TIMEOUT* .
 
 This way of configuring Cata-Log is particularly useful in combination with docker.
-The docker-compose.yml lists the various available options with their defaults.
+The docker-compose.yml lists all available options with their defaults.

@@ -1,9 +1,10 @@
 from typing import override
 
+from pydantic import Field
+
 from cata_log.exceptions import PagesExhausted, CalendarUnavailableWarning
 
 from .base import Provider, Preview
-from .configuration import Configuration
 from .regions import
 
 # Import some useful helpers. Remove what you don't need.
@@ -22,23 +23,25 @@ class TemplateProvider(Provider):
     url = # The URL to the provider's digital flyer.
     # Optional
     first_page_number = 1 # The number of the first page in the provider's counting
-    configuration = (
-        Configuration(
-            name=, # A descriptive and concise name for the configuration value",
-            helptext=, # A text describing the configuration and how to figure out what value to set.
-            default=, # Only set this if the configuration value is optional
-            parse_as=, # What datatype the value should be parseable as, defaults to string
-        ),
-        # Add more Configurations if required
-    )
     schedule = "0 4 * * *" # The crontab schedule on which the provider data is cached
+    jitter = 3600 # The maximum number of seconds that the caching schedule is randomly delayed.
+
+    class Configuration(Provider.Configuration):
+        # Set all configurations values that must be set by the user to be able to cache the desired flyer.
+        # You don't need to define this class if your provider class does not required user configuration.
+        example_required_config: str = Field(description="This config is required. Its name is just an example. Please provide a description that helps the user find the required value.")
+        exampl_optional_config: str = Field(description="This config is optional. Its name is just an example.", default="0")
+        # Define as many configurations as you need.
 
     # The following methods must be implemented.
+    #
     # These instance variables are always available:
     #  - _client: A HTTP client you should use to make requests to the provider's server. It raises an error if a status code starting with 4 or 5 is received.
     #  - _relevant_datetime: A datetime at which the provider's flyer is valid. The current datetime by default. Can be used if the URLs of the provider's digital flyer contain date parts.
+    #  - _configuration:  An instance of the configuration class with the values given by the user.
+    #
     # You don't need to care about error handling, the base class deals with this.
-    # The only case in which you need to take errors is if they are expected, for example if a page number has no page to it.
+    # The only case in which you need to take care of errors is if they are expected, for example if a page number has no page to it.
 
     @override
     def _get_catalog_data(self):
@@ -89,6 +92,9 @@ class TemplateProvider(Provider):
         # Override this only if the provider's flyer is not valid in the moment the flyer is intended to be cached.
         # Mostly relevant for preview and retrospect flyers.
 
+    @override
+    def _cleanup(self):
+        # Close any open instances you set up in the other methods that require manual closing here.
 
 
 # If the provider offers more digital flyers like previews, that use the same logic as the current flyer,
