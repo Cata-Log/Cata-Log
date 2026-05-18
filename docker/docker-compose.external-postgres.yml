@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: cata-log-db
+    volumes:
+      - /path/to/cata-log/postgres/:/var/lib/postgresql/
+      - /path/to/cata-log/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_DB=cata-log # must match cata-log:DATABASE_NAME
+      - POSTGRES_USER=user # must match cata-log:DATABASE_USER
+      - POSTGRES_PASSWORD=db_passwd # must match cata-log:DATABASE_PASSWORD
+      - PGADMIN_DEFAULT_PASSWORD=example
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:latest
+    container_name: cata-log-adminer
+    restart: unless-stopped
+    ports:
+      - 9999:8080
+
+  cata-log:
+    image: cata-log:latest
+    container_name: cata-log
+    volumes:
+      - /path/to/cata-log/storage:/mnt/storage
+      - /path/to/cata-log/log:/var/log/cata-log
+      - /path/to/cata-log/plugins:/mnt/plugins
+    ports:
+      - 2424:8000
+    environment:
+      - CATA_LOG_PASSWORD=testwithdb1234 # gitleaks:allow
+      - CATA_LOG_EXTERNAL_DATABASE_URL=postgresql+pg8000://user:db_passwd@db/cata-log
+    restart: unless-stopped

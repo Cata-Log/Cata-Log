@@ -37,6 +37,7 @@ from sqlalchemy import (
     orm,
 )
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import select
 from sqlalchemy.types import JSON, String, Text
@@ -66,7 +67,9 @@ class Provider(ModelBase, TimestampMixin):
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     class_uid: orm.Mapped[str] = orm.mapped_column(String(127))
-    configuration: orm.Mapped[dict[str, str]] = orm.mapped_column(JSON)
+    configuration: orm.Mapped[dict[str, str]] = orm.mapped_column(
+        MutableDict.as_mutable(JSON)
+    )
     note: orm.Mapped[str] = orm.mapped_column(Text, default="")
     job_id: orm.Mapped[str | None] = orm.mapped_column(
         String(255), nullable=True, unique=True
@@ -77,10 +80,9 @@ class Provider(ModelBase, TimestampMixin):
     status: orm.Mapped[StatusEnum] = orm.mapped_column(
         SQLEnum(StatusEnum, name="provider_status_enum"),
         default=StatusEnum.HEALTHY,
-        server_default=StatusEnum.HEALTHY.value,
+        server_default=StatusEnum.HEALTHY,
     )
     __tablename__ = "providers"
-    __table_args__ = (UniqueConstraint("class_uid", "configuration"),)
 
     def get_provider_class(self) -> type[ProviderType]:
         """Get the class for this provider.

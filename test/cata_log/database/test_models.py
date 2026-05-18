@@ -82,19 +82,6 @@ def test_Provider_deletion(db_session, full_database, fake_provider):
     pass
 
 
-def test_Provider_unique_together_constraint(LocalSession, fake_provider):
-    with LocalSession() as db_session:
-        db_session.add(
-            database.Provider(
-                class_uid=fake_provider.class_uid,
-                configuration=fake_provider.configuration,
-            )
-        )
-
-        with pytest.raises(sqlalchemy.exc.IntegrityError):
-            db_session.flush()
-
-
 @pytest.mark.parametrize(
     "side_effect",
     [

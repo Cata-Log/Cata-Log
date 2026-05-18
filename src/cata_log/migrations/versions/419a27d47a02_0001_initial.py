@@ -51,7 +51,11 @@ def upgrade() -> None:
         "providers",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("class_uid", sa.String(127), nullable=False),
-        sa.Column("configuration", sa.JSON(), nullable=False),
+        sa.Column(
+            "configuration",
+            sa.JSON(),
+            nullable=False,
+        ),
         sa.Column("note", sa.Text(), nullable=True),
         sa.Column("job_id", sa.String(255), nullable=True),
         sa.Column(
@@ -64,7 +68,7 @@ def upgrade() -> None:
                 "HEALTHY",
                 name="provider_status_enum",
             ),
-            server_default="healthy",
+            server_default="HEALTHY",
             nullable=False,
         ),
         sa.Column(
@@ -80,7 +84,6 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("class_uid", "configuration"),
         sa.UniqueConstraint("job_id"),
     )
     op.create_table(
