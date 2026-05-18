@@ -111,6 +111,7 @@ class Provider(abc.ABC):
         """Entrypoint for the context manager."""
         return self
 
+    @final
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
@@ -125,7 +126,11 @@ class Provider(abc.ABC):
             exc_value: The exception raised in the context.
             exc_traceback: The traceback of the exception raised in the context.
         """
+        self._cleanup()
         self._client.close()
+
+    def _cleanup(self) -> None:  # noqa: B027 # should do nothing by default
+        """Additional cleanup."""
 
     def get_relevant_datetime(self) -> datetime:
         """Get the datetime that defines the catalog offered by this provider.

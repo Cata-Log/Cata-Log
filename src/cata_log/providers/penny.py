@@ -107,10 +107,11 @@ class Penny(Provider):
         return self._get_valid_since() + timedelta(days=7)
 
     @override
-    def __exit__(self, *args: object) -> None:
-        self.pdf_catalog.close()
-        self.temp_pdf_catalog_file.close()
-        return super().__exit__(*args)
+    def _cleanup(self) -> None:
+        if hasattr(self, "pdf_catalog"):
+            self.pdf_catalog.close()
+        if hasattr(self, "temp_pdf_catalog_file"):
+            self.temp_pdf_catalog_file.close()
 
 
 class PennyPreview(Preview, Penny):
