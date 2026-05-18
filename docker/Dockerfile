@@ -80,4 +80,4 @@ WORKDIR /
 
 ENTRYPOINT [ "python3", "-m" , "cata_log", "--host", "0.0.0.0", "--port", "8000"]
 
-HEALTHCHECK --interval=60s --timeout=30s --start-period=3s --retries=3 CMD [ "wget", "--quiet", "http://0.0.0.0:8000/health", "--output-document" , "/dev/null"]
+HEALTHCHECK --interval=60s --timeout=30s --start-period=20s --start-interval=5s --retries=3 CMD [ "wget", "--quiet", "http://0.0.0.0:8000/health", "--output-document" , "/dev/null"]

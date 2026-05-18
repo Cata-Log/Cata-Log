@@ -11,22 +11,12 @@ services:
       - MARIADB_ROOT_PASSWORD=example
     restart: unless-stopped
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "mariadb -u$$MARIADB_USER -p$$MARIADB_PASSWORD -e 'SELECT 1'",
-        ]
-      interval: 10s
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 20s
+      start_interval: 5s
+      interval: 1m
       timeout: 5s
-      retries: 12
-      start_period: 10s
-
-  adminer:
-    image: adminer:latest
-    container_name: cata-log-adminer
-    restart: unless-stopped
-    ports:
-      - 9999:8080
+      retries: 3
 
   cata-log:
     image: cata-log:latest
@@ -41,3 +31,5 @@ services:
       - CATA_LOG_PASSWORD=testwithdb1234 # gitleaks:allow
       - CATA_LOG_EXTERNAL_DATABASE_URL=mysql+pymysql://user:db_passwd@db/cata-log
     restart: unless-stopped
+    depends_on:
+      - db

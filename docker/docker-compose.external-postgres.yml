@@ -12,13 +12,13 @@ services:
       - PGADMIN_DEFAULT_PASSWORD=example
       - PGADMIN_DEFAULT_EMAIL=admin@example.com
     restart: unless-stopped
-
-  adminer:
-    image: adminer:latest
-    container_name: cata-log-adminer
-    restart: unless-stopped
-    ports:
-      - 9999:8080
+    healthcheck:
+      test: "pg_isready -U postgres || exit 1"
+      start_period: 20s
+      start_interval: 5s
+      interval: 1m
+      timeout: 5s
+      retries: 3
 
   cata-log:
     image: cata-log:latest
@@ -33,3 +33,5 @@ services:
       - CATA_LOG_PASSWORD=testwithdb1234 # gitleaks:allow
       - CATA_LOG_EXTERNAL_DATABASE_URL=postgresql+pg8000://user:db_passwd@db/cata-log
     restart: unless-stopped
+    depends_on:
+      - db
