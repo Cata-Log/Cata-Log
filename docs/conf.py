@@ -102,29 +102,15 @@ toc_object_entries_show_parents = "domain"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+from sphinxawesome_theme.postprocess import Icons
+from dataclasses import asdict
+from sphinxawesome_theme import ThemeOptions
 
-html_theme = "alabaster"
-html_sidebars = {
-    "**": [
-        "about.html",
-        "searchfield.html",
-        "navigation.html",
-        "relations.html",
-        "donate.html",
-    ]
-}
-html_theme_options = {
-    "description": "The central hub for grocery store catalogs",
-    "logo": "",
-    # "logo_name": ,
-    "touch_icon": "",
-    "github_button": True,
-    "github_repo": "cata-log",
-    "github_user": "Cata-Log",
-    "show_powered_by": True,
-    "show_relbars": True,
-    "fixed_sidebar": True,
-}
+html_theme = "sphinxawesome_theme"
+html_permalinks_icon = Icons.permalinks_icon
+theme_options = ThemeOptions(show_scrolltop=True)
+html_theme_options = asdict(theme_options)
+
 html_title = "Cata-Log Docs"
 html_short_title = "Cata-Log Docs"
 html_logo = ""
@@ -132,6 +118,7 @@ html_favicon = ""
 html_static_path = ["_static"]
 html_last_updated_fmt = ""
 html_show_sourcelink = True
+pygments_style = "sphinx"
 
 # -- Autodoc configuration  ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#configuration
