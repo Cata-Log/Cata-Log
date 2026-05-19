@@ -190,7 +190,14 @@ apidoc_implicit_namespaces = True
 # -- Intersphinx configuration  ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#configuration
 
-intersphinx_mapping = {"python": (f"https://docs.python.org/{python_version}", None)}
+intersphinx_mapping = {
+    "python": (f"https://docs.python.org/{python_version}", None),
+    "pydantic": ("https://pydantic.dev/docs/validation/latest", None),
+    "starlette": ("https://starlette.dev", None),
+    "fastapi": ("https://fastapi.tiangolo.com", None),
+    "sqlalchemy": ("https://docs.sqlalchemy.org/en/latest", None),
+    "apscheduler": ("https://apscheduler.readthedocs.io/en/3.x", None),
+}
 
 
 # -- Napoleon configuration  ---------------------------------------------------

@@ -89,6 +89,9 @@ class Provider(ModelBase, TimestampMixin):
 
         Returns:
             The provider class.
+
+        Raises:
+            :exc:`cata_log.exceptions.ProviderUnknownClassWarning`: If there is no class for this provider's class-uid.
         """
         return ProviderType.get_class(self.class_uid)
 
@@ -97,11 +100,18 @@ class Provider(ModelBase, TimestampMixin):
 
         Returns:
             The provider instance.
+
+        Raises:
+            :exc:`cata_log.exceptions.ProviderUnknownClassWarning`: If there is no class for this provider's class-uid.
         """
         return self.get_provider_class()(self.configuration)
 
     def fetch_catalog(self, db_session: orm.Session) -> None:
-        """Fetch this provider's catalog and save it to storage and db."""
+        """Fetch this provider's catalog and save it to storage and db.
+
+        Raises:
+            :exc:`cata_log.exceptions.NetworkError`: Reraised
+        """
         try:
             logger.debug(
                 "Fetching catalog of provider ...", extra={"provider_id": self.id}

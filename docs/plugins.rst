@@ -24,8 +24,8 @@ Activating a plugin is straightforward.
     Please be careful what files you use as plugins!
     They may potentially include malicious code that will be executed on your machine if used as a plugin.
 
-2. Put the file in the */mnt/plugins/* docker volume or the provider directory of the cata_log server.
-You may order the plugins into subdirectories of that volume.
+2. Put the file in the */mnt/plugins/* docker volume or the plugin directory of the cata_log server.
+You may order the plugins files into subdirectories within these directories.
 
 3. Restart (or start) the Cata-Log instance. The plugged-in provider is now available.
 

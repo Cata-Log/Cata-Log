@@ -30,8 +30,8 @@ To get involved with consolidation and optimization, please see :doc:`the ToDo l
     :maxdepth: 1
     :caption: Resources:
 
-    todo
     template-provider
+    todo
     modules
 
 

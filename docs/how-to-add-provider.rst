@@ -13,6 +13,9 @@ There is a template in :doc:`the *docs/template-provider.py* file <template-prov
 
 Here we give a quick rundown of what you need to do, while implementing an example provider.
 
+Implementation Details and Example
+----------------------------------
+
 1. Add a file <your-provider>.py to src/cata_log/providers (or copy the template there).
 2. In that file define a class <YourProvider> that inherits from the Provider baseclass
 
@@ -31,6 +34,7 @@ Here we give a quick rundown of what you need to do, while implementing an examp
     - url: A URL to the provider's digital flyer webpage.
     - region: The region the flyer is distributed in. If the region is missing, adding it is very straightforward. Just check out and follow :doc:`the how-to-add-regions guide <how-to-add-region>`.
 
+
     All other datapoints must only be added if they differ from the defaults:
 
     - first_page_number (``1``): The number of the first page of a flyer in the provider's publicly accessible data.
@@ -44,13 +48,13 @@ Here we give a quick rundown of what you need to do, while implementing an examp
         from .regions import Germany
 
         class ExampleProvider(Provider):
-        uid = "example-de"
-        name= "Example-Provider"
-        description = "An example provider for the purpose of the documentation."
-        url = "https://example-provider.de/catalog"
-        region = Germany
-        first_page_number = 0
-        schedule = "30 2 * * *" # fetch at 2:30am every day
+            uid = "example-de"
+            name= "Example-Provider"
+            description = "An example provider for the purpose of the documentation."
+            url = "https://example-provider.de/catalog"
+            region = Germany
+            first_page_number = 0
+            schedule = "30 2 * * *" # fetch at 2:30am every day
 
 4. Define the configuration required for the provider.
     Some providers offer different flyers based on local branch, region, etc.
@@ -59,9 +63,9 @@ Here we give a quick rundown of what you need to do, while implementing an examp
     In our example there is flyer for every store of the provider company.
     We need the internal ID of the store. The user can find it in a cookie that is set by the online catalog.
 
-    The configuration is set by a nested class that inherits from the default provider configuration.
+    The configuration is defined via a nested class that inherits from the default provider configuration.
 
-    Every piece of information to be given by the user, we define a variable of that class.
+    For every piece of information to be given by the user, we define a variable of that class.
     Please provide a description so the user knows how to figure out the value he needs to set.
 
     .. code-block:: python
@@ -74,16 +78,22 @@ Here we give a quick rundown of what you need to do, while implementing an examp
             ...
 
             class Configuration(Provider.Configuration):
-                store_id: str = Field(description="The ID of the store. Open the example provider's webpage and select your store. Open the browser's webinspector and search the cookie with name 'store-id'. The value of this cookie is the store_id.")
+                store_id: str = Field(description="""
+                    The ID of the store.
+                    Open the example provider's webpage and select your store.
+                    Open the browser's webinspector and search the cookie with name 'store-id'.
+                    The value of this cookie is the store_id.
+                    """
+                )
 
-    You can set a default if there is a reasonable fallback if the user doesn't provide a value.
+    You can set a default if there is a reasonable fallback in case the user doesn't provide a value.
 
     Skip this step if you don't need information from the user in order to cache your provider's online flyer.
 
 5. The Provider baseclass is abstract, meaning you must implement at least four of its methods.
     To make this as easy as possible, the base class provides a couple of variables and wraps the code you write.
 
-    - self._client: A HTTP client instance that you should use to make requests to the provider's website.
+    - self._client: A HTTP client instance that you should use to make requests to the provider's servers.
     - self._relevant_datetime: The datetime identifying the flyer.
     - self._configuration: An instance of the configuration class with the values given by the user.
 
@@ -93,7 +103,6 @@ Here we give a quick rundown of what you need to do, while implementing an examp
     The methods you must implement are:
 
     - _get_catalog_data:
-
         This allows you to get data from the provider which is needed to access the pages of the flyer.
 
         For example, our providers offer an endpoint to download a json file with the URLs to all currently available flyers and their pages.
@@ -116,7 +125,6 @@ Here we give a quick rundown of what you need to do, while implementing an examp
         If this method is not needed, just set ``pass`` as its body. That way a call to it will do exactly nothing.
 
     - _get_page:
-
         In this function you fetch the image data for a single page of the flyer.
         The page to be fetched is defined by the page_number argument.
 
@@ -144,7 +152,6 @@ Here we give a quick rundown of what you need to do, while implementing an examp
                     return self._client.get(urljoin("https://example-provider.com/catalog/pages/", page_relative_url)).content
 
     - _get_valid_since:
-
         This function returns the datetime of the moment that the flyer became valid, in the sense that the offers in it became active.
         Typically that will be 0am of the start-day labeled on the flyer. There is no need to consider store opening hours.
 
@@ -173,7 +180,6 @@ Here we give a quick rundown of what you need to do, while implementing an examp
                     )
 
     - _get_valid_until:
-
         This function returns the datetime of the moment after the flyer became invalid, in the sense that the offers in it became inactive.
         Typically that will be 0am of the day after the end-day labeled on the flyer. There is no need to consider store opening hours.
 
@@ -189,9 +195,7 @@ Here we give a quick rundown of what you need to do, while implementing an examp
                 return self._get_valid_since() + timedelta(days=7)
 
 6. If necessary, you may want to override other methods as well.
-
     - get_relevant_datetime:
-
         This method returns the datetime that is relevant to identify the provider's flyer.
 
         In many cases, the digital flyer URLs contain the year and calendar-week number of the week in which the flyer is valid.
@@ -229,13 +233,15 @@ Here we give a quick rundown of what you need to do, while implementing an examp
         Note the order of inheritance, the mixin must come first.
 
     - _cleanup:
-
         If you have instantiated classes in other methods that need to be closed when everything is done.
         This is the place to do it.
 
 We are now done implementing our example provider class.
 
-Putting it all together we get
+Complete Example
+^^^^^^^^^^^^^^^^
+
+Putting all the pieces of the example together we get
 
 .. code-block:: python
 
@@ -297,19 +303,21 @@ Putting it all together we get
         preview_timedelta = timedelta(days=7)
 
 
+Further Reading
+^^^^^^^^^^^^^^^
 
 For more exemplary implementations, you can check the source code of existing and stable provider classes.
-
 
 - *norma.py* implements provider classes that don't need to get any catalog data.
 - *penny.py* extracts the flyer pages from the flyer pdf download as the provider API is too obscure.
 - The provider classes in *aldi.py* look a lot like what we coded as an example.
 
+Next Steps
+----------
 
 Now to check your code into the main repository, a few more steps have to be taken.
 
-3. Lint the code you created, please run
-
+1. Lint the code you created, please run
     .. code-block:: console
 
         ruff check --config=tools/ruff.toml
@@ -320,13 +328,11 @@ Now to check your code into the main repository, a few more steps have to be tak
     It can be taken care of in the process of reviewing the merge request.
 
 2. Test your provider implementation. This will check if there are any grave mistakes in the way you defined the class and its attributes.
-
     .. code-block:: console
 
         pytest test/cata_log/providers
 
 3. Test the provider manually. Install the cata_log package from your local source with the new provider class
-
     .. code-block:: console
 
         uv pip install -e .

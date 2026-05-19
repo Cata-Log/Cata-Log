@@ -17,9 +17,9 @@ Welcome to the documentation of Cata-Log, the central self-hostable hub for all 
    installation
    configuration
    plugins
-   faq
-   troubleshooting
    contributors
+   troubleshooting
+   faq
    changelog
    contact
    license

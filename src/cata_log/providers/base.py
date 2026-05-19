@@ -73,7 +73,11 @@ class Provider(abc.ABC):
     def __init__(self, configuration: dict[str, str]) -> None:
         """Constructor for a provider instance.
 
-        Stores kwargs into the :attr:`_config` member.
+        Attributes:
+            _configuration: An instance of the :class:`cata_log.base.Provider.Configuration` loaded from :param:`configuration` .
+            _client: HTTPX client instance that throws on every error status and follows redirects.
+            _relevant_datetime: The relevant datetime defining the catalog to cache.
+            _logger: The logger for this instance.
         """
         self._logger = logging.getLogger(
             self.__module__ + "." + self.__class__.__name__
@@ -99,7 +103,7 @@ class Provider(abc.ABC):
         Adds the subclass to the registry.
 
         Raises:
-            ProviderRegistrationWarning: If a provider subclass could not be registered.
+            :exc:`cata_log.exceptions.ProviderRegistrationWarning`: If a provider subclass could not be registered.
         """
         super().__init_subclass__()
         if cls.uid in cls._registry:
@@ -119,7 +123,7 @@ class Provider(abc.ABC):
         exc_traceback: TracebackType | None,
     ) -> None:
         """Exitpoint for the context manager.
-        Closes the httpx client.
+        Closes :attr:`client`.
 
         Args:
             exc_type: The type of the exception raised in the context.
@@ -135,6 +139,7 @@ class Provider(abc.ABC):
     def get_relevant_datetime(self) -> datetime:
         """Get the datetime that defines the catalog offered by this provider.
         The current datetime for current catalogs, a future datetime for preview catalogs.
+        Used to set :attr:`_relevant_datetime`.
 
         Returns:
             The current datetime in the providers regional timezone.
@@ -147,7 +152,11 @@ class Provider(abc.ABC):
 
     @final
     def get_valid_since(self) -> datetime:
-        """_get_valid_since wrapped in error handling."""
+        """_get_valid_since wrapped in error handling.
+
+        Raises:
+            :exc:`cata_log.exceptions.ProviderBrokenWarning`: If any exception is raise in getting the valid_since timestamp.
+        """
         try:
             result = self._get_valid_since()
         except Exception as error:
@@ -160,7 +169,11 @@ class Provider(abc.ABC):
 
     @final
     def get_valid_until(self) -> datetime:
-        """_get_valid_until wrapped in error handling."""
+        """_get_valid_until wrapped in error handling.
+
+        Raises:
+            :exc:`cata_log.exceptions.ProviderBrokenWarning`: If any exception is raise in getting the valid_until timestamp.
+        """
         try:
             result = self._get_valid_until()
         except Exception as error:
@@ -179,7 +192,20 @@ class Provider(abc.ABC):
         """
 
     def get_page(self, page_number: PageNumber) -> bytes:
-        """_get_page wrapped in error handling."""
+        """_get_page wrapped in error handling.
+
+        Raises:
+            :exc:`cata_log.exceptions.PagesExhausted`:
+                If page_number is not first_page_number and pages are exhausted or a :exc:`httpx.HTTPStatusError` is raised.
+            :exc:`cata_log.exceptions.CatalogUnavailableWarning`:
+                If page_number is first_page_number and the catalog is unavailable.
+            :exc:`cata_log.exceptions.ProviderMisconfiguredOrBrokenWarning`:
+                If page_number is first_page_number and pages are exhausted or a :exc:`httpx.HTTPStatusError` is raised or the catalog is unavailable.
+            :exc:`cata_log.exceptions.NetworkError`:
+                If a :exc:`httpx.TransportError` is raised.
+            :exc:`cata_log.exceptions.ProviderBrokenWarning`:
+                If any other exception is raised.
+        """
         self._logger.debug("Getting page %s ...", page_number)
         try:
             result = self._get_page(page_number)
@@ -217,7 +243,18 @@ class Provider(abc.ABC):
         """
 
     def get_catalog_data(self) -> None:
-        """_get_catalog_data wrapped in error handling."""
+        """_get_catalog_data wrapped in error handling.
+
+        Raises:
+            :exc:`cata_log.exceptions.CatalogUnavailableWarning`:
+                If the catalog is unavailable.
+            :exc:`cata_log.exceptions.ProviderMisconfiguredOrBrokenWarning`:
+                If a :exc:`httpx.HTTPStatusError` is raised.
+            :exc:`cata_log.exceptions.NetworkError`:
+                If a :exc:`httpx.TransportError` is raised.
+            :exc:`cata_log.exceptions.ProviderBrokenWarning`:
+                If any other exception is raised.
+        """
         self._logger.debug("Getting catalog data ...")
         try:
             self._get_catalog_data()
@@ -263,7 +300,7 @@ class Provider(abc.ABC):
             The class to the class-id.
 
         Raises:
-            ProviderUnknownClassWarning: If there is no class for the given class-id.
+            :exc:`cata_log.exceptions.ProviderUnknownClassWarning`: If there is no class for the given uid.
         """
         provider_class = cls._registry.get(class_uid)
         if not provider_class:
@@ -304,7 +341,8 @@ class Provider(abc.ABC):
             The validated configuration.
 
         Raises:
-            ProviderConfigurationInvalidWarning: If the given configuration is incomplete or otherwise invalid.
+            :exc:`cata_log.exceptions.ProviderInvalidConfigurationWarning`:
+                If the given configuration is incomplete or otherwise invalid.
         """
         try:
             validated_configuration = cls.Configuration.model_validate(

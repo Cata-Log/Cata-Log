@@ -54,7 +54,7 @@ class PageNumber:
             The sum of this instance and the other object.
 
         Raises:
-            TypeError: If the other object is of incompatible type.
+            :exc:`TypeError`: If the other object is of incompatible type.
         """
         if isinstance(other, int):
             return PageNumber(self._number + other + self._offset, self._offset)
@@ -68,7 +68,7 @@ class PageNumber:
             The difference of this instance and the other object.
 
         Raises:
-            TypeError: If the other object is of incompatible type.
+            :exc:`TypeError`: If the other object is of incompatible type.
         """
         if isinstance(other, int):
             return PageNumber(self._number - other + self._offset, self._offset)
@@ -213,7 +213,7 @@ class DoublePageNumber:
             The sum of this instance and the other object.
 
         Raises:
-            TypeError: If the other object is of incompatible type.
+            :exc:`TypeError`: If the other object is of incompatible type.
         """
         return (self.as_page_number() + other).as_double_page_number()
 
@@ -225,7 +225,7 @@ class DoublePageNumber:
             The difference between this instance and the other object.
 
         Raises:
-            TypeError: If the other object is of incompatible type.
+            :exc:`TypeError`: If the other object is of incompatible type.
         """
         return (self.as_page_number() - other).as_double_page_number()
 

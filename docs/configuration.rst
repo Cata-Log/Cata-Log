@@ -7,7 +7,7 @@
 Configuration
 =============
 
-There are two ways to configure your Cata-Log server.
+There are two parallel methods to configure your Cata-Log server.
 
 Command-line
 ------------

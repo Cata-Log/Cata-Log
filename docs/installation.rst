@@ -41,6 +41,8 @@ Follow these steps to set up your instance of Cata-Log:
     pip install cata_log
     ```
 
+    See the following section on :ref:`external databases <External Database>` for details on package extras.
+
 2. Start the server with
 
     ```bash
@@ -49,7 +51,7 @@ Follow these steps to set up your instance of Cata-Log:
 
     Don't forget to set a password, otherwise you won't be able to log in.
 
-3. Open *<server_ip>:8000* to check whether the container started successfully.
+3. Open *<server_ip>:2424* to check whether the container started successfully.
 
 .. important::
 
@@ -82,15 +84,32 @@ Available options are:
 
 - MySQL:
 
-.. code-block:: text
+    .. code-block:: text
 
-    mysql+pymysql://<db_username>:<db_password>@<database_ip>:<database_port>/cata-log
+        mysql+pymysql://<db_username>:<db_password>@<database_ip>:<database_port>/cata-log
+
+    Support for MySQL can be installed with the mysql extra
+
+    .. code-block:: console
+
+        pip install cata_log[mysql]
+
+    and is always included in the docker image.
 
 - PostgreSQL:
 
-.. code-block:: text
+    .. code-block:: text
 
-    postgresql+pg8000://<db_username>:<db_password>@<database_ip>:<database_port>/cata-log
+        postgresql+pg8000://<db_username>:<db_password>@<database_ip>:<database_port>/cata-log
+
+    Support for MySQL can be installed with the mysql extra
+
+    .. code-block:: console
+
+        pip install cata_log[postgres]
+
+    and is always included in the docker image.
+
 
 .. important::
 

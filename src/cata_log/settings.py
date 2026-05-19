@@ -27,13 +27,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Configuration for the Cata-Log server. You can configure the settings with these command-line arguments or environment variables starting with CATA_LOG_."""
+    """Configuration for the Cata-Log server. You can configure the settings with these command-line arguments or environment variables starting with *CATA_LOG_*."""
 
     model_config = SettingsConfigDict(
         env_prefix="CATA_LOG_",
         cli_kebab_case=True,
         cli_parse_args=True,
-        cli_ignore_unknown_args=False,
+        cli_ignore_unknown_args=True,  # otherwise sphinx build fails
     )
 
     username: str = Field(default="admin", description="Username for authentication")
