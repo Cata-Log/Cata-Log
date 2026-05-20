@@ -60,6 +60,7 @@ def create_fastapi_app() -> FastAPI:
         docs_url="/docs/swagger",
         redoc_url="/docs/redoc",
     )
+
     app.add_route(
         "/docs",
         lambda _: RedirectResponse("/docs/swagger", status_code=status.HTTP_302_FOUND),

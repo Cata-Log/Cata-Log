@@ -20,6 +20,7 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse, Response
+from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import AwareDatetime, BaseModel
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql import func
@@ -29,6 +30,7 @@ from cata_log.api import common
 from cata_log.api.mixins import AwareTimestampsMixin
 
 from .pages import Page
+from .pagination import PaginationPage
 
 router = APIRouter(prefix="/catalogs", tags=["catalogs"])
 
@@ -48,25 +50,26 @@ class FullCatalog(Catalog):
     pages: list[Page]
 
 
-@router.get("", response_model=list[Catalog], operation_id="list-catalogs-v1")
+@router.get("", response_model=PaginationPage[Catalog], operation_id="list-catalogs-v1")
 def list_catalogs(
     db_session: Session = database.depends_db_session,
-) -> list[database.Catalog]:
+) -> PaginationPage[database.Catalog]:
     """List all catalogs."""
-    return (
+    return paginate(
         db_session.query(database.Catalog)
         .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
-        .all()
     )
 
 
 @router.get(
-    "/latest", response_model=list[Catalog], operation_id="list-latest-catalogs-v1"
+    "/latest",
+    response_model=PaginationPage[Catalog],
+    operation_id="list-latest-catalogs-v1",
 )
 def list_latest_catalogs(
     db_session: Session = database.depends_db_session,
-) -> list[database.Catalog]:
+) -> PaginationPage[database.Catalog]:
     """List the latest catalog for every provider."""
     subquery = db_session.query(
         database.Catalog.id.label("id"),
@@ -77,61 +80,63 @@ def list_latest_catalogs(
         )
         .label("rn"),
     ).subquery()
-    return (
+    return paginate(
         db_session.query(database.Catalog)
         .join(subquery, database.Catalog.id == subquery.c.id)
         .filter(subquery.c.rn == 1)
-        .all()
     )
 
 
 @router.get(
-    "/previews", response_model=list[Catalog], operation_id="list-preview-catalogs-v1"
+    "/previews",
+    response_model=PaginationPage[Catalog],
+    operation_id="list-preview-catalogs-v1",
 )
 def list_previews_catalogs(
     db_session: Session = database.depends_db_session,
-) -> list[database.Catalog]:
+) -> PaginationPage[database.Catalog]:
     """List all preview catalogs."""
-    return (
+    return paginate(
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
-        .all()
     )
 
 
 @router.get(
-    "/current", response_model=list[Catalog], operation_id="list-current-catalogs-v1"
+    "/current",
+    response_model=PaginationPage[Catalog],
+    operation_id="list-current-catalogs-v1",
 )
 def list_current_catalogs(
     db_session: Session = database.depends_db_session,
-) -> list[database.Catalog]:
+) -> PaginationPage[database.Catalog]:
     """List all current catalogs."""
     now = datetime.now(tz=UTC)
-    return (
+    return paginate(
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
         .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
-        .all()
     )
 
 
 @router.get(
-    "/outdated", response_model=list[Catalog], operation_id="list-outdated-catalogs-v1"
+    "/outdated",
+    response_model=PaginationPage[Catalog],
+    operation_id="list-outdated-catalogs-v1",
 )
 def list_outdated_catalogs(
     db_session: Session = database.depends_db_session,
-) -> list[database.Catalog]:
+) -> PaginationPage[database.Catalog]:
     """List all outdated catalogs."""
-    return (
+    return paginate(
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
-        .all()
     )
 
 
@@ -192,7 +197,7 @@ def download_catalog(
 
 @router.get(
     "/{catalog_id}/pages",
-    response_model=list[Page],
+    response_model=PaginationPage[Page],
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
@@ -203,13 +208,12 @@ def download_catalog(
 )
 def get_catalog_pages(
     catalog_id: int, db_session: Session = database.depends_db_session
-) -> list[database.Page]:
+) -> PaginationPage[database.Page]:
     """Get catalog pages."""
-    return (
+    return paginate(
         db_session.query(database.Page)
         .filter(database.Page.catalog_id == catalog_id)
         .order_by(database.Page.number)
-        .all()
     )
 
 

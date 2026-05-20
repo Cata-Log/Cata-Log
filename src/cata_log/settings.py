@@ -90,6 +90,12 @@ class Settings(BaseSettings):
     log_file_maxsize: NonNegativeInt = Field(
         default=2097152, description="Maximum size of a single logfile."
     )  # 2 MB
+    api_default_pagination_page_size: PositiveInt = Field(
+        default=50, description="Default size of a single paginated API response."
+    )
+    api_max_pagination_page_size: PositiveInt = Field(
+        default=100, description="Maximum size of a single paginated API response."
+    )
     host: IPvAnyAddress = Field(
         default=IPv4Address("127.0.0.1"),
         description="The host address that Cata-Log should be served under.",

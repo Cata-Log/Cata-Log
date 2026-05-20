@@ -21,7 +21,6 @@ from io import BytesIO
 from urllib.parse import urljoin
 
 import pytest
-from PIL import Image
 from pypdf import PdfReader
 
 from cata_log.api import common
@@ -32,7 +31,8 @@ def test_list_catalogs(full_database, client):
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 3
+    assert "items" in data
+    assert len(data["items"]) == 3
 
 
 def test_list_catalogs__noauth(full_database, noauth_client):
@@ -64,9 +64,10 @@ def test_list_latest_catalogs(full_database, fake_latest_catalog, client):
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]
-    assert data[0]["id"] == fake_latest_catalog.id
+    assert "items" in data
+    assert len(data["items"]) == 1
+    assert data["items"][0]
+    assert data["items"][0]["id"] == fake_latest_catalog.id
 
 
 def test_list_latest_catalogs__noauth(full_database, noauth_client):
@@ -94,9 +95,10 @@ def test_list_latest_catalogs__noauth__public_get(
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]
-    assert data[0]["id"] == fake_latest_catalog.id
+    assert "items" in data
+    assert len(data["items"]) == 1
+    assert data["items"][0]
+    assert data["items"][0]["id"] == fake_latest_catalog.id
 
 
 def test_list_previews_catalogs(full_database, fake_catalog_preview, client):
@@ -104,9 +106,10 @@ def test_list_previews_catalogs(full_database, fake_catalog_preview, client):
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]
-    assert data[0]["id"] == fake_catalog_preview.id
+    assert "items" in data
+    assert len(data["items"]) == 1
+    assert data["items"][0]
+    assert data["items"][0]["id"] == fake_catalog_preview.id
 
 
 def test_list_previews_catalogs__noauth(full_database, noauth_client):
@@ -134,9 +137,10 @@ def test_list_previews_catalogs__noauth__public_get(
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]
-    assert data[0]["id"] == fake_catalog_preview.id
+    assert "items" in data
+    assert len(data["items"]) == 1
+    assert data["items"][0]
+    assert data["items"][0]["id"] == fake_catalog_preview.id
 
 
 def test_list_current_catalogs(full_database, fake_catalog_current, client):
@@ -144,9 +148,10 @@ def test_list_current_catalogs(full_database, fake_catalog_current, client):
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]
-    assert data[0]["id"] == fake_catalog_current.id
+    assert "items" in data
+    assert len(data["items"]) == 1
+    assert data["items"][0]
+    assert data["items"][0]["id"] == fake_catalog_current.id
 
 
 def test_list_current_catalogs__noauth(full_database, noauth_client):
@@ -174,9 +179,10 @@ def test_list_current_catalogs__noauth__public_get(
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]
-    assert data[0]["id"] == fake_catalog_current.id
+    assert "items" in data
+    assert len(data["items"]) == 1
+    assert data["items"][0]
+    assert data["items"][0]["id"] == fake_catalog_current.id
 
 
 def test_list_outdated_catalogs(full_database, fake_catalog_outdated, client):
@@ -184,9 +190,10 @@ def test_list_outdated_catalogs(full_database, fake_catalog_outdated, client):
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]
-    assert data[0]["id"] == fake_catalog_outdated.id
+    assert "items" in data
+    assert len(data["items"]) == 1
+    assert data["items"][0]
+    assert data["items"][0]["id"] == fake_catalog_outdated.id
 
 
 def test_list_outdated_catalogs__noauth(full_database, noauth_client):
@@ -214,9 +221,10 @@ def test_list_outdated_catalogs__noauth__public_get(
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]
-    assert data[0]["id"] == fake_catalog_outdated.id
+    assert "items" in data
+    assert len(data["items"]) == 1
+    assert data["items"][0]
+    assert data["items"][0]["id"] == fake_catalog_outdated.id
 
 
 def test_get_catalog(fake_catalog, client):
@@ -310,8 +318,9 @@ def test_get_catalog_pages(fake_catalog, fake_page, client):
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]["id"] == fake_page.id
+    assert "items" in data
+    assert len(data["items"]) == 1
+    assert data["items"][0]["id"] == fake_page.id
 
 
 def test_get_catalog_pages__noauth(fake_catalog, noauth_client):
@@ -339,8 +348,9 @@ def test_get_catalog_pages__noauth__public_get(
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]["id"] == fake_page.id
+    assert "items" in data
+    assert len(data["items"]) == 1
+    assert data["items"][0]["id"] == fake_page.id
 
 
 def test_get_catalog_page__catalog_not_found(client):
@@ -533,7 +543,7 @@ def test_embed_catalog_page__bad_auth(fake_catalog, fake_page, bad_auth_client):
     assert response.headers["WWW-Authenticate"] == "Basic"
 
 
-def test_embed_catalog_page(
+def test_embed_catalog_page__noauth__public_get(
     fake_catalog, fake_page, fake_file, noauth_client, public_get
 ):
     response = noauth_client.get(

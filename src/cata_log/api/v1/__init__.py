@@ -17,6 +17,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from fastapi import APIRouter
+from fastapi_pagination import add_pagination
 
 from . import catalogs, pages, providers
 
@@ -25,5 +26,7 @@ router = APIRouter(prefix="/v1", tags=["v1"])
 router.include_router(pages.router)
 router.include_router(providers.router)
 router.include_router(catalogs.router)
+
+add_pagination(router)  # must come after the routes are included!
 
 __all__ = ["router"]

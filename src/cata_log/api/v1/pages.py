@@ -19,12 +19,15 @@
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
+from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from cata_log import database
 from cata_log.api import common
 from cata_log.api.mixins import AwareTimestampsMixin
+
+from .pagination import PaginationPage
 
 router = APIRouter(prefix="/pages", tags=["pages"])
 
@@ -51,18 +54,17 @@ class Page(AwareTimestampsMixin, BaseModel):
 
 @router.get(
     "",
-    response_model=list[Page],
+    response_model=PaginationPage[Page],
     operation_id="list-pages-v1",
 )
 def list_pages(
     db_session: Session = database.depends_db_session,
-) -> list[database.Page]:
+) -> PaginationPage[database.Page]:
     """List all pages."""
-    return (
+    return paginate(
         db_session.query(database.Page)
         .join(database.Catalog, database.Page.catalog_id == database.Catalog.id)
         .order_by(database.Catalog.created_at.desc(), database.Page.number)
-        .all()
     )
 
 

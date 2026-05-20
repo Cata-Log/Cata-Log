@@ -26,6 +26,8 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from fastapi import APIRouter, HTTPException, responses, status
 from fastapi.exceptions import RequestValidationError
+from fastapi_pagination import paginate as paginate_list
+from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from pydantic.fields import FieldInfo
 from pydantic.types import AwareDatetime
@@ -46,6 +48,7 @@ from cata_log.utils.queries import latest_provider_catalog_id_subquery
 
 from .catalogs import Catalog
 from .pages import Page
+from .pagination import PaginationPage
 
 router = APIRouter(prefix="/providers", tags=["providers"])
 
@@ -215,12 +218,14 @@ class ProviderInfo(BaseModel):
         return str(schedule)
 
 
-@router.get("", response_model=list[Provider], operation_id="list-providers-v1")
+@router.get(
+    "", response_model=PaginationPage[Provider], operation_id="list-providers-v1"
+)
 def list_providers(
     db_session: Session = database.depends_db_session,
-) -> list[database.Provider]:
+) -> PaginationPage[database.Provider]:
     """List all providers."""
-    return (
+    return paginate(
         db_session.query(database.Provider)
         .options(
             selectinload(database.Provider.catalogs).selectinload(
@@ -228,36 +233,37 @@ def list_providers(
             )
         )
         .order_by(database.Provider.class_uid)
-        .all()
     )
 
 
 @router.get(
     "/available",
-    response_model=list[ProviderInfo],
+    response_model=PaginationPage[ProviderInfo],
     operation_id="list-available-providers-v1",
 )
 def list_available_providers(
     query: str | None = None, region: str | None = None
-) -> list[type[ProviderType]]:
+) -> PaginationPage[type[ProviderType]]:
     """List all available providers."""
     if region:
         region = region.lower()
     if query:
         query = query.lower()
-    return [
-        catalog_class
-        for catalog_class in ProviderType.get_classes()
-        if (not query and not region)
-        or (region and (region in catalog_class.region.local_name.lower()))
-        or (
-            query
-            and (
-                (query in catalog_class.uid)
-                or (query in catalog_class.description.lower())
+    return paginate_list(
+        [
+            catalog_class
+            for catalog_class in ProviderType.get_classes()
+            if (not query and not region)
+            or (region and (region in catalog_class.region.local_name.lower()))
+            or (
+                query
+                and (
+                    (query in catalog_class.uid)
+                    or (query in catalog_class.description.lower())
+                )
             )
-        )
-    ]
+        ]
+    )
 
 
 @router.post(
@@ -449,19 +455,18 @@ def delete_provider(
 
 @router.get(
     "/{provider_id}/catalogs",
-    response_model=list[Catalog],
+    response_model=PaginationPage[Catalog],
     operation_id="list-provider-catalogs-v1",
 )
 def list_provider_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
-) -> list[database.Catalog]:
+) -> PaginationPage[database.Catalog]:
     """List all catalogs of a provider."""
-    return (
+    return paginate(
         db_session.query(database.Catalog)
         .options(selectinload(database.Catalog.pages))
         .filter(database.Catalog.provider_id == provider_id)
         .order_by(database.Catalog.created_at.desc())
-        .all()
     )
 
 
@@ -520,21 +525,20 @@ def download_latest_provider_catalog(
 
 @router.get(
     "/{provider_id}/catalogs/latest/pages",
-    response_model=list[Page],
+    response_model=PaginationPage[Page],
     operation_id="get-latest-provider-catalog-pages-v1",
 )
 def list_latest_provider_catalog_pages(
     provider_id: int, db_session: Session = database.depends_db_session
-) -> list[database.Page]:
+) -> PaginationPage[database.Page]:
     """Get the pages of the latest catalog of a provider."""
 
-    return (
+    return paginate(
         db_session.query(database.Page)
         .filter(
             database.Page.catalog_id == latest_provider_catalog_id_subquery(provider_id)
         )
         .order_by(database.Page.number)
-        .all()
     )
 
 
@@ -632,60 +636,57 @@ def embed_latest_provider_catalog_page(
 
 @router.get(
     "/{provider_id}/catalogs/current",
-    response_model=list[Catalog],
+    response_model=PaginationPage[Catalog],
     operation_id="list-provider-current-catalogs-v1",
 )
 def list_provider_current_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
-) -> list[database.Catalog]:
+) -> PaginationPage[database.Catalog]:
     """List all current catalogs of a provider."""
     now = datetime.now(tz=UTC)
-    return (
+    return paginate(
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
         .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
-        .all()
     )
 
 
 @router.get(
     "/{provider_id}/catalogs/previews",
-    response_model=list[Catalog],
+    response_model=PaginationPage[Catalog],
     operation_id="list-provider-preview-catalogs-v1",
 )
 def list_provider_preview_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
-) -> list[database.Catalog]:
+) -> PaginationPage[database.Catalog]:
     """List all preview catalogs of a provider."""
-    return (
+    return paginate(
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
-        .all()
     )
 
 
 @router.get(
     "/{provider_id}/catalogs/outdated",
-    response_model=list[Catalog],
+    response_model=PaginationPage[Catalog],
     operation_id="list-provider-outdated-catalogs-v1",
 )
 def list_provider_outdated_catalogs(
     provider_id: int, db_session: Session = database.depends_db_session
-) -> list[database.Catalog]:
+) -> PaginationPage[database.Catalog]:
     """List all outdated catalogs of a provider."""
-    return (
+    return paginate(
         db_session.query(database.Catalog)
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
         .order_by(database.Catalog.created_at.desc())
-        .all()
     )
 
 

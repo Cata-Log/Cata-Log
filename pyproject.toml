@@ -34,6 +34,7 @@ dependencies = [
     "apscheduler>=3.11.2",
     "ebooklib>=0.20",
     "fake-useragent>=2.2.0",
+    "fastapi-pagination>=0.15.13",
     "fastapi[standard-no-fastapi-cloud-cli]>=0.135.1",
     "opds>=0.1.1",
     "pillow>=12.1.1",
