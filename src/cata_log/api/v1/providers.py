@@ -271,10 +271,6 @@ def list_available_providers(
     status_code=status.HTTP_201_CREATED,
     response_model=Provider,
     responses={
-        status.HTTP_404_NOT_FOUND: {
-            "model": common.HTTPStatusError,
-            "description": "Object doesn't exist.",
-        },
         status.HTTP_409_CONFLICT: {
             "model": common.HTTPStatusError,
             "description": "Object already exists.",
@@ -321,7 +317,7 @@ def post_provider(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "Object doesn't exist.",
+            "description": "Object doesn't exist",
         },
         status.HTTP_409_CONFLICT: {
             "model": common.HTTPStatusError,
@@ -388,7 +384,7 @@ def patch_provider(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "Object doesn't exist.",
+            "description": "Object doesn't exist",
         },
     },
     operation_id="get-provider-v1",
@@ -411,7 +407,7 @@ def get_provider(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "Object doesn't exist.",
+            "description": "Object doesn't exist",
         },
     },
     operation_id="get-available-provider-v1",
@@ -435,7 +431,7 @@ def get_available_provider(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "Object doesn't exist.",
+            "description": "Object doesn't exist",
         },
     },
     operation_id="delete-provider-v1",
@@ -696,7 +692,7 @@ def list_provider_outdated_catalogs(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "Object doesn't exist.",
+            "description": "Object doesn't exist",
         },
     },
     response_model=Job,
@@ -726,7 +722,7 @@ def post_provider_job_run(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "Object doesn't exist.",
+            "description": "Object doesn't exist",
         },
     },
     response_model=Provider,
@@ -752,7 +748,7 @@ def post_provider_add_job(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "Object doesn't exist.",
+            "description": "Object doesn't exist",
         },
     },
     response_model=Provider,
@@ -778,7 +774,7 @@ def post_provider_remove_job(
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
-            "description": "Object doesn't exist.",
+            "description": "Object doesn't exist",
         },
     },
     response_model=Job,

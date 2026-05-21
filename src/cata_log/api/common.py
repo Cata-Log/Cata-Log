@@ -16,10 +16,47 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+from fastapi.exceptions import RequestValidationError
+from fastapi.requests import Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 
 class HTTPStatusError(BaseModel):
-    """Basic response data model for a HTTP status error."""
+    """Basic data model for a HTTP status error response.
+    Intentionally close to the FastAPI default.
+    """
 
     detail: str
+
+
+class ValidationError(BaseModel):
+    """Data model for a validation error.
+    Intentionally close to the pydantic default.
+    """
+
+    type: str
+    loc: list[str]
+    msg: str
+    input: str | None = None
+    ctx: str | None = None
+
+
+class HTTPValidationError(BaseModel):
+    """Data model for a HTTP validation response.
+    Intentionally close to the FastAPI default.
+    """
+
+    detail: list[ValidationError]
+
+
+async def validation_exception_handler(
+    request: Request,  # noqa: ARG001 # required in the signature of a FastAPI exception_handler
+    exc: RequestValidationError,
+) -> JSONResponse:
+    """Handler for request validation errors."""
+    http_validation_error = HTTPValidationError.model_validate({"detail": exc.errors()})
+    return JSONResponse(
+        status_code=422,
+        content=http_validation_error.model_dump(),
+    )

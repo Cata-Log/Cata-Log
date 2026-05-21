@@ -17,6 +17,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from fastapi import Depends, FastAPI, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import RedirectResponse
 
 from cata_log import (
@@ -42,8 +43,15 @@ def create_fastapi_app() -> FastAPI:
         responses={
             status.HTTP_401_UNAUTHORIZED: {
                 "model": common.HTTPStatusError,
-                "description": "If the request is not authorized.",
+                "description": "Request is not authorized",
             },
+            status.HTTP_422_UNPROCESSABLE_CONTENT: {
+                "model": common.HTTPValidationError,
+                "description": "Request failed to validate",
+            },
+        },
+        exception_handlers={
+            RequestValidationError: common.validation_exception_handler
         },
         title="Cata-Log",
         description="The Central Hub For Grocery Store Catalogs",
@@ -65,7 +73,6 @@ def create_fastapi_app() -> FastAPI:
         "/docs",
         lambda _: RedirectResponse("/docs/swagger", status_code=status.HTTP_302_FOUND),
     )
-
     app.mount("/static", static.create_staticfiles_app(), "static")
     app.include_router(api.router)
     app.include_router(web.router)
