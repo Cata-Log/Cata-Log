@@ -34,4 +34,5 @@ services:
       - CATA_LOG_EXTERNAL_DATABASE_URL=postgresql+pg8000://user:db_passwd@db/cata-log
     restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
