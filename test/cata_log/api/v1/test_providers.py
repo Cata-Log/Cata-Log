@@ -32,8 +32,8 @@ def test_list_providers(full_database, client):
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 1
+    assert "results" in data
+    assert len(data["results"]) == 1
 
 
 def test_list_providers__noauth(full_database, noauth_client):
@@ -59,8 +59,8 @@ def test_list_providers__noauth__public_get(full_database, noauth_client, public
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 1
+    assert "results" in data
+    assert len(data["results"]) == 1
 
 
 @pytest.mark.parametrize(
@@ -96,8 +96,8 @@ def test_list_available_providers__noauth__public_get(noauth_client, public_get)
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert data["items"]
+    assert "results" in data
+    assert data["results"]
 
 
 def test_list_provider_catalogs(
@@ -107,10 +107,10 @@ def test_list_provider_catalogs(
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 3
-    assert data["items"][0]
-    assert data["items"][0]["id"] == fake_catalog_preview.id
+    assert "results" in data
+    assert len(data["results"]) == 3
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_preview.id
 
 
 def test_list_provider_catalogs__noauth(full_database, fake_provider, noauth_client):
@@ -140,10 +140,10 @@ def test_list_provider_catalogs__noauth__public_get(
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 3
-    assert data["items"][0]
-    assert data["items"][0]["id"] == fake_catalog_preview.id
+    assert "results" in data
+    assert len(data["results"]) == 3
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_preview.id
 
 
 def test_list_provider_current_catalog(full_database, fake_catalog_current, client):
@@ -153,10 +153,10 @@ def test_list_provider_current_catalog(full_database, fake_catalog_current, clie
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 1
-    assert data["items"][0]
-    assert data["items"][0]["id"] == fake_catalog_current.id
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_current.id
 
 
 def test_list_provider_current_catalog__noauth(
@@ -194,10 +194,10 @@ def test_list_provider_current_catalog__noauth__public_get(
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 1
-    assert data["items"][0]
-    assert data["items"][0]["id"] == fake_catalog_current.id
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_current.id
 
 
 def test_list_provider_previews_catalogs(full_database, fake_catalog_preview, client):
@@ -207,10 +207,10 @@ def test_list_provider_previews_catalogs(full_database, fake_catalog_preview, cl
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 1
-    assert data["items"][0]
-    assert data["items"][0]["id"] == fake_catalog_preview.id
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_preview.id
 
 
 def test_list_provider_previews_catalogs__noauth(
@@ -248,10 +248,10 @@ def test_list_provider_previews_catalogs__noauth__public_get(
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 1
-    assert data["items"][0]
-    assert data["items"][0]["id"] == fake_catalog_preview.id
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_preview.id
 
 
 def test_list_provider_outdated_catalogs(full_database, fake_catalog_outdated, client):
@@ -261,10 +261,10 @@ def test_list_provider_outdated_catalogs(full_database, fake_catalog_outdated, c
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 1
-    assert data["items"][0]
-    assert data["items"][0]["id"] == fake_catalog_outdated.id
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_outdated.id
 
 
 def test_list_provider_outdated_catalogs__noauth(
@@ -302,10 +302,10 @@ def test_list_provider_outdated_catalogs__noauth__public_get(
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 1
-    assert data["items"][0]
-    assert data["items"][0]["id"] == fake_catalog_outdated.id
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_outdated.id
 
 
 def test_get_latest_provider_catalog(
@@ -372,10 +372,10 @@ def test_list_latest_provider_catalog_pages(
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 1
-    assert data["items"][0]
-    assert data["items"][0]["id"] == fake_latest_catalog.pages[0].id
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_latest_catalog.pages[0].id
 
 
 def test_list_latest_provider_catalog_pages__noauth(
@@ -413,10 +413,10 @@ def test_list_latest_provider_catalog_pages__noauth__public_get(
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 1
-    assert data["items"][0]
-    assert data["items"][0]["id"] == fake_latest_catalog.pages[0].id
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_latest_catalog.pages[0].id
 
 
 def test_get_latest_provider_catalog_pages__no_catalog(fake_provider, client):
@@ -424,8 +424,8 @@ def test_get_latest_provider_catalog_pages__no_catalog(fake_provider, client):
 
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert len(data["items"]) == 0
+    assert "results" in data
+    assert len(data["results"]) == 0
 
 
 def test_get_latest_provider_catalog_page(
