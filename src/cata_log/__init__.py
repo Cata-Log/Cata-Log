@@ -18,4 +18,11 @@
 
 from importlib import metadata
 
+from fastapi_pagination.utils import disable_installed_extensions_check
+
+from .settings import get_settings
+
 __version__ = metadata.version("cata-log")
+
+if not get_settings().dev_mode:
+    disable_installed_extensions_check()
