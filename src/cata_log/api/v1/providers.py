@@ -181,7 +181,7 @@ class ConfigInfo(BaseModel):
     """Configuration info data model."""
 
     description: str = ""
-    default: object | None = None
+    default: str | None = None
     type: str = Field(validation_alias="annotation")
 
     @field_validator("type", mode="before")
