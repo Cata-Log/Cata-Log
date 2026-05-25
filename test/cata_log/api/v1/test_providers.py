@@ -555,6 +555,59 @@ def test_download_latest_provider_catalog__not_found(full_database, client):
     assert response.json()["detail"] == "Catalog not found"
 
 
+def test_embed_latest_provider_catalog(fake_provider, full_database, client):
+    response = client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/embed",
+    )
+
+    assert response.status_code == 200
+    assert response.headers
+    assert "content-type" in response.headers
+    assert response.headers["content-type"] == "application/pdf"
+    assert "content-disposition" in response.headers
+    assert response.headers["content-disposition"].startswith("inline")
+    assert response.content
+    pdf_reader = PdfReader(BytesIO(response.content), strict=True)
+    assert len(pdf_reader.pages) == 1
+    assert len(pdf_reader.pages[0].images) == 1
+
+
+def test_embed_latest_provider_catalog__noauth(
+    full_database, fake_provider, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/embed",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_embed_latest_provider_catalog__bad_auth(
+    full_database, fake_provider, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/embed",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_embed_latest_provider_catalog__not_found(full_database, client):
+    response = client.get(
+        "/api/v1/providers/1034/catalogs/latest/embed",
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    assert response.json()["detail"] == "Catalog not found"
+
+
 @pytest.mark.parametrize(("filename"), [None, "page_image.png"])
 def test_download_latest_provider_catalog_page(
     full_database, fake_provider, fake_page, fake_file, client, filename

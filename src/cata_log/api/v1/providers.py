@@ -531,6 +531,36 @@ def download_latest_provider_catalog(
 
 
 @router.get(
+    "/{provider_id}/catalogs/latest/embed",
+    operation_id="embed-latest-provider-catalog-v1",
+)
+def embed_latest_provider_catalog(
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    filename: Annotated[str | None, Query(description="Name for the file")] = None,
+    db_session: Session = database.depends_db_session,
+) -> responses.Response:
+    """Embed the latest catalog of a provider as pdf."""
+    catalog = (
+        db_session.query(database.Catalog)
+        .filter(database.Catalog.provider_id == provider_id)
+        .options(selectinload(database.Catalog.pages))
+        .order_by(database.Catalog.created_at.desc())
+        .first()
+    )
+    if not catalog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+    filename = filename or f"catalog-{catalog.id}.pdf"
+    headers = {
+        "Content-Disposition": f"inline; filename={filename}",
+    }
+    return responses.Response(
+        catalog.as_pdf(), headers=headers, media_type="application/pdf"
+    )
+
+
+@router.get(
     "/{provider_id}/catalogs/latest/pages",
     response_model=PaginationPage[Page],
     operation_id="get-latest-provider-catalog-pages-v1",

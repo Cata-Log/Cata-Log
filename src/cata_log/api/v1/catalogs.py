@@ -210,6 +210,40 @@ def download_catalog(
 
 
 @router.get(
+    "/{catalog_id}/embed",
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": common.HTTPStatusError,
+            "description": "Object doesn't exist",
+        },
+    },
+    operation_id="embed-catalog-v1",
+)
+def embed_catalog(
+    catalog_id: Annotated[int, Path(description="ID of the catalog")],
+    filename: Annotated[str | None, Query(description="Name for the file")] = None,
+    db_session: Session = database.depends_db_session,
+) -> Response:
+    """Embed a catalog as pdf."""
+    catalog = db_session.get(
+        database.Catalog, catalog_id, options=[selectinload(database.Catalog.pages)]
+    )
+    if not catalog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+    filename = filename or f"catalog-{catalog.id}.pdf"
+    headers = {
+        "Content-Disposition": f"inline; filename={filename}",
+    }
+    return Response(
+        catalog.as_pdf(),
+        headers=headers,
+        media_type="application/pdf",
+    )
+
+
+@router.get(
     "/{catalog_id}/pages",
     response_model=PaginationPage[Page],
     responses={
