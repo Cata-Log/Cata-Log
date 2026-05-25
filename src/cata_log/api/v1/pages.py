@@ -17,7 +17,9 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 
-from fastapi import APIRouter, HTTPException, status
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Path, Query, status
 from fastapi.responses import FileResponse
 from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import BaseModel
@@ -49,7 +51,7 @@ class Page(AwareTimestampsMixin, BaseModel):
 
     id: int
     number: int
-    catalog_id: int
+    catalog_id: Annotated[int, Path(description="ID of the catalog")]
     file: PageFile
 
 
@@ -59,7 +61,9 @@ class Page(AwareTimestampsMixin, BaseModel):
     operation_id="list-pages-v1",
 )
 def list_pages(
-    order: str = "number",
+    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        "number",
+    ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Page]:
     """List all pages."""
@@ -68,7 +72,7 @@ def list_pages(
         .join(database.Catalog, database.Page.catalog_id == database.Catalog.id)
         .order_by(
             database.Catalog.created_at.desc(),
-            *[text(field_order.strip()) for field_order in order.split(",")],
+            *[text(order_param) for order_param in order],
         )
     )
 
@@ -85,7 +89,8 @@ def list_pages(
     operation_id="get-page-v1",
 )
 def get_page(
-    page_id: int, db_session: Session = database.depends_db_session
+    page_id: Annotated[int, Path(description="ID of the page")],
+    db_session: Session = database.depends_db_session,
 ) -> database.Page:
     """Get a single page."""
     page = db_session.get(database.Page, page_id)
@@ -107,8 +112,8 @@ def get_page(
     operation_id="download-page-v1",
 )
 def download_page(
-    page_id: int,
-    filename: str | None = None,
+    page_id: Annotated[int, Path(title="test", description="ID of the page")],
+    filename: Annotated[str | None, Query(description="Name for the file")] = None,
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
     """Download a single page."""
@@ -141,8 +146,8 @@ def download_page(
     operation_id="embed-page-v1",
 )
 def embed_page(
-    page_id: int,
-    filename: str | None = None,
+    page_id: Annotated[int, Path(description="ID of the page")],
+    filename: Annotated[str | None, Query(description="Name for the file")] = None,
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
     """Embed a single page."""

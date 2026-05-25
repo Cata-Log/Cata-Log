@@ -17,14 +17,14 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Annotated, Any
 from zoneinfo import ZoneInfo
 
 from apscheduler.job import Job as SchedulerJob
 from apscheduler.triggers.base import BaseTrigger
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
-from fastapi import APIRouter, HTTPException, responses, status
+from fastapi import APIRouter, HTTPException, Path, Query, responses, status
 from fastapi.exceptions import RequestValidationError
 from fastapi_pagination import paginate as paginate_list
 from fastapi_pagination.ext.sqlalchemy import paginate
@@ -223,7 +223,9 @@ class ProviderInfo(BaseModel):
     "", response_model=PaginationPage[Provider], operation_id="list-providers-v1"
 )
 def list_providers(
-    order: str = "class_uid",
+    order: Annotated[list[str], Query(description="Field name to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        "class_uid"
+    ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Provider]:
     """List all providers."""
@@ -234,7 +236,7 @@ def list_providers(
                 database.Catalog.pages
             )
         )
-        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
+        .order_by(*[text(order_param) for order_param in order])
     )
 
 
@@ -310,7 +312,7 @@ def post_provider(
     return provider
 
 
-# def validate_configuration(provider_id: int, provider_update: ProviderUpdate) -> ProviderUpdate:
+# def validate_configuration(provider_id:Annotated[int, Path(description="ID of the provider")], provider_update: ProviderUpdate) -> ProviderUpdate:
 
 
 @router.patch(
@@ -329,7 +331,7 @@ def post_provider(
     operation_id="update-provider-v1",
 )
 def patch_provider(
-    provider_id: int,
+    provider_id: Annotated[int, Path(description="ID of the provider")],
     provider_update: ProviderUpdate,
     db_session: Session = database.depends_db_session,
 ) -> database.Provider:
@@ -392,7 +394,8 @@ def patch_provider(
     operation_id="get-provider-v1",
 )
 def get_provider(
-    provider_id: int, db_session: Session = database.depends_db_session
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    db_session: Session = database.depends_db_session,
 ) -> database.Provider:
     """Get a single provider."""
     provider = db_session.get(database.Provider, provider_id)
@@ -415,7 +418,7 @@ def get_provider(
     operation_id="get-available-provider-v1",
 )
 def get_available_provider(
-    provider_class_uid: str,
+    provider_class_uid: Annotated[str, Path(description="Class UID of the provider")],
 ) -> type[ProviderType]:
     """Get a single provider."""
     try:
@@ -439,7 +442,8 @@ def get_available_provider(
     operation_id="delete-provider-v1",
 )
 def delete_provider(
-    provider_id: int, db_session: Session = database.depends_db_session
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    db_session: Session = database.depends_db_session,
 ) -> None:
     """Delete a single provider. This also deletes all its catalogs and their pages."""
     provider = db_session.get(database.Provider, provider_id)
@@ -457,8 +461,10 @@ def delete_provider(
     operation_id="list-provider-catalogs-v1",
 )
 def list_provider_catalogs(
-    provider_id: int,
-    order: str = "-created_at",
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    order: Annotated[list[str], Query(description="Field name to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        "-created_at"
+    ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List all catalogs of a provider."""
@@ -466,7 +472,7 @@ def list_provider_catalogs(
         db_session.query(database.Catalog)
         .options(selectinload(database.Catalog.pages))
         .filter(database.Catalog.provider_id == provider_id)
-        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
+        .order_by(*[text(order_param) for order_param in order])
     )
 
 
@@ -476,7 +482,8 @@ def list_provider_catalogs(
     operation_id="get-latest-provider-catalog-v1",
 )
 def get_latest_provider_catalog(
-    provider_id: int, db_session: Session = database.depends_db_session
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    db_session: Session = database.depends_db_session,
 ) -> database.Catalog:
     """Get the latest catalog of a provider."""
     latest_catalog = (
@@ -498,8 +505,8 @@ def get_latest_provider_catalog(
     operation_id="download-latest-provider-catalog-v1",
 )
 def download_latest_provider_catalog(
-    provider_id: int,
-    filename: str | None = None,
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    filename: Annotated[str | None, Query(description="Name for the file")] = None,
     db_session: Session = database.depends_db_session,
 ) -> responses.Response:
     """Download the latest catalog of a provider as pdf."""
@@ -529,8 +536,10 @@ def download_latest_provider_catalog(
     operation_id="get-latest-provider-catalog-pages-v1",
 )
 def list_latest_provider_catalog_pages(
-    provider_id: int,
-    order: str = "number",
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    order: Annotated[list[str], Query(description="Field name to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        "number"
+    ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Page]:
     """Get the pages of the latest catalog of a provider."""
@@ -540,7 +549,7 @@ def list_latest_provider_catalog_pages(
         .filter(
             database.Page.catalog_id == latest_provider_catalog_id_subquery(provider_id)
         )
-        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
+        .order_by(*[text(order_param) for order_param in order])
     )
 
 
@@ -550,8 +559,8 @@ def list_latest_provider_catalog_pages(
     operation_id="get-latest-provider-catalog-page-v1",
 )
 def get_latest_provider_catalog_page(
-    provider_id: int,
-    page_number: int,
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    page_number: Annotated[int, Path(description="Number of the page")],
     db_session: Session = database.depends_db_session,
 ) -> database.Page:
     """Get the pages of the latest catalog of a provider."""
@@ -576,9 +585,9 @@ def get_latest_provider_catalog_page(
     operation_id="download-latest-provider-catalog-page-v1",
 )
 def download_latest_provider_catalog_page(
-    provider_id: int,
-    page_number: int,
-    filename: str | None = None,
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    page_number: Annotated[int, Path(description="Number of the page")],
+    filename: Annotated[str | None, Query(description="Name for the file")] = None,
     db_session: Session = database.depends_db_session,
 ) -> responses.FileResponse:
     """Download a single page of the latest catalog of a provider."""
@@ -609,9 +618,9 @@ def download_latest_provider_catalog_page(
     operation_id="embed-latest-provider-catalog-page-v1",
 )
 def embed_latest_provider_catalog_page(
-    provider_id: int,
-    page_number: int,
-    filename: str | None = None,
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    page_number: Annotated[int, Path(description="Number of the page")],
+    filename: Annotated[str | None, Query(description="Name for the file")] = None,
     db_session: Session = database.depends_db_session,
 ) -> responses.FileResponse:
     """Embed a single page of the latest catalog of a provider."""
@@ -642,8 +651,10 @@ def embed_latest_provider_catalog_page(
     operation_id="list-provider-current-catalogs-v1",
 )
 def list_provider_current_catalogs(
-    provider_id: int,
-    order: str = "-created_at",
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    order: Annotated[list[str], Query(description="Field name to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        "-created_at"
+    ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List all current catalogs of a provider."""
@@ -654,7 +665,7 @@ def list_provider_current_catalogs(
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
+        .order_by(*[text(order_param) for order_param in order])
     )
 
 
@@ -664,8 +675,10 @@ def list_provider_current_catalogs(
     operation_id="list-provider-preview-catalogs-v1",
 )
 def list_provider_preview_catalogs(
-    provider_id: int,
-    order: str = "-created_at",
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    order: Annotated[list[str], Query(description="Field name to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        "-created_at"
+    ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List all preview catalogs of a provider."""
@@ -674,7 +687,7 @@ def list_provider_preview_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
+        .order_by(*[text(order_param) for order_param in order])
     )
 
 
@@ -684,8 +697,10 @@ def list_provider_preview_catalogs(
     operation_id="list-provider-outdated-catalogs-v1",
 )
 def list_provider_outdated_catalogs(
-    provider_id: int,
-    order: str = "-created_at",
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    order: Annotated[list[str], Query(description="Field name to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        "-created_at"
+    ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List all outdated catalogs of a provider."""
@@ -694,7 +709,7 @@ def list_provider_outdated_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
+        .order_by(*[text(order_param) for order_param in order])
     )
 
 
@@ -711,7 +726,8 @@ def list_provider_outdated_catalogs(
     operation_id="run-provider-job-v1",
 )
 def post_provider_job_run(
-    provider_id: int, db_session: Session = database.depends_db_session
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    db_session: Session = database.depends_db_session,
 ) -> SchedulerJob:
     """Run the providers job to update its catalog."""
     provider = db_session.get(database.Provider, provider_id)
@@ -741,7 +757,8 @@ def post_provider_job_run(
     operation_id="add-provider-job-v1",
 )
 def post_provider_add_job(
-    provider_id: int, db_session: Session = database.depends_db_session
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    db_session: Session = database.depends_db_session,
 ) -> database.Provider:
     """Add the provider's job."""
     provider = db_session.get(database.Provider, provider_id)
@@ -767,7 +784,8 @@ def post_provider_add_job(
     operation_id="delete-provider-job-v1",
 )
 def post_provider_remove_job(
-    provider_id: int, db_session: Session = database.depends_db_session
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    db_session: Session = database.depends_db_session,
 ) -> database.Provider:
     """Remove the provider's job."""
     provider = db_session.get(database.Provider, provider_id)
@@ -793,7 +811,8 @@ def post_provider_remove_job(
     operation_id="get-provider-job-v1",
 )
 def get_provider_job(
-    provider_id: int, db_session: Session = database.depends_db_session
+    provider_id: Annotated[int, Path(description="ID of the provider")],
+    db_session: Session = database.depends_db_session,
 ) -> SchedulerJob:
     """Remove the provider's job."""
     provider = db_session.get(database.Provider, provider_id)
