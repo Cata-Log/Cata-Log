@@ -49,14 +49,6 @@ class ProviderBrokenWarning(ProviderWarning):
     provider_status = StatusEnum.BROKEN
 
 
-class ProviderRegistrationWarning(ProviderBrokenWarning):
-    """An error indicating that the provider class could not be registered."""
-
-    @override
-    def __init__(self, *args: Any) -> None:
-        super().__init__("Provider class could not be registered.", *args)
-
-
 class ProviderMisconfiguredWarning(ProviderWarning):
     """An error indicating that the provider is misconfigured."""
 

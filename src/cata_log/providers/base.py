@@ -34,7 +34,6 @@ from cata_log.exceptions import (
     ProviderBrokenWarning,
     ProviderInvalidConfigurationWarning,
     ProviderMisconfiguredOrBrokenWarning,
-    ProviderRegistrationWarning,
     ProviderUnknownClassWarning,
     ProviderWarning,
 )
@@ -77,11 +76,7 @@ class Provider(abc.ABC):
             _configuration: An instance of the :class:`cata_log.base.Provider.Configuration` loaded from :param:`configuration` .
             _client: HTTPX client instance that throws on every error status and follows redirects.
             _relevant_datetime: The relevant datetime defining the catalog to cache.
-            _logger: The logger for this instance.
         """
-        self._logger = logging.getLogger(
-            self.__module__ + "." + self.__class__.__name__
-        )
         self._configuration = self.validate_configuration(configuration)
         self._relevant_datetime = self.get_relevant_datetime()
         self._client = httpx.Client(
@@ -100,14 +95,16 @@ class Provider(abc.ABC):
     @override
     def __init_subclass__(cls) -> None:
         """Subclass constructor.
-        Adds the subclass to the registry.
-
-        Raises:
-            :exc:`cata_log.exceptions.ProviderRegistrationWarning`: If a provider subclass could not be registered.
+        Initializes a logger and adds the subclass to the registry.
         """
         super().__init_subclass__()
+        cls._logger = logging.getLogger(cls.__module__ + "." + cls.__name__)
         if cls.uid in cls._registry:
-            raise ProviderRegistrationWarning(cls.uid)
+            cls._logger.error(
+                "Provider has a duplicate UID and can't be registered!",
+                extra={"uid": cls.uid},
+            )
+            return
         cls._registry[cls.uid] = cls
 
     @final

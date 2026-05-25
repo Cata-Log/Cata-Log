@@ -20,7 +20,7 @@ import pytest
 from apscheduler.triggers.cron import CronTrigger
 from pydantic import BaseModel
 
-from cata_log.providers import Provider
+from cata_log.providers import Provider, __all__
 from cata_log.providers.regions import Region
 
 
@@ -44,3 +44,7 @@ def test_registered_classes__attributes(provider_class):
     assert issubclass(provider_class.Configuration, BaseModel)
     assert provider_class.uid
     assert provider_class.uid in Provider._registry
+
+
+def test_builtin_registered_classes_registration():
+    assert len(__all__) - 1 == len(Provider._registry.values())

@@ -26,10 +26,11 @@ from test.cata_log.conftest import SideEffects
 
 
 def test_duplicate_provider(provider_test_class):
-    with pytest.raises(exceptions.ProviderRegistrationWarning):
+    class DuplicateProvider(Provider):
+        uid = provider_test_class.uid
 
-        class DuplicateProvider(Provider):
-            uid = provider_test_class.uid
+    assert provider_test_class.uid in Provider._registry
+    assert Provider._registry[provider_test_class.uid] == provider_test_class
 
 
 @pytest.mark.parametrize(
