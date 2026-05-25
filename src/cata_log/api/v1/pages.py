@@ -22,6 +22,7 @@ from fastapi.responses import FileResponse
 from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import text
 
 from cata_log import database
 from cata_log.api import common
@@ -58,13 +59,17 @@ class Page(AwareTimestampsMixin, BaseModel):
     operation_id="list-pages-v1",
 )
 def list_pages(
+    order: str = "number",
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Page]:
     """List all pages."""
     return paginate(
         db_session.query(database.Page)
         .join(database.Catalog, database.Page.catalog_id == database.Catalog.id)
-        .order_by(database.Catalog.created_at.desc(), database.Page.number)
+        .order_by(
+            database.Catalog.created_at.desc(),
+            *[text(field_order.strip()) for field_order in order.split(",")],
+        )
     )
 
 

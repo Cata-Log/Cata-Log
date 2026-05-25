@@ -23,7 +23,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import AwareDatetime, BaseModel
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, text
 
 from cata_log import database
 from cata_log.api import common
@@ -52,13 +52,14 @@ class FullCatalog(Catalog):
 
 @router.get("", response_model=PaginationPage[Catalog], operation_id="list-catalogs-v1")
 def list_catalogs(
+    order: str = "-created_at",
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List all catalogs."""
     return paginate(
         db_session.query(database.Catalog)
         .options(selectinload(database.Catalog.pages))
-        .order_by(database.Catalog.created_at.desc())
+        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
     )
 
 
@@ -68,16 +69,14 @@ def list_catalogs(
     operation_id="list-latest-catalogs-v1",
 )
 def list_latest_catalogs(
+    order: str = "-created_at",
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List the latest catalog for every provider."""
     subquery = db_session.query(
         database.Catalog.id.label("id"),
         func.row_number()
-        .over(
-            partition_by=database.Catalog.provider_id,
-            order_by=database.Catalog.created_at.desc(),
-        )
+        .over(partition_by=database.Catalog.provider_id, order_by=order)
         .label("rn"),
     ).subquery()
     return paginate(
@@ -93,6 +92,7 @@ def list_latest_catalogs(
     operation_id="list-preview-catalogs-v1",
 )
 def list_previews_catalogs(
+    order: str = "-created_at",
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List all preview catalogs."""
@@ -100,7 +100,7 @@ def list_previews_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(database.Catalog.created_at.desc())
+        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
     )
 
 
@@ -110,6 +110,7 @@ def list_previews_catalogs(
     operation_id="list-current-catalogs-v1",
 )
 def list_current_catalogs(
+    order: str = "-created_at",
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List all current catalogs."""
@@ -119,7 +120,7 @@ def list_current_catalogs(
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
         .options(selectinload(database.Catalog.pages))
-        .order_by(database.Catalog.created_at.desc())
+        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
     )
 
 
@@ -129,6 +130,7 @@ def list_current_catalogs(
     operation_id="list-outdated-catalogs-v1",
 )
 def list_outdated_catalogs(
+    order: str = "-created_at",
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List all outdated catalogs."""
@@ -136,7 +138,7 @@ def list_outdated_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(database.Catalog.created_at.desc())
+        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
     )
 
 
@@ -207,13 +209,15 @@ def download_catalog(
     operation_id="get-catalog-pages-v1",
 )
 def get_catalog_pages(
-    catalog_id: int, db_session: Session = database.depends_db_session
+    catalog_id: int,
+    order: str = "number",
+    db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Page]:
     """Get catalog pages."""
     return paginate(
         db_session.query(database.Page)
         .filter(database.Page.catalog_id == catalog_id)
-        .order_by(database.Page.number)
+        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
     )
 
 

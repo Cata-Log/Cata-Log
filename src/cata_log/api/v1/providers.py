@@ -34,6 +34,7 @@ from pydantic.types import AwareDatetime
 from pydantic_core import PydanticCustomError
 from pydantic_core.core_schema import ValidationInfo
 from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.sql import text
 
 from cata_log import constants, database
 from cata_log.api import common
@@ -222,6 +223,7 @@ class ProviderInfo(BaseModel):
     "", response_model=PaginationPage[Provider], operation_id="list-providers-v1"
 )
 def list_providers(
+    order: str = "class_uid",
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Provider]:
     """List all providers."""
@@ -232,7 +234,7 @@ def list_providers(
                 database.Catalog.pages
             )
         )
-        .order_by(database.Provider.class_uid)
+        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
     )
 
 
@@ -455,14 +457,16 @@ def delete_provider(
     operation_id="list-provider-catalogs-v1",
 )
 def list_provider_catalogs(
-    provider_id: int, db_session: Session = database.depends_db_session
+    provider_id: int,
+    order: str = "-created_at",
+    db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List all catalogs of a provider."""
     return paginate(
         db_session.query(database.Catalog)
         .options(selectinload(database.Catalog.pages))
         .filter(database.Catalog.provider_id == provider_id)
-        .order_by(database.Catalog.created_at.desc())
+        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
     )
 
 
@@ -525,7 +529,9 @@ def download_latest_provider_catalog(
     operation_id="get-latest-provider-catalog-pages-v1",
 )
 def list_latest_provider_catalog_pages(
-    provider_id: int, db_session: Session = database.depends_db_session
+    provider_id: int,
+    order: str = "number",
+    db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Page]:
     """Get the pages of the latest catalog of a provider."""
 
@@ -534,7 +540,7 @@ def list_latest_provider_catalog_pages(
         .filter(
             database.Page.catalog_id == latest_provider_catalog_id_subquery(provider_id)
         )
-        .order_by(database.Page.number)
+        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
     )
 
 
@@ -636,7 +642,9 @@ def embed_latest_provider_catalog_page(
     operation_id="list-provider-current-catalogs-v1",
 )
 def list_provider_current_catalogs(
-    provider_id: int, db_session: Session = database.depends_db_session
+    provider_id: int,
+    order: str = "-created_at",
+    db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List all current catalogs of a provider."""
     now = datetime.now(tz=UTC)
@@ -646,7 +654,7 @@ def list_provider_current_catalogs(
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
         .options(selectinload(database.Catalog.pages))
-        .order_by(database.Catalog.created_at.desc())
+        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
     )
 
 
@@ -656,7 +664,9 @@ def list_provider_current_catalogs(
     operation_id="list-provider-preview-catalogs-v1",
 )
 def list_provider_preview_catalogs(
-    provider_id: int, db_session: Session = database.depends_db_session
+    provider_id: int,
+    order: str = "-created_at",
+    db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List all preview catalogs of a provider."""
     return paginate(
@@ -664,7 +674,7 @@ def list_provider_preview_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(database.Catalog.created_at.desc())
+        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
     )
 
 
@@ -674,7 +684,9 @@ def list_provider_preview_catalogs(
     operation_id="list-provider-outdated-catalogs-v1",
 )
 def list_provider_outdated_catalogs(
-    provider_id: int, db_session: Session = database.depends_db_session
+    provider_id: int,
+    order: str = "-created_at",
+    db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
     """List all outdated catalogs of a provider."""
     return paginate(
@@ -682,7 +694,7 @@ def list_provider_outdated_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(database.Catalog.created_at.desc())
+        .order_by(*[text(field_order.strip()) for field_order in order.split(",")])
     )
 
 
