@@ -27,14 +27,16 @@ class AwareDatetimesMixin:
 
     @field_validator("*", mode="before")
     @classmethod
-    def make_datetimes_aware(cls, value: Any) -> Any:  # noqa: ANN401 # no reason to be precise here
-        """Add a timezone to naive datetime values that are localized in UTC.
+    def convert_datetimes_to_utc(cls, value: Any) -> Any:  # noqa: ANN401 # no reason to be precise here
+        """Convert datetime values to UTC timezone.
 
         Returns:
-            The aware datetime.
+            The converted datetime.
         """
-        if isinstance(value, datetime) and value.tzinfo is None:
-            return value.replace(tzinfo=UTC)
+        if isinstance(value, datetime):
+            if value.tzinfo is None:
+                return value.replace(tzinfo=UTC)
+            return value.astimezone(UTC)
         return value
 
 

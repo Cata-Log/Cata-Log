@@ -57,7 +57,9 @@ def test_Provider_insertion(LocalSession, started_scheduler, provider_test_class
         assert len(job.args) == 1
         assert 1 in job.args
         assert provider.created_at
+        assert provider.created_at.tzinfo == UTC
         assert provider.updated_at
+        assert provider.updated_at.tzinfo == UTC
 
 
 def test_Provider_insertion__bad_class_uid(LocalSession):
@@ -88,7 +90,9 @@ def test_Provider_deletion(db_session, full_database, fake_provider):
         SideEffects.DONOTHING,
     ],
 )
-def test_Provider_fetch_catalog__success(db_session, fake_provider, side_effect):
+def test_Provider_fetch_catalog__success(
+    db_session, fake_provider, provider_test_class, side_effect
+):
     fake_provider.configuration["side_effect"] = side_effect
     db_session.commit()
 
@@ -97,6 +101,11 @@ def test_Provider_fetch_catalog__success(db_session, fake_provider, side_effect)
     db_session.refresh(fake_provider)
     assert fake_provider.status == StatusEnum.HEALTHY
     assert len(fake_provider.catalogs) == 1
+    assert fake_provider.catalogs[
+        0
+    ].valid_until == provider_test_class.const_valid_since.replace(
+        tzinfo=provider_test_class.region.timezone
+    )
     assert len(fake_provider.catalogs[0].pages) == 10
     for page in fake_provider.catalogs[0].pages:
         assert page.file.sha256 == sha256(page.file.path.read_bytes()).hexdigest()
@@ -163,7 +172,9 @@ def test_Catalog_insertion(LocalSession, fake_provider):
 
         assert catalog.id
         assert catalog.valid_since
+        assert catalog.valid_since.tzinfo == UTC
         assert catalog.valid_until
+        assert catalog.valid_until.tzinfo == UTC
         assert catalog.provider.id == fake_provider.id
         assert catalog.provider.class_uid == fake_provider.class_uid
         assert catalog.provider.configuration == fake_provider.configuration
@@ -171,7 +182,9 @@ def test_Catalog_insertion(LocalSession, fake_provider):
         assert fake_provider.catalogs[0].id == catalog.id
         assert fake_provider.catalogs[0].valid_since == catalog.valid_since
         assert catalog.created_at
+        assert catalog.created_at.tzinfo == UTC
         assert catalog.updated_at
+        assert catalog.updated_at.tzinfo == UTC
 
 
 def test_Catalog_deletion(db_session, fake_catalog, full_database):
@@ -205,7 +218,9 @@ def test_PageFile_insertion(faker, LocalSession):
         assert pagefile.height
         assert pagefile.path == get_settings().storage_path / "testfile.jpg"
         assert pagefile.created_at
+        assert pagefile.created_at.tzinfo == UTC
         assert pagefile.updated_at
+        assert pagefile.updated_at.tzinfo == UTC
 
 
 @pytest.mark.parametrize(
@@ -278,7 +293,9 @@ def test_Page_insertion(LocalSession, fake_catalog, fake_pagefile):
         assert fake_catalog.pages[0].id == page.id
         assert fake_catalog.pages[0].number == page.number
         assert page.created_at
+        assert page.created_at.tzinfo == UTC
         assert page.updated_at
+        assert page.updated_at.tzinfo == UTC
 
 
 @pytest.mark.parametrize(

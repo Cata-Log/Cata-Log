@@ -19,7 +19,7 @@
 import contextlib
 import logging
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
@@ -30,13 +30,12 @@ from apscheduler.jobstores.base import JobLookupError
 from apscheduler.triggers.cron import CronTrigger
 from ebooklib import epub
 from PIL import Image
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import (
-    DateTime,
     ForeignKey,
     UniqueConstraint,
     orm,
 )
-from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.schema import CheckConstraint
@@ -54,7 +53,7 @@ from cata_log.scheduler import scheduler
 from cata_log.settings import get_settings
 
 from .mixins import TimestampMixin
-from .types import PathType
+from .types import PathType, UTCDatetime
 
 logger = logging.getLogger(__name__)
 
@@ -124,8 +123,8 @@ class Provider(ModelBase, TimestampMixin):
                 db_session.add(self)
                 new_catalog = Catalog(
                     provider_id=self.id,
-                    valid_since=provider_fetcher.get_valid_since().astimezone(UTC),
-                    valid_until=provider_fetcher.get_valid_until().astimezone(UTC),
+                    valid_since=provider_fetcher.get_valid_since(),
+                    valid_until=provider_fetcher.get_valid_until(),
                 )
                 db_session.add(new_catalog)
                 db_session.flush()
@@ -226,8 +225,8 @@ class Catalog(ModelBase, TimestampMixin):
     """ORM model for a catalog."""
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
-    valid_since: orm.Mapped[datetime] = orm.mapped_column(DateTime(timezone=True))
-    valid_until: orm.Mapped[datetime] = orm.mapped_column(DateTime(timezone=True))
+    valid_since: orm.Mapped[datetime] = orm.mapped_column(UTCDatetime)
+    valid_until: orm.Mapped[datetime] = orm.mapped_column(UTCDatetime)
     provider: orm.Mapped[Provider] = orm.relationship(back_populates="catalogs")
     provider_id: orm.Mapped[int] = orm.mapped_column(
         ForeignKey(Provider.__tablename__ + ".id", ondelete="CASCADE"), nullable=False

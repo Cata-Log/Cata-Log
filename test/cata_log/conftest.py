@@ -415,6 +415,8 @@ def provider_test_class(_session_faker):
             }
         )
 
+        const_valid_since = _session_faker.date_time()
+
         @override
         def _get_page(self, page_number):
             SideEffects.run(self._configuration.side_effect)
@@ -434,7 +436,7 @@ def provider_test_class(_session_faker):
         @override
         def _get_valid_since(self):
             SideEffects.run(self._configuration.side_effect)
-            return _session_faker.date_time()
+            return self.const_valid_since
 
         @override
         def _get_valid_until(self):

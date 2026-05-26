@@ -96,6 +96,10 @@ def test_get_valid_since(provider_test_class, side_effect, expected_error):
         ).get_valid_until()
 
         assert result
+        assert result.tzinfo
+        assert result == provider_test_class.const_valid_since.replace(
+            tzinfo=provider_test_class.region.timezone
+        )
 
 
 @pytest.mark.parametrize(
@@ -132,6 +136,7 @@ def test_get_valid_until(provider_test_class, side_effect, expected_error):
         ).get_valid_until()
 
         assert result
+        assert result.tzinfo
 
 
 @pytest.mark.parametrize(
@@ -274,6 +279,10 @@ def test_get_valid_since__preview(
         ).get_valid_since()
 
         assert result
+        assert result.tzinfo
+        assert result == preview_provider_test_class.const_valid_since.replace(
+            tzinfo=preview_provider_test_class.region.timezone
+        )
 
 
 @pytest.mark.parametrize(
@@ -314,6 +323,7 @@ def test_get_valid_until__preview(
         ).get_valid_until()
 
         assert result
+        assert result.tzinfo
 
 
 @pytest.mark.parametrize(

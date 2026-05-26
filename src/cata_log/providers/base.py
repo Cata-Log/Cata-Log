@@ -158,6 +158,8 @@ class Provider(abc.ABC):
             result = self._get_valid_since()
         except Exception as error:
             raise ProviderBrokenWarning from error
+        if not result.tzinfo:
+            return result.replace(tzinfo=self.region.timezone)
         return result
 
     @abc.abstractmethod
@@ -175,6 +177,8 @@ class Provider(abc.ABC):
             result = self._get_valid_until()
         except Exception as error:
             raise ProviderBrokenWarning from error
+        if not result.tzinfo:
+            return result.replace(tzinfo=self.region.timezone)
         return result
 
     @abc.abstractmethod

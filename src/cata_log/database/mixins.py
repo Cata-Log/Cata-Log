@@ -19,21 +19,24 @@
 from datetime import datetime
 
 from sqlalchemy import (
-    DateTime,
     func,
     orm,
 )
+
+from cata_log.database.types import UTCDatetime
 
 
 class TimestampMixin:
     """Mixin adding standard creation and update timestamps to an ORM model."""
 
     created_at: orm.Mapped[datetime] = orm.mapped_column(
-        DateTime(timezone=True), server_default=func.current_timestamp(), nullable=False
+        UTCDatetime,
+        server_default=func.current_timestamp(),
+        nullable=False,
     )
 
     updated_at: orm.Mapped[datetime] = orm.mapped_column(
-        DateTime(timezone=True),
+        UTCDatetime,
         server_default=func.current_timestamp(),
         onupdate=func.current_timestamp(),
         nullable=False,
