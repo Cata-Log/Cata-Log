@@ -19,6 +19,7 @@
 import pytest
 from apscheduler.triggers.cron import CronTrigger
 from pydantic import BaseModel
+from pydantic_extra_types.cron import CronStr
 
 from cata_log.providers import Provider, __all__
 from cata_log.providers.regions import Region
@@ -37,6 +38,7 @@ def test_registered_classes__attributes(provider_class):
     assert issubclass(provider_class.region, Region)
     assert provider_class.schedule
     assert isinstance(provider_class.schedule, str)
+    CronStr(provider_class.schedule)
     assert CronTrigger.from_crontab(provider_class.schedule)
     assert isinstance(provider_class.jitter, int)
     assert provider_class.jitter < 86400

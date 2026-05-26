@@ -33,6 +33,7 @@ from pydantic.fields import FieldInfo
 from pydantic.types import AwareDatetime
 from pydantic_core import PydanticCustomError
 from pydantic_core.core_schema import ValidationInfo
+from pydantic_extra_types.cron import CronStr
 from sqlalchemy.orm import Session, selectinload
 
 from cata_log import constants, database
@@ -75,14 +76,18 @@ class Job(AwareDatetimesMixin, BaseModel):
 
     id: str
     next_run_time: AwareDatetime | None = None
-    schedule: str = Field(validation_alias="trigger")
+    schedule: CronStr | None = Field(validation_alias="trigger")
     jitter: int = Field(validation_alias="trigger")
 
     @field_validator("schedule", mode="before")
     @classmethod
-    def get_schedule_from_trigger(cls, trigger: BaseTrigger) -> str:
+    def get_schedule_from_trigger(cls, trigger: BaseTrigger) -> str | None:
         """Get the crontab schedule as a string."""
-        return str(trigger)
+        if isinstance(trigger, CronTrigger):
+            return "{minute} {hour} {day} {month} {day_of_week}".format(
+                **{field.name: str(field) for field in trigger.fields}
+            )
+        return None
 
     @field_validator("jitter", mode="before")
     @classmethod
@@ -206,7 +211,7 @@ class ProviderInfo(BaseModel):
     description: str
     url: str
     region: RegionInfo
-    schedule: str
+    schedule: CronStr
     jitter: int
     class_uid: str = Field(validation_alias="uid")
     configuration: dict[str, ConfigInfo] = Field(validation_alias="Configuration")
@@ -218,12 +223,6 @@ class ProviderInfo(BaseModel):
     ) -> dict[str, FieldInfo]:
         """Get the config field infos from the configuration model."""
         return configuration_class.model_fields
-
-    @field_validator("schedule", mode="before")
-    @classmethod
-    def get_schedule_string(cls, schedule: CronTrigger) -> str:
-        """Get the config field infos from the configuration model."""
-        return str(schedule)
 
 
 @router.get(
