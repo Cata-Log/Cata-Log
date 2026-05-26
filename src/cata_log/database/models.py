@@ -39,6 +39,7 @@ from sqlalchemy import (
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.schema import CheckConstraint
 from sqlalchemy.sql import select
 from sqlalchemy.types import JSON, String, Text
 
@@ -392,14 +393,21 @@ class PageFile(ModelBase, TimestampMixin):
     path: orm.Mapped[Path] = orm.mapped_column(PathType, unique=True)
     original_sha256: orm.Mapped[str] = orm.mapped_column(String(64))
     sha256: orm.Mapped[str] = orm.mapped_column(String(64))
-    size: orm.Mapped[int] = orm.mapped_column()
-    height: orm.Mapped[int] = orm.mapped_column()
-    width: orm.Mapped[int] = orm.mapped_column()
+    size: orm.Mapped[int] = orm.mapped_column(CheckConstraint("size > 0"))
+    height: orm.Mapped[int] = orm.mapped_column(CheckConstraint("height > 0"))
+    width: orm.Mapped[int] = orm.mapped_column(CheckConstraint("width > 0"))
     pages: orm.Mapped[list[Page]] = orm.relationship(
         back_populates="file",
         passive_deletes="all",  # essential to make ondelete=RESTRICT work: https://stackoverflow.com/questions/55968951/sqlalchemy-fk-ondelete-does-not-restrict
     )
     __tablename__ = "pagefiles"
+
+    @orm.validates("size", "width", "height")
+    def validate_nonnegative_number(self, key: str, value: int) -> int:
+        """Ensure size values are positive."""
+        if value <= 0:
+            raise ValueError(f"Invalid {key} {value}")
+        return value
 
     @property
     def name(self) -> str:
@@ -462,7 +470,7 @@ class Page(ModelBase, TimestampMixin):
     """ORM model for a catalog page."""
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
-    number: orm.Mapped[int] = orm.mapped_column()
+    number: orm.Mapped[int] = orm.mapped_column(CheckConstraint("number >= 0"))
     catalog_id: orm.Mapped[int] = orm.mapped_column(
         ForeignKey(Catalog.__tablename__ + ".id", ondelete="CASCADE"), nullable=False
     )
@@ -474,3 +482,10 @@ class Page(ModelBase, TimestampMixin):
 
     __tablename__ = "pages"
     __table_args__ = (UniqueConstraint("catalog_id", "number"),)
+
+    @orm.validates("number")
+    def validate_nonnegative_number(self, key: str, number: int) -> int:
+        """Ensure number is nonnegative."""
+        if number < 0:
+            raise ValueError(f"Invalid {key} {number}")
+        return number

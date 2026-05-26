@@ -190,9 +190,9 @@ def test_PageFile_insertion(faker, LocalSession):
             path=get_settings().storage_path / "testfile.jpg",
             sha256=faker.sha256(),
             original_sha256=faker.sha256(),
-            size=faker.random.randint(1, 2000),
-            width=faker.random.randint(100, 1000),
-            height=faker.random.randint(100, 1000),
+            size=1,
+            width=1,
+            height=1,
         )
         db_session.add(pagefile)
         db_session.commit()
@@ -206,6 +206,32 @@ def test_PageFile_insertion(faker, LocalSession):
         assert pagefile.path == get_settings().storage_path / "testfile.jpg"
         assert pagefile.created_at
         assert pagefile.updated_at
+
+
+@pytest.mark.parametrize(
+    ("bad_key", "bad_value"),
+    [
+        ("size", -101),
+        ("width", -52),
+        ("height", -67),
+        ("size", 0),
+        ("width", 0),
+        ("height", 0),
+    ],
+)
+def test_PageFile_insertion__bad_values(faker, bad_key, bad_value):
+    values = {
+        "path": get_settings().storage_path / "testfile.jpg",
+        "sha256": faker.sha256(),
+        "original_sha256": faker.sha256(),
+        "size": faker.random.randint(1, 2000),
+        "width": faker.random.randint(100, 1000),
+        "height": faker.random.randint(100, 1000),
+    }
+    values[bad_key] = bad_value
+
+    with pytest.raises(ValueError, match=rf"{bad_value}"):
+        database.PageFile(**values)
 
 
 def test_PageFile_deletion(db_session, fake_file, fake_pagefile):
@@ -233,7 +259,7 @@ def test_PageFile_deletion__restricted(db_session, fake_file, fake_pagefile, fak
 def test_Page_insertion(LocalSession, fake_catalog, fake_pagefile):
     with LocalSession() as db_session:
         page = database.Page(
-            number=4,
+            number=0,
             catalog_id=fake_catalog.id,
             file_id=fake_pagefile.id,
         )
@@ -242,7 +268,7 @@ def test_Page_insertion(LocalSession, fake_catalog, fake_pagefile):
         db_session.refresh(page)
 
         assert page.id
-        assert page.number == 4
+        assert page.number == 0
         assert page.file.id == fake_pagefile.id
         assert len(fake_pagefile.pages) == 1
         assert fake_pagefile.pages[0].id == page.id
@@ -253,6 +279,25 @@ def test_Page_insertion(LocalSession, fake_catalog, fake_pagefile):
         assert fake_catalog.pages[0].number == page.number
         assert page.created_at
         assert page.updated_at
+
+
+@pytest.mark.parametrize(
+    ("bad_key", "bad_value"),
+    [
+        ("number", -101),
+        ("number", -1),
+    ],
+)
+def test_Page_insertion__bad_values(fake_catalog, fake_pagefile, bad_key, bad_value):
+    values = {
+        "number": 4,
+        "catalog_id": fake_catalog.id,
+        "file_id": fake_pagefile.id,
+    }
+    values[bad_key] = bad_value
+
+    with pytest.raises(ValueError, match=rf"{bad_value}"):
+        database.Page(**values)
 
 
 def test_Page_unique_together_constraint(LocalSession, fake_pagefile, fake_page):

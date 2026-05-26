@@ -23,6 +23,7 @@ from fastapi import APIRouter, HTTPException, Path, Query, status
 from fastapi.responses import FileResponse, Response
 from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import AwareDatetime, BaseModel
+from pydantic.types import NonNegativeInt
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql import func
 
@@ -41,7 +42,7 @@ class Catalog(AwareTimestampsMixin, BaseModel):
     """Catalog data model."""
 
     id: int
-    provider_id: Annotated[int, Path(description="ID of the provider")]
+    provider_id: int
     valid_since: AwareDatetime
     valid_until: AwareDatetime
 
@@ -287,7 +288,7 @@ def get_catalog_pages(
 )
 def get_catalog_page(
     catalog_id: Annotated[int, Path(description="ID of the catalog")],
-    page_number: Annotated[int, Path(description="Number of the page")],
+    page_number: Annotated[NonNegativeInt, Path(description="Number of the page")],
     db_session: Session = database.depends_db_session,
 ) -> database.Page:
     """Get a single catalog page by its page number."""
@@ -316,7 +317,7 @@ def get_catalog_page(
 )
 def download_catalog_page(
     catalog_id: Annotated[int, Path(description="ID of the catalog")],
-    page_number: Annotated[int, Path(description="Number of the page")],
+    page_number: Annotated[NonNegativeInt, Path(description="Number of the page")],
     filename: str | None = None,
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:
@@ -352,7 +353,7 @@ def download_catalog_page(
 )
 def embed_catalog_page(
     catalog_id: Annotated[int, Path(description="ID of the catalog")],
-    page_number: Annotated[int, Path(description="Number of the page")],
+    page_number: Annotated[NonNegativeInt, Path(description="Number of the page")],
     filename: Annotated[str | None, Query(description="Name for the file")] = None,
     db_session: Session = database.depends_db_session,
 ) -> FileResponse:

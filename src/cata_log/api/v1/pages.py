@@ -23,6 +23,7 @@ from fastapi import APIRouter, HTTPException, Path, Query, status
 from fastapi.responses import FileResponse
 from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import BaseModel
+from pydantic.types import NonNegativeInt, PositiveInt, StringConstraints
 from sqlalchemy.orm import Session
 
 from cata_log import database
@@ -39,10 +40,12 @@ class PageFile(AwareTimestampsMixin, BaseModel):
     """Page file data model."""
 
     id: int
-    sha256: str
-    size: int
-    width: int
-    height: int
+    sha256: Annotated[
+        str, StringConstraints(strip_whitespace=True, pattern=r"^[a-z0-9]{64}$")
+    ]
+    size: PositiveInt
+    width: PositiveInt
+    height: PositiveInt
     name: str
 
 
@@ -50,8 +53,8 @@ class Page(AwareTimestampsMixin, BaseModel):
     """Page data model."""
 
     id: int
-    number: int
-    catalog_id: Annotated[int, Path(description="ID of the catalog")]
+    number: NonNegativeInt
+    catalog_id: int
     file: PageFile
 
 

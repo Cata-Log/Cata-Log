@@ -4,6 +4,19 @@ from cata_log.utils import page_numbers
 
 
 @pytest.mark.parametrize(
+    ("page_number", "start_number"),
+    [
+        (10, 22),
+        (3, 4),
+        (-1, 0),
+    ],
+)
+def test_PageNumber__invalid(page_number, start_number):
+    with pytest.raises(ValueError):  # noqa: PT011 # nothing reasonable to match
+        page_numbers.PageNumber(page_number, start_number)
+
+
+@pytest.mark.parametrize(
     ("page_number", "equal_object"),
     [
         (page_numbers.PageNumber(0, 0), 0),

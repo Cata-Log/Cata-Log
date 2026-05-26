@@ -35,6 +35,8 @@ class PageNumber:
             start_number: The number of the first page.
         """
         self._number = page_number - start_number
+        if self._number < 0:
+            raise ValueError("Pagenumber is below the startnumber.")
         self._offset = start_number
 
     @override

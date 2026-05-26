@@ -287,7 +287,7 @@ def fake_file(faker):
 def fake_pagefile(faker, db_session, fake_file):
     fake_pagefile = database.PageFile(
         path=str(fake_file),
-        size=faker.random.randint(1, 1000),
+        size=faker.random.randint(1000, 10000),
         sha256=faker.sha256(),
         original_sha256=faker.sha256(),
         height=faker.random.randint(100, 1000),

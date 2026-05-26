@@ -30,7 +30,7 @@ from fastapi_pagination import paginate as paginate_list
 from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from pydantic.fields import FieldInfo
-from pydantic.types import AwareDatetime
+from pydantic.types import AwareDatetime, NonNegativeInt, StringConstraints
 from pydantic_core import PydanticCustomError
 from pydantic_core.core_schema import ValidationInfo
 from pydantic_extra_types.cron import CronStr
@@ -252,24 +252,38 @@ def list_providers(
     operation_id="list-available-providers-v1",
 )
 def list_available_providers(
-    query: str | None = None, region: str | None = None
+    query: Annotated[
+        list[str] | None,
+        StringConstraints(strip_whitespace=True, to_lower=True),
+        "Filter by text (case-insensitive)",
+    ] = None,
+    region: Annotated[
+        list[str] | None,
+        StringConstraints(strip_whitespace=True, to_lower=True),
+        "Filter by region local name (case-insensitive)",
+    ] = None,
 ) -> PaginationPage[type[ProviderType]]:
     """List all available providers."""
-    if region:
-        region = region.lower()
-    if query:
-        query = query.lower()
     return paginate_list(
         [
             catalog_class
             for catalog_class in ProviderType.get_classes()
             if (not query and not region)
-            or (region and (region in catalog_class.region.local_name.lower()))
+            or (
+                region
+                and any(
+                    region_name in catalog_class.region.local_name.lower()
+                    for region_name in region
+                )
+            )
             or (
                 query
                 and (
-                    (query in catalog_class.uid)
-                    or (query in catalog_class.description.lower())
+                    any(
+                        query_text in catalog_class.uid.lower()
+                        or query_text in catalog_class.description.lower()
+                        for query_text in query
+                    )
                 )
             )
         ]
@@ -596,7 +610,7 @@ def list_latest_provider_catalog_pages(
 )
 def get_latest_provider_catalog_page(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    page_number: Annotated[int, Path(description="Number of the page")],
+    page_number: Annotated[NonNegativeInt, Path(description="Number of the page")],
     db_session: Session = database.depends_db_session,
 ) -> database.Page:
     """Get the pages of the latest catalog of a provider."""
@@ -622,7 +636,7 @@ def get_latest_provider_catalog_page(
 )
 def download_latest_provider_catalog_page(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    page_number: Annotated[int, Path(description="Number of the page")],
+    page_number: Annotated[NonNegativeInt, Path(description="Number of the page")],
     filename: Annotated[str | None, Query(description="Name for the file")] = None,
     db_session: Session = database.depends_db_session,
 ) -> responses.FileResponse:
@@ -655,7 +669,7 @@ def download_latest_provider_catalog_page(
 )
 def embed_latest_provider_catalog_page(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    page_number: Annotated[int, Path(description="Number of the page")],
+    page_number: Annotated[NonNegativeInt, Path(description="Number of the page")],
     filename: Annotated[str | None, Query(description="Name for the file")] = None,
     db_session: Session = database.depends_db_session,
 ) -> responses.FileResponse:
