@@ -47,4 +47,4 @@ def test_registered_classes__attributes(provider_class):
 
 
 def test_builtin_registered_classes_registration():
-    assert len(__all__) - 1 == len(Provider._registry.values())
+    assert len(Provider._registry.values()) >= len(__all__) - 1

@@ -17,6 +17,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from sqlalchemy import ScalarSelect, sql
+from sqlalchemy.sql import ColumnExpressionArgument
 
 from cata_log import database
 
@@ -37,3 +38,17 @@ def latest_provider_catalog_id_subquery(provider_id: int) -> ScalarSelect[int]:
         .limit(1)
         .scalar_subquery()
     )
+
+
+def order_sql(string: str) -> ColumnExpressionArgument:
+    """Translates an ordering string into sql.
+
+    Args:
+        string: The string to translate.
+
+    Returns:
+        SQL expression for proper ordering by the string.
+    """
+    if string.startswith("-"):
+        return sql.desc(string[1:])
+    return sql.text(string)

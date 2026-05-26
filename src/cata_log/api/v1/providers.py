@@ -34,7 +34,6 @@ from pydantic.types import AwareDatetime
 from pydantic_core import PydanticCustomError
 from pydantic_core.core_schema import ValidationInfo
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy.sql import text
 
 from cata_log import constants, database
 from cata_log.api import common
@@ -45,7 +44,7 @@ from cata_log.exceptions import (
 )
 from cata_log.providers import Provider as ProviderType
 from cata_log.scheduler import scheduler
-from cata_log.utils.queries import latest_provider_catalog_id_subquery
+from cata_log.utils.queries import latest_provider_catalog_id_subquery, order_sql
 
 from .catalogs import Catalog
 from .pages import Page
@@ -191,6 +190,14 @@ class ConfigInfo(BaseModel):
         """Get the type name of the config."""
         return annotation.__name__
 
+    @field_validator("default", mode="before")
+    @classmethod
+    def convert_default(cls, default: str | None) -> str | None:
+        """Convert default to string."""
+        if default is not None:
+            return str(default)
+        return default
+
 
 class ProviderInfo(BaseModel):
     """Provider info data model."""
@@ -223,7 +230,7 @@ class ProviderInfo(BaseModel):
     "", response_model=PaginationPage[Provider], operation_id="list-providers-v1"
 )
 def list_providers(
-    order: Annotated[list[str], Query(description="Field name to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
         "class_uid"
     ],
     db_session: Session = database.depends_db_session,
@@ -236,7 +243,7 @@ def list_providers(
                 database.Catalog.pages
             )
         )
-        .order_by(*[text(order_param) for order_param in order])
+        .order_by(*[order_sql(order_param) for order_param in order])
     )
 
 
@@ -462,7 +469,7 @@ def delete_provider(
 )
 def list_provider_catalogs(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    order: Annotated[list[str], Query(description="Field name to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
         "-created_at"
     ],
     db_session: Session = database.depends_db_session,
@@ -472,7 +479,7 @@ def list_provider_catalogs(
         db_session.query(database.Catalog)
         .options(selectinload(database.Catalog.pages))
         .filter(database.Catalog.provider_id == provider_id)
-        .order_by(*[text(order_param) for order_param in order])
+        .order_by(*[order_sql(order_param) for order_param in order])
     )
 
 
@@ -567,7 +574,7 @@ def embed_latest_provider_catalog(
 )
 def list_latest_provider_catalog_pages(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    order: Annotated[list[str], Query(description="Field name to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
         "number"
     ],
     db_session: Session = database.depends_db_session,
@@ -579,7 +586,7 @@ def list_latest_provider_catalog_pages(
         .filter(
             database.Page.catalog_id == latest_provider_catalog_id_subquery(provider_id)
         )
-        .order_by(*[text(order_param) for order_param in order])
+        .order_by(*[order_sql(order_param) for order_param in order])
     )
 
 
@@ -682,7 +689,7 @@ def embed_latest_provider_catalog_page(
 )
 def list_provider_current_catalogs(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    order: Annotated[list[str], Query(description="Field name to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
         "-created_at"
     ],
     db_session: Session = database.depends_db_session,
@@ -695,7 +702,7 @@ def list_provider_current_catalogs(
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[text(order_param) for order_param in order])
+        .order_by(*[order_sql(order_param) for order_param in order])
     )
 
 
@@ -706,7 +713,7 @@ def list_provider_current_catalogs(
 )
 def list_provider_preview_catalogs(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    order: Annotated[list[str], Query(description="Field name to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
         "-created_at"
     ],
     db_session: Session = database.depends_db_session,
@@ -717,7 +724,7 @@ def list_provider_preview_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[text(order_param) for order_param in order])
+        .order_by(*[order_sql(order_param) for order_param in order])
     )
 
 
@@ -728,7 +735,7 @@ def list_provider_preview_catalogs(
 )
 def list_provider_outdated_catalogs(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    order: Annotated[list[str], Query(description="Field name to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
         "-created_at"
     ],
     db_session: Session = database.depends_db_session,
@@ -739,7 +746,7 @@ def list_provider_outdated_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[text(order_param) for order_param in order])
+        .order_by(*[order_sql(order_param) for order_param in order])
     )
 
 

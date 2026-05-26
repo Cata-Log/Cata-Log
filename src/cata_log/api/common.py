@@ -19,7 +19,7 @@
 from fastapi.exceptions import RequestValidationError
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class HTTPStatusError(BaseModel):
@@ -40,6 +40,22 @@ class ValidationError(BaseModel):
     msg: str
     input: str | None = None
     ctx: str | None = None
+
+    @field_validator("input", mode="before")
+    @classmethod
+    def convert_input(cls, input: object | None) -> str | None:  # noqa: A002 # to match attribute name
+        """Convert input to string."""
+        if input is not None:
+            return str(input)
+        return input
+
+    @field_validator("input", mode="before")
+    @classmethod
+    def convert_ctx(cls, ctx: object | None) -> str | None:
+        """Convert ctx to string."""
+        if ctx is not None:
+            return str(ctx)
+        return input
 
 
 class HTTPValidationError(BaseModel):

@@ -24,11 +24,11 @@ from fastapi.responses import FileResponse
 from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import text
 
 from cata_log import database
 from cata_log.api import common
 from cata_log.api.mixins import AwareTimestampsMixin
+from cata_log.utils.queries import order_sql
 
 from .pagination import PaginationPage
 
@@ -72,7 +72,7 @@ def list_pages(
         .join(database.Catalog, database.Page.catalog_id == database.Catalog.id)
         .order_by(
             database.Catalog.created_at.desc(),
-            *[text(order_param) for order_param in order],
+            *[order_sql(order_param) for order_param in order],
         )
     )
 
