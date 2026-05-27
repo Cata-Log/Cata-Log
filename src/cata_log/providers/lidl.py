@@ -89,8 +89,7 @@ class LidlDeutschland(Provider):
             ]
         except IndexError as index_error:
             raise CatalogUnavailableWarning from index_error
-        flyer_json_response = self._client.get(flyer_json_url)
-        self.flyer_json = flyer_json_response.json()
+        self.flyer_json = self._client.get(flyer_json_url).json()
 
     @override
     def _get_page(self, page_number: PageNumber) -> bytes:
@@ -98,20 +97,19 @@ class LidlDeutschland(Provider):
             url = self.flyer_json["flyer"]["pages"][int(page_number)]["zoom"]
         except IndexError as error:
             raise PagesExhausted from error
-        response = self._client.get(url)
-        return response.content
+        return self._client.get(url).content
 
     @override
     def _get_valid_since(self) -> datetime:
         return datetime.strptime(
             self.flyer_json["flyer"]["offerStartDate"], "%Y-%m-%d"
-        ).astimezone(tz=self.region.timezone)
+        ).replace(tzinfo=self.region.timezone)
 
     @override
     def _get_valid_until(self) -> datetime:
         return datetime.strptime(
             self.flyer_json["flyer"]["offerEndDate"], "%Y-%m-%d"
-        ).astimezone(tz=self.region.timezone) + timedelta(days=1)
+        ).replace(tzinfo=self.region.timezone) + timedelta(days=1)
 
 
 class LidlDeutschlandPreview(Preview, LidlDeutschland):
