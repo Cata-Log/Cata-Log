@@ -17,6 +17,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from importlib import metadata
+from warnings import filterwarnings
 
 from fastapi_pagination.utils import disable_installed_extensions_check
 
@@ -25,4 +26,9 @@ from .settings import get_settings
 __version__ = metadata.version("cata-log")
 
 if not get_settings().dev_mode:
+    filterwarnings(
+        "ignore",
+        category=UserWarning,
+        module=r"tzlocal",
+    )
     disable_installed_extensions_check()
