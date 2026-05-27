@@ -86,4 +86,7 @@ class HoferPreview(Preview, Hofer):
     uid = Hofer.uid + "-preview"
     name = Hofer.name + "-Vorschau"
     description = Hofer.description + " für nächste Woche"
-    preview_timedelta = timedelta(days=7)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return timedelta(days=7)

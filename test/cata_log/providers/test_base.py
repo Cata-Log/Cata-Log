@@ -16,11 +16,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+from datetime import UTC, datetime, timedelta
+
+import httpx
 import pytest
+from freezegun import freeze_time
 from pydantic import ValidationError
 
 from cata_log import exceptions
 from cata_log.providers import Provider
+from cata_log.settings import get_settings
 from cata_log.utils.page_numbers import PageNumber
 from test.cata_log.conftest import SideEffects
 
@@ -31,6 +36,52 @@ def test_duplicate_provider(provider_test_class):
 
     assert provider_test_class.uid in Provider._registry
     assert Provider._registry[provider_test_class.uid] == provider_test_class
+
+
+def test_relevant_datetime(faker, provider_test_class):
+    with freeze_time(faker.date_time(tzinfo=UTC)):
+        assert provider_test_class(
+            provider_test_class.default_configuration,
+        )._relevant_datetime == datetime.now(UTC)
+
+
+def test_client(provider_test_class, fake_request):
+    provider_class_client = provider_test_class(
+        provider_test_class.default_configuration,
+    )._client
+
+    assert provider_class_client.follow_redirects is True
+    assert provider_class_client.timeout.connect == get_settings().request_timeout
+    assert "httpx" not in provider_class_client.headers["User-Agent"]
+
+    assert provider_class_client.event_hooks["response"]
+    with pytest.raises(
+        httpx.HTTPStatusError,
+        check=lambda status_error: status_error.response.status_code == 401,
+    ):
+        assert provider_class_client.event_hooks["response"][0](
+            httpx.Response(status_code=401, request=fake_request)
+        )
+    with pytest.raises(
+        httpx.HTTPStatusError,
+        check=lambda status_error: status_error.response.status_code == 404,
+    ):
+        assert provider_class_client.event_hooks["response"][0](
+            httpx.Response(status_code=404, request=fake_request)
+        )
+    with pytest.raises(
+        httpx.HTTPStatusError,
+        check=lambda status_error: status_error.response.status_code == 500,
+    ):
+        assert provider_class_client.event_hooks["response"][0](
+            httpx.Response(status_code=500, request=fake_request)
+        )
+    provider_class_client.event_hooks["response"][0](
+        httpx.Response(status_code=301, request=fake_request)
+    )
+    provider_class_client.event_hooks["response"][0](
+        httpx.Response(status_code=200, request=fake_request)
+    )
 
 
 @pytest.mark.parametrize(
@@ -393,6 +444,22 @@ def test_get_page__preview(
         )
 
         assert result
+
+
+def test_relevant_datetime_preview(faker, preview_provider_test_class):
+    with freeze_time(faker.date_time(tzinfo=UTC)):
+        assert preview_provider_test_class(
+            preview_provider_test_class.default_configuration,
+        )._relevant_datetime == datetime.now(UTC) + timedelta(days=3)
+
+
+def test_relevant_datetime_preview_error(faker, preview_provider_test_class):
+    def bad__get_preview_timedelta(*args):
+        raise ValueError
+
+    preview_provider_test_class._get_preview_timedelta = bad__get_preview_timedelta
+    with pytest.raises(exceptions.ProviderBrokenWarning):
+        preview_provider_test_class(preview_provider_test_class.default_configuration)
 
 
 @pytest.mark.parametrize(

@@ -82,4 +82,7 @@ class NettoPreview(Preview, Netto):
     name = Netto.name + "-Vorschau"
     description = Netto.description + " nächste Woche"
     schedule = "0 4 * * *"
-    preview_timedelta = timedelta(days=7)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return timedelta(days=7)

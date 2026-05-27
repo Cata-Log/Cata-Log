@@ -19,6 +19,8 @@
 import os
 import sys
 
+import httpx
+
 sys.argv = [
     "python3 -m cata_log",
 ]
@@ -191,6 +193,13 @@ def bad_auth_client(noauth_client):
 def client(fake_credentials_encoded, noauth_client):
     noauth_client.headers = {"Authorization": f"Basic {fake_credentials_encoded}"}
     return noauth_client
+
+
+@pytest.fixture
+def fake_request(faker, request):
+    return httpx.Request(
+        url=faker.url(), method=faker.random_element(["GET", "POST", "PATCH", "DELETE"])
+    )
 
 
 @pytest.fixture
@@ -451,6 +460,9 @@ def preview_provider_test_class(provider_test_class):
     class TestPreviewProvider(Preview, provider_test_class):
         uid = provider_test_class.uid + "-preview"
         name = provider_test_class.name + "-Preview"
-        preview_timedelta = timedelta(days=7)
+
+        @override
+        def _get_preview_timedelta(self) -> timedelta:
+            return timedelta(days=3)
 
     return TestPreviewProvider

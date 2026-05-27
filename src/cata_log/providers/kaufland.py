@@ -110,7 +110,10 @@ class KauflandWochePreview(Preview, KauflandWoche):
     uid = KauflandWoche.uid + "-preview"
     name = KauflandWoche.name + "-Vorschau"
     description = KauflandWoche.description + " im nächsten Katalog"
-    preview_timedelta = timedelta(days=7)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return timedelta(days=7)
 
     flyer_index = 1
 

@@ -37,7 +37,7 @@ class AldiNord(Provider):
     first_page_number = 1
     schedule = "0 4 * * *"
 
-    page_url_format = "https://ipaper.ipapercms.dk/aldi-nord/aldi-aktuell/{valid_since:%Y}/{valid_since:%Y}cw{week_number:02}mopromotionaldi-angebote-ab-montag-{valid_since:%d}-{valid_since:%m}-1/Image.ashx?PageNumber={page_number}&ImageType=Normal"
+    page_url_format = "https://ipaper.ipapercms.dk/aldi-nord/aldi-aktuell/{valid_since:%Y}/{valid_since:%Y}cw{week_number:02}mopromotionaldi-angebote-ab-montag-{valid_since:%d}-{valid_since:%m}/Image.ashx?PageNumber={page_number}&ImageType=Normal"
 
     @override
     def _get_catalog_data(self) -> None:
@@ -74,4 +74,7 @@ class AldiNordPreview(Preview, AldiNord):
     name = AldiNord.name + "-Vorschau"
     description = AldiNord.description + " nächste Woche"
     schedule = "0 4 * * *"
-    preview_timedelta = timedelta(days=7)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return timedelta(days=7)

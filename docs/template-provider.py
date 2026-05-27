@@ -2,7 +2,7 @@ from typing import override
 
 from pydantic import Field
 
-from cata_log.exceptions import PagesExhausted, CalendarUnavailableWarning
+from cata_log.exceptions import PagesExhausted, CatalogUnavailableWarning
 
 from .base import Provider, Preview
 from .regions import
@@ -46,11 +46,16 @@ class TemplateProvider(Provider):
     @override
     def _get_catalog_data(self):
         # Get any data required to access the page's data in this function.
-        # You can store that data in instance variables, the function returns nothing.
+        # You can store that data in instance variables, this function returns nothing.
         #
         # Raise CalendarUnavailableWarning if the provider's flyer is not available.
         # Only raise this if the unavailability is not an indication for a larger issue with the provider,
         # for example if a preview or retrospect is not yet or no longer online.
+        #
+        # If you don't need this method, just call  pass  in its body.
+        #
+        # See lidl.py for a provider that fetches json file with all page URLs and catalog timestamps.
+        # See norma.py for a provider that doesn't require catalog data.
 
     @override
     def _get_page(self, page_number):
@@ -58,17 +63,19 @@ class TemplateProvider(Provider):
         #
         # page_number is an instance of the PageNumber class.
         # It can be converted to a DoublePageNumber that helps in iterating data that is organized in the double page format.
-        # See aldi.py for an example for this behaviour.
+        # See aldi_sued.py for an example for this behaviour.
         # If you need the number of the page as an integer, use int(page_number).
         #
         # Raise PagesExhausted if there is no page corresponding to page_number.
         # You don't need to do this if the missing page leads to a 404 HTTP status error. That case is handled by the base class.
         # Cases where you need to raise PagesExhausted yourself are,
         # for example, if the page url is extracted from a dictionary first and that extraction raises an Index- or KeyError.
-        # See aldi.py for an example where you need to raise manually.
-        # See norma.py for an example where you don't need to raise.
         #
         # In the same scenarios as in _get_catalog_data, you can raise CalendarUnavailableWarning.
+        #
+        # See aldi_sued.py for an example where you need to raise manually.
+        # See norma.py for an example where you don't need to raise.
+
 
     @override
     def _get_valid_since(self):
@@ -76,21 +83,22 @@ class TemplateProvider(Provider):
         # Typically the _relevant_datetime is used as a starting point.
         # With some providers, the date is contained in data fetched by _get_catalog_data.
         # You can then use the datetime and calendar utilities to get the needed datetime.
-        # See aldi.py for an example of a provider with well-known ryhthm.
-        # See kaufland.py for an example of a provider with validity timestamps in the catalog data.
+        # Be careful when working with naive datetimes:
+        # - if this function returns a naive datetime, the provider region's timezone is set to it as a fallback
+        # - don't use astimezone to set the correct timezone, replace(tzinfo=...) is the correct way
+        #
+        # See aldi_sued.py for an example of a provider with well-known ryhthm.
+        # See lidl.py for an example of a provider with validity timestamps in the catalog data.
 
     @override
     def _get_valid_until(self):
         # Calculate and return the datetime of the point in time that the provider's flyer becomes valid.
         # If the provider's flyers follow a specific ryhthm (e.g. weekly),
         # you can use the value returned by _get_valid_since as starting point.
-        # See aldi.py for an example of a provider with well-known ryhthm.
-        # See kaufland.py for an example of a provider with validity timestamps in the catalog data.
-
-    @override
-    def get_relevant_datetime(self):
-        # Override this only if the provider's flyer is not valid in the moment the flyer is intended to be cached.
-        # Mostly relevant for preview and retrospect flyers.
+        # The same remarks about timezones as in _get_valid_since apply.
+        #
+        # See aldi_sued.py for an example of a provider with well-known ryhthm.
+        # See lidl.py for an example of a provider with validity timestamps in the catalog data.
 
     @override
     def _cleanup(self):
@@ -107,4 +115,7 @@ class TemplatePreviewProvider(Preview, TemplateProvider):
     uid = # Set a uid for the preview
     name = # A proper name for the preview
     description = # A description for the preview provider
-    preview_timedelta = timedelta( # the timedelta that the preview is ahead of the regular flyer release schedule
+
+    @override
+    def _get_preview_timedelta(self):
+        # Compute and return the timedelta that the preview is ahead of the regular flyer release schedule.

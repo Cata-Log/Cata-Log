@@ -356,14 +356,36 @@ class Provider(abc.ABC):
 
 # mypy: disable_error_code=misc
 # mypy: disable_error_code=no-any-return
-class Preview:
+class Preview(abc.ABC):
     """Preview mixin for a provider class."""
 
-    preview_timedelta: timedelta
+    @abc.abstractmethod
+    def _get_preview_timedelta(self) -> timedelta:
+        """Get the dynamic timedelta between the relevant datetime and the relevant datetime of the preview.
+
+        Returns:
+            The preview timedelta.
+        """
+
+    @final
+    def get_preview_timedelta(self) -> timedelta:
+        """Get the preview timedelta with error handling.
+
+        Returns:
+            The preview timedelta.
+
+        Raises:
+            :exc:`cata_log.exceptions.ProviderBrokenWarning`: If any exception is raised.
+        """
+        try:
+            preview_timedelta = self._get_preview_timedelta()
+        except Exception as error:
+            raise ProviderBrokenWarning from error
+        return preview_timedelta
 
     @override
     def get_relevant_datetime(self) -> datetime:
-        return super().get_relevant_datetime() + self.preview_timedelta
+        return super().get_relevant_datetime() + self.get_preview_timedelta()
 
     @override
     def get_catalog_data(self) -> None:

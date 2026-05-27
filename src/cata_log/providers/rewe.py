@@ -97,4 +97,7 @@ class RewePreview(Preview, Rewe):
     name = Rewe.name + "-Vorschau"
     description = Rewe.description + " nächste Woche"
     schedule = "30 4 * * 6,0"
-    preview_timedelta = timedelta(days=7)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return timedelta(days=7)

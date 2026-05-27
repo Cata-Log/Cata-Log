@@ -119,6 +119,9 @@ class PennyPreview(Preview, Penny):
     uid = Penny.uid + "-preview"
     name = Penny.name + "-Vorschau"
     description = Penny.description + " im nächsten Katalog"
-    preview_timedelta = timedelta(days=7)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return timedelta(days=7)
 
     market_catalog_url_key = "nextWeekFlippingBookURL"

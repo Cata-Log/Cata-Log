@@ -84,4 +84,7 @@ class MetroWochenangebotePreview(Preview, MetroWochenangebote):
     uid = MetroWochenangebote.uid + "-preview"
     name = MetroWochenangebote.name + "-Vorschau"
     description = MetroWochenangebote.description + " für nächste Woche"
-    preview_timedelta = timedelta(days=7)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return timedelta(days=7)

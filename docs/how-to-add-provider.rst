@@ -153,7 +153,8 @@ Implementation Details and Example
 
     - _get_valid_since:
         This function returns the datetime of the moment that the flyer became valid, in the sense that the offers in it became active.
-        Typically that will be 0am of the start-day labeled on the flyer. There is no need to consider store opening hours.
+        Typically that will be 0am in the provider region's timezone of the start-day labeled on the flyer.
+        There is no need to consider store opening hours.
 
         Let's say our flyer always becomes active on wednesday.
         Then we need to calculate back to the past wednesday to get the start-datetime of the currently active flyer.
@@ -179,6 +180,12 @@ Implementation Details and Example
                         self._relevant_datetime.tzinfo, # set the timezone of the relevant datetime
                     )
 
+        Some providers include the flyer validity timestamps in the data fetched with _get_catalog_data.
+        Of course it is recommended to use these if available.
+        Be careful when working with naive datetimes. If _get_valid_since returns a naive datetime, the provider regional timezone is set to make it aware.
+        If that is not correct, you need to handle the timezone yourself.
+        Make sure to use replace(tzinfo=...) and not astimezone, as the latter will perform a conversion from the machines local timezone, which is almost always incorrect.
+
     - _get_valid_until:
         This function returns the datetime of the moment after the flyer became invalid, in the sense that the offers in it became inactive.
         Typically that will be 0am of the day after the end-day labeled on the flyer. There is no need to consider store opening hours.
@@ -194,47 +201,44 @@ Implementation Details and Example
             def _get_valid_until(self):
                 return self._get_valid_since() + timedelta(days=7)
 
-6. If necessary, you may want to override other methods as well.
-    - get_relevant_datetime:
-        This method returns the datetime that is relevant to identify the provider's flyer.
+        This timestamp can also be retrieved in _get_catalog_data, see the remarks on _get_valid_since.
 
-        In many cases, the digital flyer URLs contain the year and calendar-week number of the week in which the flyer is valid.
-        For example: *https://other_provider.com/catalogs/2026_week41/pages/1.jpg*
-
-        To be able to format this string, a datetime within the flyer's activity timeframe is required.
-        That is what the _relevant_datetime variable is set up for.
-
-        The standard implementation returns just the current datetime in the provider region's timezone.
-        With that datetime, the currently active flyer can be retrieved.
-
-        If you want to implement a flyer preview of a flyer with a weekly schedule, you need the relevant datetime to be in the next week, not the current one.
-        You can achieve this by overriding the get_relevant_datetime method and adding a week to the default implementation.
-
-        .. code-block:: python
-
-            @override
-            def get_relevant_datetime(self):
-                return super().get_relevant_datetime() + timedelta(days=7)
-
-        In many cases, digital preview flyers follow the same or similar logic as current catalogs.
-
-        For these cases, a preview provider class can inherit from the current provider class and override just this method.
-        To make this even simpler, a mixin is provided that does exactly that.
-
-        .. code-block:: python
-
-            from .base import Preview
-            ...
-
-            class ExamplePreviewProvider(Preview, ExampleProvider):
-                ...
-                preview_timedelta = timedelta(days=7)
-
-        Note the order of inheritance, the mixin must come first.
+6. Depending on your implementation you may use additional methods.
 
     - _cleanup:
         If you have instantiated classes in other methods that need to be closed when everything is done.
         This is the place to do it.
+
+7. If the provider's catalog is a preview, you can include the Preview mixin to manage the time shift between the datetimes.
+
+    Typically, digital preview flyers follow the same or similar logic as their current catalogs analogs.
+    By using the mixin you only change the datetimes to match the timeframe of the preview and preserve the other behaviour.
+
+    In many cases, the digital flyer URLs contain the year and calendar-week number of the week in which the flyer is valid.
+    For example: *https://other_provider.com/catalogs/2026_week41/pages/1.jpg*
+
+    To be able to format this string to get the preview flyer, _relevant_datetime needs to be shifted.
+    E.g. if you want to implement a flyer preview of a flyer with a weekly schedule, you need the relevant datetime to be in the next week, not the current one.
+
+    .. code-block:: python
+        from .base import Preview
+        ...
+
+        class ExampleProvider(Preview, Provider):
+            ...
+
+    Note the order of inheritance, the mixin must come first.
+
+    You can then manage the time difference between the timeframe of the current and preview catalog
+    using the ``_get_preview_timedelta`` method.
+
+    .. code-block:: python
+        class ExampleProvider(Preview, Provider):
+
+            @override
+            def _get_preview_timedelta(self):
+                return
+
 
 We are now done implementing our example provider class.
 
@@ -300,7 +304,10 @@ Putting all the pieces of the example together we get
         uid = "example-de-preview"
         name = "example-preview"
         description = "An example preview provider"
-        preview_timedelta = timedelta(days=7)
+
+        @override
+        def get_preview_timedelta(self):
+           return timedelta(days=7)
 
 
 Further Reading
@@ -309,8 +316,9 @@ Further Reading
 For more exemplary implementations, you can check the source code of existing and stable provider classes.
 
 - *norma.py* implements provider classes that don't need to get any catalog data.
+- *lidl.py* gets the valdiity timestamps from the catalog data json.
 - *penny.py* extracts the flyer pages from the flyer pdf download as the provider API is too obscure.
-- The provider classes in *aldi.py* look a lot like what we coded as an example.
+- The provider classes in *aldi_sued.py* look a lot like what we coded as an example.
 
 Next Steps
 ----------

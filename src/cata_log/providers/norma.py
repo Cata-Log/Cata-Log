@@ -75,7 +75,10 @@ class NormaPreview(Preview, Norma):
     uid = Norma.uid + "-preview"
     name = Norma.name + "-Vorschau"
     description = Norma.description + " nächste Woche"
-    preview_timedelta = timedelta(days=7)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return timedelta(days=7)
 
 
 class NormaPrepreview(NormaPreview):
@@ -84,7 +87,10 @@ class NormaPrepreview(NormaPreview):
     uid = NormaPreview.uid + "-2"
     name = Norma.name + "-Vorvorschau"
     description = Norma.description + " übernächste Woche"
-    preview_timedelta = timedelta(days=14)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return timedelta(days=14)
 
 
 class NormaRetrospect(NormaPreview):
@@ -93,7 +99,10 @@ class NormaRetrospect(NormaPreview):
     uid = Norma.uid + "-retrospect"
     name = Norma.name + "-Rückschau"
     description = Norma.description + " letzte Woche"
-    preview_timedelta = -timedelta(days=7)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return -timedelta(days=7)
 
 
 class NormaRetrospect2(NormaPreview):
@@ -102,4 +111,7 @@ class NormaRetrospect2(NormaPreview):
     uid = NormaRetrospect.uid + "-2"
     name = Norma.name + "-Rückrückschau"
     description = Norma.description + " vorletzte Woche"
-    preview_timedelta = -timedelta(days=14)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return timedelta(days=14)

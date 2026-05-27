@@ -119,7 +119,10 @@ class LidlDeutschlandPreview(Preview, LidlDeutschland):
     name = LidlDeutschland.name + "-Vorschau"
     description = LidlDeutschland.description + " nächste Woche"
     flyer_index = 1
-    preview_timedelta = timedelta(days=7)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return timedelta(days=7)
 
 
 class LidlDeutschlandPrepreview(LidlDeutschlandPreview):
@@ -129,7 +132,10 @@ class LidlDeutschlandPrepreview(LidlDeutschlandPreview):
     name = LidlDeutschland.name + "-Vorvorschau"
     description = LidlDeutschland.description + " übernächste Woche"
     flyer_index = 2
-    preview_timedelta = timedelta(days=14)
+
+    @override
+    def _get_preview_timedelta(self) -> timedelta:
+        return timedelta(days=14)
 
 
 class LidlItalia(LidlDeutschland):
