@@ -191,7 +191,7 @@ class ConfigInfo(BaseModel):
 
     @field_validator("type", mode="before")
     @classmethod
-    def get_type_name(cls, annotation: type) -> str:
+    def get_type_name(cls, annotation: type) -> str:  # type: ignore [valid-type] # mypy misinterprets type here
         """Get the type name of the config."""
         return annotation.__name__
 

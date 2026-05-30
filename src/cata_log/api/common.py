@@ -55,7 +55,7 @@ class ValidationError(BaseModel):
         """Convert ctx to string."""
         if ctx is not None:
             return str(ctx)
-        return input
+        return ctx
 
 
 class HTTPValidationError(BaseModel):
