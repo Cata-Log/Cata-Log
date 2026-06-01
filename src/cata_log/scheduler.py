@@ -34,7 +34,7 @@ settings = get_settings()
 
 JOB_DATABASE_URL = (
     get_settings().external_database_url
-    or f"sqlite:///{settings.database_path / 'jobs.sqlite3'}"
+    or f"sqlite+pysqlite:///{settings.database_path / 'jobs.sqlite3'}"
 )
 
 scheduler = BackgroundScheduler(

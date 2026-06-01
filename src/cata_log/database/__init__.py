@@ -28,7 +28,7 @@ from .models import Catalog, ModelBase, Page, PageFile, Provider
 
 DATABASE_URL = (
     get_settings().external_database_url
-    or f"sqlite:///{get_settings().database_path / 'cata-log.sqlite3'}"
+    or f"sqlite+pysqlite:///{get_settings().database_path / 'cata-log.sqlite3'}"
 )
 
 engine = create_engine(url=DATABASE_URL)
