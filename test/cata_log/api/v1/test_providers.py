@@ -1352,6 +1352,7 @@ def test_delete_provider_job__provider_not_found(client):
 
 def test_delete_provider_job__no_job(client, db_session, fake_provider):
     fake_provider.remove_job()
+    db_session.commit()
 
     response = client.delete(
         url=f"/api/v1/providers/{fake_provider.id}/job",

@@ -16,6 +16,18 @@ def test_PageNumber__invalid(page_number, start_number):
         page_numbers.PageNumber(page_number, start_number)
 
 
+def test_PageNumber__properties(faker):
+    fake_start_number = faker.random.randint(0, 100)
+    fake_number = fake_start_number + faker.random.randint(0, 100)
+
+    page_number = page_numbers.PageNumber(fake_number, fake_start_number)
+
+    assert page_number.normalized == fake_number - fake_start_number
+    assert int(page_number) == fake_number
+    assert repr(page_number)
+    assert str(page_number)
+
+
 @pytest.mark.parametrize(
     ("page_number", "equal_object"),
     [
@@ -93,6 +105,18 @@ def test_PageNumber___gt___smaller(page_number, greater_object):
 
 
 @pytest.mark.parametrize(
+    ("page_number", "incomparable_object"),
+    [
+        (page_numbers.PageNumber(0, 0), ["list"]),
+        (page_numbers.PageNumber(1, 0), {1: "dict"}),
+    ],
+)
+def test_PageNumber___gt___incomparable(page_number, incomparable_object):
+    with pytest.raises(TypeError):
+        page_number < incomparable_object  # noqa: B015 # not pointless, triggers error
+
+
+@pytest.mark.parametrize(
     ("summand_1", "summand_2", "expected_sum"),
     [
         (page_numbers.PageNumber(3, 0), 0, page_numbers.PageNumber(3, 0)),
@@ -105,6 +129,19 @@ def test_PageNumber___add__(summand_1, summand_2, expected_sum):
 
 
 @pytest.mark.parametrize(
+    ("summand_1", "summand_2"),
+    [
+        (page_numbers.PageNumber(3, 0), "str"),
+        ([1, "list"], page_numbers.PageNumber(0, 0)),
+        (page_numbers.PageNumber(1, 1), {1: "dict"}),
+    ],
+)
+def test_PageNumber___add___incompatible(summand_1, summand_2):
+    with pytest.raises(TypeError):
+        summand_1 + summand_2
+
+
+@pytest.mark.parametrize(
     ("minuend", "subtrahend", "expected_difference"),
     [
         (page_numbers.PageNumber(1, 0), 1, page_numbers.PageNumber(0, 0)),
@@ -114,6 +151,39 @@ def test_PageNumber___add__(summand_1, summand_2, expected_sum):
 )
 def test_PageNumber___sub__(minuend, subtrahend, expected_difference):
     assert minuend - subtrahend == expected_difference
+
+
+@pytest.mark.parametrize(
+    ("minuend", "subtrahend"),
+    [
+        (page_numbers.PageNumber(3, 0), "str"),
+        ([1, "list"], page_numbers.PageNumber(0, 0)),
+        (page_numbers.PageNumber(1, 1), {1: "dict"}),
+    ],
+)
+def test_PageNumber___sub___incompatible(minuend, subtrahend):
+    with pytest.raises(TypeError):
+        minuend - subtrahend
+
+
+def test_PageNumber__hashable():
+    assert {page_numbers.PageNumber(0, 0)}
+
+
+def test_DoublePageNumber__properties(faker):
+    fake_start_number = faker.random.randint(0, 100)
+    fake_number = fake_start_number + faker.random.randint(1, 100)
+    fake_index = faker.random.randint(0, 1)
+
+    double_page_number = page_numbers.DoublePageNumber(
+        fake_number, fake_index, fake_start_number
+    )
+
+    assert double_page_number.side == fake_index
+    assert double_page_number.number == fake_number
+    assert int(double_page_number) == fake_number
+    assert repr(double_page_number)
+    assert str(double_page_number)
 
 
 @pytest.mark.parametrize(
@@ -228,6 +298,18 @@ def test_DoublePageNumber___gt___smaller(double_page_number, greater_object):
 
 
 @pytest.mark.parametrize(
+    ("double_page_number", "incomparable_object"),
+    [
+        (page_numbers.DoublePageNumber(0, 0, 0), ["list"]),
+        (page_numbers.DoublePageNumber(1, 0, 0), {1: "dict"}),
+    ],
+)
+def test_DoublePageNumber___gt___incomparable(double_page_number, incomparable_object):
+    with pytest.raises(TypeError):
+        double_page_number < incomparable_object  # noqa: B015 # not pointless, triggers error
+
+
+@pytest.mark.parametrize(
     ("summand_1", "summand_2", "expected_sum"),
     [
         (
@@ -273,6 +355,10 @@ def test_DoublePageNumber___add__(summand_1, summand_2, expected_sum):
 )
 def test_DoublePageNumber___sub__(minuend, subtrahend, expected_difference):
     assert minuend - subtrahend == expected_difference
+
+
+def test_DoublePageNumber___hashable():
+    assert {page_numbers.DoublePageNumber(0, 0, 0)}
 
 
 @pytest.mark.parametrize(

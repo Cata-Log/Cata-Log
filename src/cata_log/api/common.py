@@ -45,17 +45,13 @@ class ValidationError(BaseModel):
     @classmethod
     def convert_input(cls, input: object | None) -> str | None:  # noqa: A002 # to match attribute name
         """Convert input to string."""
-        if input is not None:
-            return str(input)
-        return input
+        return str(input) if input is not None else input
 
     @field_validator("input", mode="before")
     @classmethod
     def convert_ctx(cls, ctx: object | None) -> str | None:
         """Convert ctx to string."""
-        if ctx is not None:
-            return str(ctx)
-        return ctx
+        return str(ctx) if ctx is not None else ctx
 
 
 class HTTPValidationError(BaseModel):

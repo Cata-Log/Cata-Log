@@ -34,7 +34,7 @@ def set_sqlite_pragma(
     connection_record: _ConnectionRecord,  # noqa: ARG001  # required for event decorator
 ) -> None:
     """Event setting pragmas on all engines after connecting to db."""
-    if "sqlite" in dbapi_connection.__class__.__module__:
+    if "sqlite" in dbapi_connection.__class__.__module__:  # pragma: no branch
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA journal_mode=WAL;")
         cursor.execute("PRAGMA foreign_keys=ON;")

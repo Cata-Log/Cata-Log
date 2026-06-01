@@ -29,7 +29,7 @@ def load_plugins() -> None:
     for file in get_settings().plugin_path.glob("**/**.py"):
         module_name = file.stem
         spec = importlib.util.spec_from_file_location(module_name, file)
-        if spec is None or spec.loader is None:
+        if spec is None or spec.loader is None:  # pragma: no cover
             continue
         module = importlib.util.module_from_spec(spec)
         try:

@@ -199,9 +199,7 @@ class ConfigInfo(BaseModel):
     @classmethod
     def convert_default(cls, default: str | None) -> str | None:
         """Convert default to string."""
-        if default is not None:
-            return str(default)
-        return default
+        return str(default) if default is not None else default
 
 
 class ProviderInfo(BaseModel):

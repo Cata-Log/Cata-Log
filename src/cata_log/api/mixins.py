@@ -34,9 +34,11 @@ class AwareDatetimesMixin:
             The converted datetime.
         """
         if isinstance(value, datetime):
-            if value.tzinfo is None:
-                return value.replace(tzinfo=UTC)
-            return value.astimezone(UTC)
+            return (
+                value.replace(tzinfo=UTC)
+                if value.tzinfo is None
+                else value.astimezone(UTC)
+            )
         return value
 
 

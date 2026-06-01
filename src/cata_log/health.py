@@ -85,7 +85,7 @@ def check_database() -> None:
     """
     try:
         with DBSession() as db_session:
-            if "sqlite" in db_session.get_bind().dialect.driver:
+            if "sqlite" in db_session.get_bind().dialect.driver:  # pragma: no branch
                 integrity_check_result = db_session.execute(
                     text("PRAGMA integrity_check;")
                 ).fetchall()

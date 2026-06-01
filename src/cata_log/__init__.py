@@ -25,7 +25,7 @@ from .settings import get_settings
 
 __version__ = metadata.version("cata-log")
 
-if not get_settings().dev_mode:
+if not get_settings().dev_mode:  # pragma: no branch
     filterwarnings(
         "ignore",
         category=UserWarning,

@@ -51,16 +51,18 @@ class UTCDatetime(TypeDecorator):
     def process_bind_param(
         self, value: datetime | None, dialect: Dialect
     ) -> datetime | None:
-        if value is None:
-            return value
-        return value.astimezone(UTC)
+        return value.astimezone(UTC) if value is not None else value
 
     @override
     def process_result_value(
         self, value: datetime | None, dialect: Dialect
     ) -> datetime | None:
-        if value is None:
-            return value
-        if value.tzinfo:
-            return value.astimezone(UTC)
-        return value.replace(tzinfo=UTC)
+        return (
+            (
+                value.replace(tzinfo=UTC)
+                if value.tzinfo is None
+                else value.astimezone(UTC)
+            )
+            if value is not None
+            else value
+        )
