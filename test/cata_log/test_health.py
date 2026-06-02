@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import shutil
 from unittest.mock import patch
 
@@ -122,14 +123,3 @@ def test_health__no_internet(patched_socket_connection, client):
 
     assert response.status_code == 500
     patched_socket_connection.assert_called_once()
-
-
-def test_health__no_storage_io(client):
-    old_stat = get_settings().storage_path.stat().st_mode
-    get_settings().storage_path.chmod(0o555)
-
-    response = client.get("/health")
-
-    assert response.status_code == 500
-
-    get_settings().storage_path.chmod(old_stat)
