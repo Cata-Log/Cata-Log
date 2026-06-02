@@ -8,7 +8,7 @@ lint_codebase:
     - uv pip install --group lint --group stubs
     - mkdir -p "$CHECK_REPORT_PATH"/mypy
     - echo "Checking codebase ..."
-    - uv run ruff check --config="$CHECK_CONFIG_PATH"ruff.toml --no-fix --output-format=gitlab | tee "$CHECK_REPORT_PATH"ruff_check.ansi
+    - uv run ruff check src/ --config="$CHECK_CONFIG_PATH"ruff.toml --no-fix --output-format=gitlab | tee "$CHECK_REPORT_PATH"ruff_check.ansi
     - uv run mypy src/ --config-file "$CHECK_CONFIG_PATH"mypy.ini | tee "$CHECK_REPORT_PATH"mypy/mypy_check.ansi
     - echo "Successfully checked codebase."
   artifacts:
