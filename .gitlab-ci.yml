@@ -20,7 +20,7 @@ variables:
   CHECK_CONFIG_PATH: "tools/"
   CHECK_REPORT_PATH: "tools/reports/"
   TEST_PATH: "test/"
-  TEST_CONFIG_PATH: "test/"
+  TEST_CONFIG_PATH: ""
   TEST_REPORT_PATH: "test/reports/"
 
 stages:
