@@ -18,7 +18,7 @@ Docker
 
 Follow these steps to set up your instance of Cata-Log:
 
-1. Get `the docker-compose.yml file <https://gitlab.com/cata-log/cata-log/-/blob/main/docker/docker-compose.yml>`_ from the git repository.
+1. Get `the docker-compose.yml file <https://gitlab.com/cata-log/cata-log-hub/-/blob/main/docker/docker-compose.yml>`_ from the git repository.
 2. Adapt it to your needs. For details on the environment variables, refer to :doc:`the configuration page <configuration>`.
    Don't forget to set *CATA_LOG_PASSWORD*, otherwise you won't be able to log in.
 3. Deploy the stack any way you wish. Common options are via the command-line
@@ -35,7 +35,7 @@ Bare-Metal
 
 Follow these steps to set up your instance of Cata-Log:
 
-1. Install cata_log from PyPI
+1. Install cata_log_hub from PyPI
 
     ```bash
     pip install cata_log
@@ -46,7 +46,7 @@ Follow these steps to set up your instance of Cata-Log:
 2. Start the server with
 
     ```bash
-    python3 -m cata_log --password=<your_password>
+    python3 -m cata_log_hub --password=<your_password>
     ```
 
     Don't forget to set a password, otherwise you won't be able to log in.
@@ -92,7 +92,7 @@ Available options are:
 
     .. code-block:: console
 
-        pip install cata_log[mysql]
+        pip install cata_log_hub[mysql]
 
     and is always included in the docker image.
 
@@ -106,7 +106,7 @@ Available options are:
 
     .. code-block:: console
 
-        pip install cata_log[postgres]
+        pip install cata_log_hub[postgres]
 
     and is always included in the docker image.
 

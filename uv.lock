@@ -99,7 +99,7 @@ wheels = [
 ]
 
 [[package]]
-name = "cata-log"
+name = "cata-log-hub"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

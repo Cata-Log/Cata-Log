@@ -1,0 +1,1471 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Cata-Log - the central hub for grocery store catalogs
+# Copyright (C) 2026 David Aderbauer & The Cata-Log Contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+from copy import deepcopy
+from io import BytesIO
+from urllib.parse import urljoin
+
+import pytest
+from pypdf import PdfReader
+
+from cata_log_hub import database
+from cata_log_hub.api import common
+
+
+def test_list_providers(full_database, client):
+    response = client.get("/api/v1/providers")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 1
+
+
+def test_list_providers__noauth(full_database, noauth_client):
+    response = noauth_client.get("/api/v1/providers")
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_providers__bad_auth(full_database, bad_auth_client):
+    response = bad_auth_client.get("/api/v1/providers")
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_providers__noauth__public_get(full_database, noauth_client, public_get):
+    response = noauth_client.get("/api/v1/providers")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 1
+
+
+@pytest.mark.parametrize(
+    ("querystring"),
+    [("?region=deutschland"), ("?region=us"), (""), ("?query=test"), ("?query=aldi")],
+)
+def test_list_available_providers(client, querystring):
+    response = client.get(urljoin("/api/v1/providers/available", querystring or ""))
+
+    assert response.status_code == 200
+
+
+def test_list_available_providers__noauth(noauth_client):
+    response = noauth_client.get("/api/v1/providers/available")
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_available_providers__bad_auth(bad_auth_client):
+    response = bad_auth_client.get("/api/v1/providers/available")
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_available_providers__noauth__public_get(noauth_client, public_get):
+    response = noauth_client.get("/api/v1/providers/available")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert data["results"]
+
+
+def test_list_provider_catalogs(
+    full_database, fake_provider, fake_catalog_preview, client
+):
+    response = client.get(f"/api/v1/providers/{fake_provider.id}/catalogs")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 3
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_preview.id
+
+
+def test_list_provider_catalogs__noauth(full_database, fake_provider, noauth_client):
+    response = noauth_client.get(f"/api/v1/providers/{fake_provider.id}/catalogs")
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_provider_catalogs__bad_auth(
+    full_database, fake_provider, bad_auth_client
+):
+    response = bad_auth_client.get(f"/api/v1/providers/{fake_provider.id}/catalogs")
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_provider_catalogs__noauth__public_get(
+    full_database, fake_provider, fake_catalog_preview, noauth_client, public_get
+):
+    response = noauth_client.get(f"/api/v1/providers/{fake_provider.id}/catalogs")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 3
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_preview.id
+
+
+def test_list_provider_current_catalog(full_database, fake_catalog_current, client):
+    response = client.get(
+        f"/api/v1/providers/{fake_catalog_current.provider_id}/catalogs/current"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_current.id
+
+
+def test_list_provider_current_catalog__noauth(
+    full_database, fake_catalog_current, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_catalog_current.provider_id}/catalogs/current"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_provider_current_catalog__bad_auth(
+    full_database, fake_catalog_current, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_catalog_current.provider_id}/catalogs/current"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_provider_current_catalog__noauth__public_get(
+    full_database, fake_catalog_current, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_catalog_current.provider_id}/catalogs/current"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_current.id
+
+
+def test_list_provider_previews_catalogs(full_database, fake_catalog_preview, client):
+    response = client.get(
+        f"/api/v1/providers/{fake_catalog_preview.provider_id}/catalogs/previews"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_preview.id
+
+
+def test_list_provider_previews_catalogs__noauth(
+    full_database, fake_catalog_preview, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_catalog_preview.provider_id}/catalogs/previews"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_provider_previews_catalogs__bad_auth(
+    full_database, fake_catalog_preview, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_catalog_preview.provider_id}/catalogs/previews"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_provider_previews_catalogs__noauth__public_get(
+    full_database, fake_catalog_preview, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_catalog_preview.provider_id}/catalogs/previews"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_preview.id
+
+
+def test_list_provider_outdated_catalogs(full_database, fake_catalog_outdated, client):
+    response = client.get(
+        f"/api/v1/providers/{fake_catalog_outdated.provider_id}/catalogs/outdated"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_outdated.id
+
+
+def test_list_provider_outdated_catalogs__noauth(
+    full_database, fake_catalog_outdated, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_catalog_outdated.provider_id}/catalogs/outdated"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_provider_outdated_catalogs__bad_auth(
+    full_database, fake_catalog_outdated, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_catalog_outdated.provider_id}/catalogs/outdated"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_provider_outdated_catalogs__noauth__public_get(
+    full_database, fake_catalog_outdated, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_catalog_outdated.provider_id}/catalogs/outdated"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_catalog_outdated.id
+
+
+def test_get_latest_provider_catalog(
+    full_database, fake_provider, fake_latest_catalog, client
+):
+    response = client.get(f"/api/v1/providers/{fake_provider.id}/catalogs/latest")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == fake_latest_catalog.id
+
+
+def test_get_latest_provider_catalog__noauth(
+    full_database, fake_provider, fake_latest_catalog, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_latest_provider_catalog__bad_auth(
+    full_database, fake_provider, fake_latest_catalog, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_latest_provider_catalog__noauth__public_get(
+    full_database, fake_provider, fake_latest_catalog, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == fake_latest_catalog.id
+
+
+def test_get_latest_provider_catalog__not_found(fake_provider, client):
+    response = client.get(f"/api/v1/providers/{fake_provider.id}/catalogs/latest")
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    data = response.json()
+    assert data["detail"] == "Catalog not found"
+
+
+def test_list_latest_provider_catalog_pages(
+    full_database, fake_provider, fake_latest_catalog, client
+):
+    response = client.get(f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_latest_catalog.pages[0].id
+
+
+def test_list_latest_provider_catalog_pages__noauth(
+    full_database, fake_provider, fake_latest_catalog, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_latest_provider_catalog_pages__bad_auth(
+    full_database, fake_provider, fake_latest_catalog, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_list_latest_provider_catalog_pages__noauth__public_get(
+    full_database, fake_provider, fake_latest_catalog, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 1
+    assert data["results"][0]
+    assert data["results"][0]["id"] == fake_latest_catalog.pages[0].id
+
+
+def test_get_latest_provider_catalog_pages__no_catalog(fake_provider, client):
+    response = client.get(f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    assert len(data["results"]) == 0
+
+
+def test_get_latest_provider_catalog_page(
+    full_database, fake_provider, fake_page, client
+):
+    response = client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == fake_page.id
+
+
+def test_get_latest_provider_catalog_page__noauth(
+    full_database, fake_provider, fake_page, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_latest_provider_catalog_page__bad_auth(
+    full_database, fake_provider, fake_page, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_latest_provider_catalog_page__noauth__public_get(
+    full_database, fake_provider, fake_page, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == fake_page.id
+
+
+def test_get_latest_provider_catalog_page__catalog_not_found(fake_provider, client):
+    response = client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/972"
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    data = response.json()
+    assert data["detail"] == "Page not found"
+
+
+def test_get_latest_provider_catalog_page__page_not_found(
+    full_database, fake_provider, client
+):
+    response = client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/972"
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    data = response.json()
+    assert data["detail"] == "Page not found"
+
+
+def test_download_latest_provider_catalog(fake_provider, full_database, client):
+    response = client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/download",
+    )
+
+    assert response.status_code == 200
+    assert response.headers
+    assert "content-type" in response.headers
+    assert response.headers["content-type"] == "application/pdf"
+    assert "content-disposition" in response.headers
+    assert response.headers["content-disposition"].startswith("attachment")
+    assert response.content
+    pdf_reader = PdfReader(BytesIO(response.content), strict=True)
+    assert len(pdf_reader.pages) == 1
+    assert len(pdf_reader.pages[0].images) == 1
+
+
+def test_download_latest_provider_catalog__noauth(
+    full_database, fake_provider, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/download",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_download_latest_provider_catalog__bad_auth(
+    full_database, fake_provider, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/download",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_download_latest_provider_catalog__not_found(full_database, client):
+    response = client.get(
+        "/api/v1/providers/1034/catalogs/latest/download",
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    assert response.json()["detail"] == "Catalog not found"
+
+
+def test_embed_latest_provider_catalog(fake_provider, full_database, client):
+    response = client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/embed",
+    )
+
+    assert response.status_code == 200
+    assert response.headers
+    assert "content-type" in response.headers
+    assert response.headers["content-type"] == "application/pdf"
+    assert "content-disposition" in response.headers
+    assert response.headers["content-disposition"].startswith("inline")
+    assert response.content
+    pdf_reader = PdfReader(BytesIO(response.content), strict=True)
+    assert len(pdf_reader.pages) == 1
+    assert len(pdf_reader.pages[0].images) == 1
+
+
+def test_embed_latest_provider_catalog__noauth(
+    full_database, fake_provider, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/embed",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_embed_latest_provider_catalog__bad_auth(
+    full_database, fake_provider, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/embed",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_embed_latest_provider_catalog__not_found(full_database, client):
+    response = client.get(
+        "/api/v1/providers/1034/catalogs/latest/embed",
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    assert response.json()["detail"] == "Catalog not found"
+
+
+@pytest.mark.parametrize(("filename"), [None, "page_image.png"])
+def test_download_latest_provider_catalog_page(
+    full_database, fake_provider, fake_page, fake_file, client, filename
+):
+    response = client.get(
+        urljoin(
+            f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/download",
+            f"?filename={filename}" if filename else "",
+        )
+    )
+
+    assert response.status_code == 200
+    assert response.content == fake_file.read_bytes()
+    assert "content-disposition" in response.headers
+    assert (
+        response.headers["content-disposition"]
+        == f'attachment; filename="{filename or fake_file.name}"'
+    )
+
+
+def test_download_latest_provider_catalog_page__noauth(
+    full_database, fake_provider, fake_page, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/download"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_download_latest_provider_catalog_page__bad_auth(
+    full_database, fake_provider, fake_page, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/download"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_download_latest_provider_catalog_page__noauth__public_get(
+    full_database, fake_provider, fake_page, fake_file, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/download",
+    )
+
+    assert response.status_code == 200
+    assert response.content == fake_file.read_bytes()
+    assert "content-disposition" in response.headers
+    assert (
+        response.headers["content-disposition"]
+        == f'attachment; filename="{fake_file.name}"'
+    )
+
+
+def test_download_latest_provider_catalog_page__catalog_not_found(
+    fake_provider, client
+):
+    response = client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/972/download"
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    data = response.json()
+    assert data["detail"] == "Page not found"
+
+
+def test_download_latest_provider_catalog_page__page_not_found(
+    full_database, fake_provider, client
+):
+    response = client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/972/download"
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    data = response.json()
+    assert data["detail"] == "Page not found"
+
+
+@pytest.mark.parametrize(("filename"), [None, "page_image.png"])
+def test_embed_latest_provider_catalog_page(
+    full_database, fake_provider, fake_page, fake_file, client, filename
+):
+    response = client.get(
+        urljoin(
+            f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/embed",
+            f"?filename={filename}" if filename else "",
+        )
+    )
+
+    assert response.status_code == 200
+    assert response.content == fake_file.read_bytes()
+    assert "content-disposition" in response.headers
+    assert (
+        response.headers["content-disposition"]
+        == f'inline; filename="{filename or fake_file.name}"'
+    )
+
+
+def test_embed_latest_provider_catalog_page__noauth(
+    full_database, fake_provider, fake_page, noauth_client
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/embed"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_embed_latest_provider_catalog_page__bad_auth(
+    full_database, fake_provider, fake_page, bad_auth_client
+):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/embed"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_embed_latest_provider_catalog_page__noauth__public_get(
+    full_database, fake_provider, fake_page, fake_file, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/{fake_page.number}/embed",
+    )
+
+    assert response.status_code == 200
+    assert response.content == fake_file.read_bytes()
+    assert "content-disposition" in response.headers
+    assert (
+        response.headers["content-disposition"]
+        == f'inline; filename="{fake_file.name}"'
+    )
+
+
+def test_embed_latest_provider_catalog_page__catalog_not_found(fake_provider, client):
+    response = client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/972/embed"
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    data = response.json()
+    assert data["detail"] == "Page not found"
+
+
+def test_embed_latest_provider_catalog_page__page_not_found(
+    full_database, fake_provider, client
+):
+    response = client.get(
+        f"/api/v1/providers/{fake_provider.id}/catalogs/latest/pages/972/embed"
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    data = response.json()
+    assert data["detail"] == "Page not found"
+
+
+def test_get_provider(fake_provider, client):
+    response = client.get(f"/api/v1/providers/{fake_provider.id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == fake_provider.id
+
+
+def test_get_provider__noauth(fake_provider, noauth_client):
+    response = noauth_client.get(f"/api/v1/providers/{fake_provider.id}")
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_provider__bad_auth(fake_provider, bad_auth_client):
+    response = bad_auth_client.get(f"/api/v1/providers/{fake_provider.id}")
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_provider__noauth__public_get(fake_provider, noauth_client, public_get):
+    response = noauth_client.get(f"/api/v1/providers/{fake_provider.id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == fake_provider.id
+
+
+def test_get_provider__not_found(client):
+    response = client.get("/api/v1/providers/456")
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    assert response.json() == {"detail": "Provider not found"}
+
+
+def test_get_available_provider(provider_test_class, client):
+    response = client.get(f"/api/v1/providers/available/{provider_test_class.uid}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["class_uid"] == provider_test_class.uid
+
+
+def test_get_available_provider__noauth(provider_test_class, noauth_client):
+    response = noauth_client.get(
+        f"/api/v1/providers/available/{provider_test_class.uid}"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_available_provider__bad_auth(provider_test_class, bad_auth_client):
+    response = bad_auth_client.get(
+        f"/api/v1/providers/available/{provider_test_class.uid}"
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_available_provider__noauth__public_get(
+    provider_test_class, noauth_client, public_get
+):
+    response = noauth_client.get(
+        f"/api/v1/providers/available/{provider_test_class.uid}"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["class_uid"] == provider_test_class.uid
+
+
+def test_get_available_provider__not_found(client):
+    response = client.get("/api/v1/providers/available/uidfornothing")
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    assert response.json() == {"detail": "Provider not available"}
+
+
+def test_delete_provider(LocalSession, fake_provider, client):
+    response = client.delete(f"/api/v1/providers/{fake_provider.id}")
+
+    assert response.status_code == 204
+    with LocalSession() as db_session:
+        assert not db_session.query(database.Provider).all()
+
+
+def test_delete_provider__noauth(LocalSession, fake_provider, noauth_client):
+    response = noauth_client.delete(f"/api/v1/providers/{fake_provider.id}")
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_delete_provider__bad_auth(LocalSession, fake_provider, bad_auth_client):
+    response = bad_auth_client.delete(f"/api/v1/providers/{fake_provider.id}")
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_delete_provider__noauth__public_get(
+    LocalSession, fake_provider, noauth_client, public_get
+):
+    response = noauth_client.delete(f"/api/v1/providers/{fake_provider.id}")
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_delete_provider__not_found(client):
+    response = client.delete("/api/v1/providers/230")
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    assert response.json() == {"detail": "Provider not found"}
+
+
+def test_patch_provider(LocalSession, fake_provider, client):
+    old_configuration = deepcopy(fake_provider.configuration)
+
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={
+            "configuration": {
+                **old_configuration,
+                "optional_config": "some value",
+            },
+            "note": "new note",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["class_uid"] == fake_provider.class_uid
+    assert data["configuration"] == {
+        **old_configuration,
+        "optional_config": "some value",
+    }
+    with LocalSession() as db_session:
+        provider = db_session.get(database.Provider, fake_provider.id)
+    assert provider.class_uid == data["class_uid"]
+    assert provider.configuration == data["configuration"]
+    assert provider.note == data["note"]
+
+
+def test_patch_provider__noauth(fake_provider, noauth_client):
+    response = noauth_client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={
+            "configuration": {
+                **fake_provider.configuration,
+                "optional_config": "config abc",
+            }
+        },
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_patch_provider__bad_auth(fake_provider, bad_auth_client):
+    response = bad_auth_client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={
+            "configuration": {
+                **fake_provider.configuration,
+                "optional_config": "config abc",
+            }
+        },
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_patch_provider__noauth__public_get(fake_provider, noauth_client, public_get):
+    response = noauth_client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={
+            "configuration": {
+                **fake_provider.configuration,
+                "optional_config": "config abc",
+            }
+        },
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_patch_provider__not_found(client):
+    response = client.patch(
+        "/api/v1/providers/230",
+        json={"configuration": {"markt_id": "marktqwertz"}},
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+    assert response.json() == {"detail": "Provider not found"}
+
+
+def test_patch_provider__missing_config(fake_provider, client):
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"configuration": {}},
+    )
+    assert response.status_code == 422
+
+
+def test_patch_provider__bad_config(fake_provider, client):
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={
+            "configuration": {
+                **fake_provider.configuration,
+                "optional_typed_config": "noint",
+            },
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_patch_provider__no_config(LocalSession, fake_provider, client):
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"note": "some note"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["class_uid"] == fake_provider.class_uid
+    assert data["configuration"] == fake_provider.configuration
+    with LocalSession() as db_session:
+        provider = db_session.get(database.Provider, fake_provider.id)
+    assert provider.class_uid == data["class_uid"]
+    assert provider.configuration == data["configuration"]
+    assert provider.note == data["note"]
+
+
+def test_patch_provider__extra_config(fake_provider, client):
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={
+            "configuration": {
+                **fake_provider.configuration,
+                "optional_config": "config abc",
+                "extra": "random",
+            }
+        },
+    )
+
+    assert response.status_code == 200
+    assert "extra" not in response.json()["configuration"]
+    assert response.json()["configuration"]["optional_config"] == "config abc"
+
+
+def test_patch_provider__bad_class_uid(db_session, fake_provider, client):
+    fake_provider.class_uid = "no-class"
+    db_session.commit()
+
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"configuration": {}},
+    )
+
+    assert response.status_code == 422
+
+
+def test_patch_provider__duplicate(db_session, fake_provider, client):
+    other_provider = database.Provider(
+        class_uid=fake_provider.class_uid,
+        configuration={**fake_provider.configuration, "optional_config": "test opt"},
+    )
+    db_session.add(other_provider)
+    db_session.flush()
+
+    assert len(db_session.query(database.Provider).all()) == 2
+
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"configuration": other_provider.configuration},
+    )
+
+    assert response.status_code == 409
+    assert fake_provider.configuration != other_provider.configuration
+    common.HTTPStatusError.model_validate(response.json())
+
+
+def test_patch_provider__no_change(fake_provider, client):
+    response = client.patch(
+        url=f"/api/v1/providers/{fake_provider.id}",
+        json={"configuration": fake_provider.configuration},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["configuration"] == fake_provider.configuration
+
+
+def test_post_provider(LocalSession, client, provider_test_class):
+    response = client.post(
+        url="/api/v1/providers",
+        json={
+            "class_uid": provider_test_class.uid,
+            "configuration": dict(provider_test_class.default_configuration),
+        },
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["class_uid"] == provider_test_class.uid
+    assert (
+        data["configuration"]
+        == provider_test_class.validate_configuration(
+            dict(provider_test_class.default_configuration)
+        ).model_dump()
+    )
+    with LocalSession() as db_session:
+        new_provider = db_session.get(database.Provider, data["id"])
+        assert new_provider
+        assert new_provider.class_uid == data["class_uid"]
+        assert new_provider.configuration == data["configuration"]
+
+
+def test_post_provider__noauth(noauth_client, provider_test_class):
+    response = noauth_client.post(
+        url="/api/v1/providers",
+        json={
+            "class_uid": provider_test_class.uid,
+            "configuration": dict(provider_test_class.default_configuration),
+        },
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_post_provider__bad_auth(bad_auth_client, provider_test_class):
+    response = bad_auth_client.post(
+        url="/api/v1/providers",
+        json={
+            "class_uid": provider_test_class.uid,
+            "configuration": dict(provider_test_class.default_configuration),
+        },
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_post_provider__bad_config(LocalSession, client, provider_test_class):
+    response = client.post(
+        url="/api/v1/providers",
+        json={
+            "class_uid": provider_test_class.uid,
+            "configuration": {
+                **provider_test_class.default_configuration,
+                "optional_typed_config": "noint",
+            },
+        },
+    )
+
+    assert response.status_code == 422
+    with LocalSession() as db_session:
+        assert not db_session.query(database.Provider).all()
+
+
+def test_post_provider__missing_config(LocalSession, client, provider_test_class):
+    response = client.post(
+        url="/api/v1/providers",
+        json={
+            "class_uid": provider_test_class.uid,
+            "configuration": {},
+        },
+    )
+
+    assert response.status_code == 422
+    with LocalSession() as db_session:
+        assert not db_session.query(database.Provider).all()
+
+
+def test_post_provider__noauth__public_get(
+    noauth_client, public_get, provider_test_class
+):
+    response = noauth_client.post(
+        url="/api/v1/providers",
+        json={
+            "class_uid": provider_test_class.uid,
+            "configuration": dict(provider_test_class.default_configuration),
+        },
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_post_provider__extra_config(client, provider_test_class):
+    response = client.post(
+        url="/api/v1/providers",
+        json={
+            "class_uid": provider_test_class.uid,
+            "configuration": {
+                **provider_test_class.default_configuration,
+                "extra": "extradata",
+            },
+        },
+    )
+
+    assert response.status_code == 201
+    assert "extra" not in response.json()["configuration"]
+    data = response.json()
+    assert (
+        data["configuration"]
+        == provider_test_class.validate_configuration(
+            provider_test_class.default_configuration
+        ).model_dump()
+    )
+
+
+def test_post_provider__bad_class_uid(LocalSession, client):
+    response = client.post(
+        url="/api/v1/providers",
+        json={"class_uid": "lu9%z", "configuration": {}},
+    )
+
+    assert response.status_code == 422
+    with LocalSession() as db_session:
+        assert not db_session.query(database.Provider).all()
+
+
+def test_post_provider__duplicate(LocalSession, fake_provider, client):
+    response = client.post(
+        url="/api/v1/providers",
+        json={
+            "class_uid": fake_provider.class_uid,
+            "configuration": fake_provider.configuration,
+        },
+    )
+
+    assert response.status_code == 409
+    with LocalSession() as db_session:
+        assert len(db_session.query(database.Provider).all()) == 1
+
+
+def test_get_provider_job(fake_provider, client):
+    response = client.get(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 200
+
+
+def test_get_provider_job__noauth(fake_provider, noauth_client):
+    response = noauth_client.get(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_provider_job__bad_auth(fake_provider, bad_auth_client):
+    response = bad_auth_client.get(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_get_provider_job__provider_not_found(client):
+    response = client.get(
+        url="/api/v1/providers/987/job",
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+
+
+def test_get_provider_job__no_job(client, fake_provider):
+    fake_provider.remove_job()
+
+    response = client.get(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+
+
+def test_delete_provider_job(fake_provider, db_session, client):
+    assert fake_provider.job_id
+
+    response = client.delete(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 200
+    db_session.refresh(fake_provider)
+    assert not fake_provider.job_id
+
+
+def test_delete_provider_job__noauth(fake_provider, noauth_client):
+    response = noauth_client.delete(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_delete_provider_job__bad_auth(fake_provider, bad_auth_client):
+    response = bad_auth_client.delete(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_delete_provider_job__provider_not_found(client):
+    response = client.delete(
+        url="/api/v1/providers/987/job",
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+
+
+def test_delete_provider_job__no_job(client, db_session, fake_provider):
+    fake_provider.remove_job()
+    db_session.commit()
+
+    response = client.delete(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 200
+    db_session.refresh(fake_provider)
+    assert not fake_provider.job_id
+
+
+def test_post_provider_job(fake_provider, db_session, client):
+    fake_provider.remove_job()
+    db_session.commit()
+
+    assert not fake_provider.job_id
+
+    response = client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 200
+    db_session.refresh(fake_provider)
+    assert fake_provider.job_id
+
+
+def test_post_provider_job__noauth(fake_provider, noauth_client):
+    response = noauth_client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_post_provider_job__bad_auth(fake_provider, bad_auth_client):
+    response = bad_auth_client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_post_provider_job__provider_not_found(client):
+    response = client.post(
+        url="/api/v1/providers/987/job",
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())
+
+
+def test_post_provider_job__with_job(client, db_session, fake_provider):
+    assert fake_provider.job_id
+
+    response = client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/job",
+    )
+
+    assert response.status_code == 200
+    db_session.refresh(fake_provider)
+    assert fake_provider.job_id
+
+
+def test_run_provider_job(fake_provider, client):
+    response = client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/job/run",
+    )
+
+    assert response.status_code == 200
+
+
+def test_run_provider_job__noauth(fake_provider, noauth_client):
+    response = noauth_client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/job/run",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_run_provider_job__bad_auth(fake_provider, bad_auth_client):
+    response = bad_auth_client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/job/run",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_run_provider_job__noauth__public_get(fake_provider, noauth_client, public_get):
+    response = noauth_client.post(
+        url=f"/api/v1/providers/{fake_provider.id}/job/run",
+    )
+
+    assert response.status_code == 401
+    common.HTTPStatusError.model_validate(response.json())
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_run_provider_job__not_found(client):
+    response = client.post(
+        url="/api/v1/providers/987/job/run",
+    )
+
+    assert response.status_code == 404
+    common.HTTPStatusError.model_validate(response.json())

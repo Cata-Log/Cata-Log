@@ -2,7 +2,7 @@ from typing import override
 
 from pydantic import Field
 
-from cata_log.exceptions import PagesExhausted, CatalogUnavailableWarning
+from cata_log_hub.exceptions import PagesExhausted, CatalogUnavailableWarning
 
 from .base import Provider, Preview
 from .regions import
@@ -11,7 +11,7 @@ from .regions import
 import calendar
 from datetime import datetime, time, timedelta
 from urllib.parse import urljoin
-from cata_log.utils.dates import get_calendar_week_number
+from cata_log_hub.utils.dates import get_calendar_week_number
 
 
 class TemplateProvider(Provider):

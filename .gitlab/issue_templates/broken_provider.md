@@ -37,7 +37,7 @@ Ideally a docker image tag (not 'latest').
 <!--
 Please put the parts of the logfile(s),
 which show the provider being insuccessfully updated, or attach them.
-You can find the logfiles in the */var/log/cata-log/* docker volume.
+You can find the logfiles in the */var/log/cata-log-hub/* docker volume.
 -->
 
 

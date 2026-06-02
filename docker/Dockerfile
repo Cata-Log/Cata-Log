@@ -6,7 +6,7 @@ ARG PYTHON_VERSION=3.14
 ARG ALPINE_VERSION=3.23
 
 ARG DATA_PATH=/mnt/
-ARG LOGS_PATH=/var/log/cata-log/
+ARG LOGS_PATH=/var/log/cata-log-hub/
 
 
 ##    stage 1    ##
@@ -33,8 +33,8 @@ FROM python:${PYTHON_VERSION}-alpine${ALPINE_VERSION} AS cata-log
 # labels
 LABEL org.opencontainers.image.authors="David Aderbauer & The Cata-Log Contributors"
 LABEL org.opencontainers.image.documentation="https://cata-log.readthedocs.io"
-LABEL org.opencontainers.image.source="https://gitlab.com/cata-log/cata-log"
-LABEL org.opencontainers.image.url="https://gitlab.com/cata-log/cata-log"
+LABEL org.opencontainers.image.source="https://gitlab.com/cata-log/cata-log-hub"
+LABEL org.opencontainers.image.url="https://gitlab.com/cata-log/cata-log-hub"
 LABEL org.opencontainers.image.licenses="AGPL-3.0-or-later"
 LABEL org.opencontainers.image.description="The central hub for grocery shopping catalogs."
 LABEL org.opencontainers.image.title="Cata-Log Server"
@@ -78,6 +78,6 @@ RUN pip install --no-cache-dir . && \
 
 WORKDIR /
 
-ENTRYPOINT [ "python3", "-m" , "cata_log", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT [ "python3", "-m" , "cata_log_hub", "--host", "0.0.0.0", "--port", "8000"]
 
 HEALTHCHECK --interval=60s --timeout=30s --start-period=20s --start-interval=5s --retries=3 CMD [ "wget", "--quiet", "http://0.0.0.0:8000/health", "--output-document" , "/dev/null"]

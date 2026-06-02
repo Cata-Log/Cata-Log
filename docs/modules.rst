@@ -11,5 +11,5 @@ Cata-Log Source Code Documentation
    :maxdepth: 1
    :caption: Packages:
 
-   apidoc-rst/cata_log/modules
+   apidoc-rst/cata_log_hub/modules
    apidoc-rst/test/modules

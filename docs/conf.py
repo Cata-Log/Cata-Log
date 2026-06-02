@@ -145,7 +145,7 @@ autodoc_inherit_docstrings = True
 # https://www.sphinx-doc.org/en/master/usage/extensions/apidoc.html#configuration
 #
 apidoc_modules = [
-    {"path": "../src/cata_log", "destination": "apidoc-rst/cata_log"},
+    {"path": "../src/cata_log_hub", "destination": "apidoc-rst/cata_log_hub"},
     {"path": "../test", "destination": "apidoc-rst/test"},
 ]
 

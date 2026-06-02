@@ -11,7 +11,7 @@ If your region is not yet implemented in cata-log, feel invited to add it yourse
 
 This is a straightforward task, here is a list of what to do with a full example:
 
-1. Add a new class inheriting from the Region baseclass to src/cata_log/providers/regions.py.
+1. Add a new class inheriting from the Region baseclass to src/cata_log_hub/providers/regions.py.
 
 2. Add all metadata as required by the baseclass.
     - local_name: The name of the region in the language of the region.

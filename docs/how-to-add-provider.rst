@@ -16,7 +16,7 @@ Here we give a quick rundown of what you need to do, while implementing an examp
 Implementation Details and Example
 ----------------------------------
 
-1. Add a file <your-provider>.py to src/cata_log/providers (or copy the template there).
+1. Add a file <your-provider>.py to src/cata_log_hub/providers (or copy the template there).
 2. In that file define a class <YourProvider> that inherits from the Provider baseclass
 
 .. code-block:: python
@@ -140,7 +140,7 @@ Implementation Details and Example
 
         .. code-block:: python
 
-            from cata_log.exceptions import PagesExhausted
+            from cata_log_hub.exceptions import PagesExhausted
             from urllib.parse import urljoin
             ...
                 @override
@@ -255,7 +255,7 @@ Putting all the pieces of the example together we get
     from urllib.parse import urljoin
     from typing import override
 
-    from cata_log.exceptions import PagesExhausted
+    from cata_log_hub.exceptions import PagesExhausted
 
     from .base import Provider, Preview
     from .regions import Germany
@@ -338,9 +338,9 @@ Now to check your code into the main repository, a few more steps have to be tak
 2. Test your provider implementation. This will check if there are any grave mistakes in the way you defined the class and its attributes.
     .. code-block:: console
 
-        pytest test/cata_log/providers
+        pytest test/cata_log_hub/providers
 
-3. Test the provider manually. Install the cata_log package from your local source with the new provider class
+3. Test the provider manually. Install the cata_log_hub package from your local source with the new provider class
     .. code-block:: console
 
         uv pip install -e .
@@ -349,7 +349,7 @@ Now to check your code into the main repository, a few more steps have to be tak
 
     .. code-block:: console
 
-        python3 -m cata_log --password=passwd
+        python3 -m cata_log_hub --password=passwd
 
     Now you can test your provider class in action by adding a provider with its class_uid and running the caching task.
 

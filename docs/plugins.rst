@@ -17,14 +17,14 @@ Activation
 Activating a plugin is straightforward.
 
 1. Get a file for a Cata-Log plugin. A plugin file must end in *.py*.
-   It must contain at least one class that inherits from *cata_log.providers.base.Provider*.
+   It must contain at least one class that inherits from *cata_log_hub.providers.base.Provider*.
 
 .. important::
 
     Please be careful what files you use as plugins!
     They may potentially include malicious code that will be executed on your machine if used as a plugin.
 
-2. Put the file in the */mnt/plugins/* docker volume or the plugin directory of the cata_log server.
+2. Put the file in the */mnt/plugins/* docker volume or the plugin directory of the cata_log_hub server.
 You may order the plugins files into subdirectories within these directories.
 
 3. Restart (or start) the Cata-Log instance. The plugged-in provider is now available.
@@ -34,7 +34,7 @@ Deactivation
 
 To deactivate a plugin:
 
-1. Remove the plugin from the */mnt/plugins/* docker volume or the provider directory of the cata_log server.
+1. Remove the plugin from the */mnt/plugins/* docker volume or the provider directory of the cata_log_hub server.
 
 2. Restart (or start) the Cata-Log instance. The plugged-in provider will be gone.
 

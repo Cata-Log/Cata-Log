@@ -1,5 +1,5 @@
 [project]
-name = "cata-log"
+name = "cata-log-hub"
 version = "0.1.0"
 description = "The central hub for grocery store catalogues"
 authors = [
@@ -55,11 +55,11 @@ postgres = [
 ]
 
 [project.urls]
-Homepage = "https://pypi.org/project/cata-log/"
-Issues = "https://gitlab.com/cata-log/cata-log/-/issues"
-Documentation = "https://gitlab.com/cata-log/cata-log/-/blob/main/README.md"
-Repository = "https://gitlab.com/cata-log/cata-log.git"
-Changelog = "https://gitlab.com/cata-log/cata-log/-/blob/main/CHANGELOG.md"
+Homepage = "https://pypi.org/project/cata-log-hub/"
+Issues = "https://gitlab.com/cata-log/cata-log-hub/-/issues"
+Documentation = "https://gitlab.com/cata-log/cata-log-hub/-/blob/main/README.md"
+Repository = "https://gitlab.com/cata-log/cata-log-hub.git"
+Changelog = "https://gitlab.com/cata-log/cata-log-hub/-/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = [
@@ -106,4 +106,4 @@ add-bounds = "major"
 include-package-data = true
 
 [tool.setuptools.package-data]
-cata_log = ["**/migrations/**", "**/static/**", "**/templates/**"]
+cata_log_hub = ["**/migrations/**", "**/static/**", "**/templates/**"]

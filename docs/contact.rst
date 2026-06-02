@@ -8,7 +8,7 @@ Contact
 =======
 
 For issues, feature requests, merge requests and similar topics please get in touch
-via the issue trackers on `gitlab <https://gitlab.com/cata-log/cata-log/-/issues>`_ and `github <https://github.com/cata-log/cata-log/issues>`_.
+via the issue trackers on `gitlab <https://gitlab.com/cata-log/cata-log-hub/-/issues>`_ and `github <https://github.com/cata-log/cata-log-hub/issues>`_.
 Requests for adding a missing language should also be submitted via an issue.
 If you have found a security-related problem, please use the email instead.
 

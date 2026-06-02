@@ -1,12 +1,12 @@
 services:
-  cata-log:
-    image: dacid99/cata-log:latest
+  cata-log-hub:
+    image: dacid99/cata-log-hub:latest
     container_name: cata-log
     volumes:
-      - /path/to/cata-log/storage:/mnt/storage
-      - /path/to/cata-log/db:/mnt/db
-      - /path/to/cata-log/log:/var/log/cata-log
-      - /path/to/cata-log/plugins:/mnt/plugins
+      - /path/to/cata-log-hub/storage:/mnt/storage
+      - /path/to/cata-log-hub/db:/mnt/db
+      - /path/to/cata-log-hub/log:/var/log/cata-log
+      - /path/to/cata-log-hub/plugins:/mnt/plugins
     ports:
       - 2424:8000
     environment:

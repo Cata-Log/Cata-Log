@@ -24,8 +24,8 @@ If you can't check one of these please explain why in the  Explanations section.
 -->
 
 - [ ] My only changes are
-  - Import the new provider in the *cata_log/providers/\_\_\init\_\_.py* file.
-  - Add the provider to the *\_\_all\_\_* list in the *cata_log/providers/\_\_init\_\_.py* file.
+  - Import the new provider in the *cata_log_hub/providers/\_\_\init\_\_.py* file.
+  - Add the provider to the *\_\_all\_\_* list in the *cata_log_hub/providers/\_\_init\_\_.py* file.
   - Add a new file containing the implementation of the provider.
 
 - [ ] I have also added a new region, as this provider's region was missing.

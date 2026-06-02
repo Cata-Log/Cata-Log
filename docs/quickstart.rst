@@ -9,7 +9,7 @@ Quickstart Guide
 
 - If you don't have already, `install docker <https://docs.docker.com/engine/install/>`_.
 
-- Get `the docker-compose.yml file <https://gitlab.com/cata-log/cata-log/-/blob/main/docker/docker-compose.yml>`_ from the git repository
+- Get `the docker-compose.yml file <https://gitlab.com/cata-log/cata-log-hub/-/blob/main/docker/docker-compose.yml>`_ from the git repository
   and run
 
     .. code-block:: console

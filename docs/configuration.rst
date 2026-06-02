@@ -16,13 +16,13 @@ Run
 
 .. code-block:: console
 
-    docker run dacid99/cata-log:latest --help
+    docker run dacid99/cata-log-hub:latest --help
 
 or
 
 .. code-block:: console
 
-    python3 -m cata_log --help
+    python3 -m cata_log_hub --help
 
 for an overview of the command line interface and the available options.
 

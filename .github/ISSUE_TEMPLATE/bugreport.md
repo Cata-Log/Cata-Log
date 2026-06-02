@@ -75,7 +75,7 @@ How the application is expected to behave without the bug.
 
 <!--
 Please put the relevant parts of the logfile(s) here or attach them.
-You can find the logfiles in the */var/log/cata-log/* docker volume.
+You can find the logfiles in the */var/log/cata-log-hub/* docker volume.
 This is crucial,
 without this information we will have to reproduce the bug, consuming a lot of time.
 -->

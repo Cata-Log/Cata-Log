@@ -1,4 +1,4 @@
-# Cata-Log
+# Cata-Log Hub
 
 The central hub for grocery store catalogs.
 
@@ -92,7 +92,7 @@ If you want an agent to install Cata-Log for you,
 point it to [the install.md file](install.md), e.g.
 
 ```bash
-  curl -fsSL https://github.com/cata-log/cata-log/blob/master/install.md | claude
+  curl -fsSL https://github.com/cata-log/cata-log-hub/blob/master/install.md | claude
 ```
 
 ## Documentation

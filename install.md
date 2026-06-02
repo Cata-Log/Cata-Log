@@ -11,7 +11,7 @@ DONE WHEN: A local Cata-Log instance is running, accessible and healthy at http:
 ## TODO
 
 - [] Verify docker is installed.
-- [] Get one of the docker-compose.yml files at https://github.com/cata-log/Cata-Log/blob/master/docker .
+- [] Get one of the docker-compose.yml files at https://github.com/cata-log/Cata-Log-Hub/blob/master/docker .
 - [] Change all passwords in the docker-compose.yml file with safe random passwords.
 - [] Set a proper path for the docker volume.
 - [] Run the stack using docker compose and the modified docker-compose.yml.

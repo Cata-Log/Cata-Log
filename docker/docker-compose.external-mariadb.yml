@@ -3,11 +3,11 @@ services:
     image: mariadb:latest
     container_name: cata-log-db
     volumes:
-      - /path/to/cata-log/mysql:/var/lib/mysql
+      - /path/to/cata-log-hub/mysql:/var/lib/mysql
     environment:
-      - MARIADB_DATABASE=cata-log # must match cata-log:DATABASE_NAME
-      - MARIADB_USER=user # must match cata-log:DATABASE_USER
-      - MARIADB_PASSWORD=db_passwd # must match cata-log:DATABASE_PASSWORD
+      - MARIADB_DATABASE=cata-log # must match cata-log-hub:DATABASE_NAME
+      - MARIADB_USER=user # must match cata-log-hub:DATABASE_USER
+      - MARIADB_PASSWORD=db_passwd # must match cata-log-hub:DATABASE_PASSWORD
       - MARIADB_ROOT_PASSWORD=example
     restart: unless-stopped
     healthcheck:
@@ -18,13 +18,13 @@ services:
       timeout: 5s
       retries: 3
 
-  cata-log:
-    image: cata-log:latest
+  cata-log-hub:
+    image: cata-log-hub:latest
     container_name: cata-log
     volumes:
-      - /path/to/cata-log/storage:/mnt/storage
-      - /path/to/cata-log/log:/var/log/cata-log
-      - /path/to/cata-log/plugins:/mnt/plugins
+      - /path/to/cata-log-hub/storage:/mnt/storage
+      - /path/to/cata-log-hub/log:/var/log/cata-log
+      - /path/to/cata-log-hub/plugins:/mnt/plugins
     ports:
       - 2424:8000
     environment:

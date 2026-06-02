@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Cata-Log - the central hub for grocery store catalogs
+# Copyright (C) 2026 David Aderbauer & The Cata-Log Contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+import pytest
+from apscheduler.triggers.cron import CronTrigger
+from pydantic import BaseModel
+from pydantic_extra_types.cron import CronStr
+
+from cata_log_hub.providers import Provider, __all__
+from cata_log_hub.providers.regions import Region
+
+
+@pytest.mark.parametrize("provider_class", Provider._registry.values())
+def test_registered_classes__attributes(provider_class):
+    assert issubclass(provider_class, Provider)
+    assert provider_class.name
+    assert isinstance(provider_class.name, str)
+    assert provider_class.description
+    assert isinstance(provider_class.description, str)
+    assert provider_class.url
+    assert isinstance(provider_class.url, str)
+    assert provider_class.region
+    assert issubclass(provider_class.region, Region)
+    assert provider_class.schedule
+    assert isinstance(provider_class.schedule, str)
+    CronStr(provider_class.schedule)
+    assert CronTrigger.from_crontab(provider_class.schedule)
+    assert isinstance(provider_class.jitter, int)
+    assert provider_class.jitter < 86400
+    assert isinstance(provider_class.first_page_number, int)
+    assert issubclass(provider_class.Configuration, BaseModel)
+    assert provider_class.uid
+    assert provider_class.uid in Provider._registry
+
+
+def test_builtin_registered_classes_registration():
+    assert len(Provider._registry.values()) >= len(__all__) - 1

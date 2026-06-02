@@ -55,7 +55,7 @@ You can run them from the project root with
 pytest
 ```
 
-The cata_log package must be installed beforehand.
+The cata_log_hub package must be installed beforehand.
 
 ## Validation and Linting
 
