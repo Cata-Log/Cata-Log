@@ -69,11 +69,16 @@ def test_list_providers__noauth__public_get(full_database, noauth_client, public
 
 
 @pytest.mark.parametrize(
-    ("querystring"),
-    [("?region=deutschland"), ("?region=us"), (""), ("?query=test"), ("?query=aldi")],
+    ("queryparam", "value"),
+    [
+        ("region", "deutschland"),
+        ("region", "us"),
+        ("query", "test"),
+        ("query", "aldi"),
+    ],
 )
-def test_list_available_providers(client, querystring):
-    response = client.get(urljoin("/api/v1/providers/available", querystring or ""))
+def test_list_available_providers(client, queryparam, value):
+    response = client.get("/api/v1/providers/available", params={queryparam: value})
 
     assert response.status_code == 200
 

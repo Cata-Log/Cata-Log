@@ -74,12 +74,12 @@ def list_providers(
 )
 def list_available_providers(
     query: Annotated[
-        list[str] | None,
+        str | None,
         StringConstraints(strip_whitespace=True, to_lower=True),
         "Filter by text (case-insensitive)",
     ] = None,
     region: Annotated[
-        list[str] | None,
+        str | None,
         StringConstraints(strip_whitespace=True, to_lower=True),
         "Filter by region local name (case-insensitive)",
     ] = None,
@@ -90,21 +90,12 @@ def list_available_providers(
             catalog_class
             for catalog_class in ProviderType.get_classes()
             if (not query and not region)
-            or (
-                region
-                and any(
-                    region_name in catalog_class.region.local_name.lower()
-                    for region_name in region
-                )
-            )
+            or (region and region in catalog_class.region.local_name.lower())
             or (
                 query
                 and (
-                    any(
-                        query_text in catalog_class.uid.lower()
-                        or query_text in catalog_class.description.lower()
-                        for query_text in query
-                    )
+                    query in catalog_class.uid.lower()
+                    or query in catalog_class.description.lower()
                 )
             )
         ]
