@@ -47,14 +47,15 @@ def list_pages(
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Page]:
     """List all pages."""
-    return paginate(
+    q = (
         db_session.query(database.Page)
         .join(database.Catalog, database.Page.catalog_id == database.Catalog.id)
         .order_by(
             database.Catalog.created_at.desc(),
-            *[order_param.sql for order_param in order],
+            *[order_param.sql(database.Page) for order_param in order],
         )
     )
+    return paginate(q)
 
 
 @router.get(

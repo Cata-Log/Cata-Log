@@ -51,7 +51,7 @@ def list_catalogs(
     return paginate(
         db_session.query(database.Catalog)
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_param.sql for order_param in order])
+        .order_by(*[order_param.sql(database.Catalog) for order_param in order])
     )
 
 
@@ -83,7 +83,7 @@ def list_latest_catalogs(
         db_session.query(database.Catalog)
         .join(subquery, database.Catalog.id == subquery.c.id)
         .filter(subquery.c.rn == 1)
-        .order_by(*[order_param.sql for order_param in order])
+        .order_by(*[order_param.sql(database.Catalog) for order_param in order])
     )
 
 
@@ -106,7 +106,7 @@ def list_previews_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_param.sql for order_param in order])
+        .order_by(*[order_param.sql(database.Catalog) for order_param in order])
     )
 
 
@@ -131,7 +131,7 @@ def list_current_catalogs(
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_param.sql for order_param in order])
+        .order_by(*[order_param.sql(database.Catalog) for order_param in order])
     )
 
 
@@ -154,7 +154,7 @@ def list_outdated_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_param.sql for order_param in order])
+        .order_by(*[order_param.sql(database.Catalog) for order_param in order])
     )
 
 
@@ -273,7 +273,7 @@ def get_catalog_pages(
     return paginate(
         db_session.query(database.Page)
         .filter(database.Page.catalog_id == catalog_id)
-        .order_by(*[order_param.sql for order_param in order])
+        .order_by(*[order_param.sql(database.Page) for order_param in order])
     )
 
 

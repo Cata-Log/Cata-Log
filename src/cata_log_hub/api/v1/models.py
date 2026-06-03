@@ -14,6 +14,7 @@ from sqlalchemy import sql
 
 from cata_log_hub import constants
 from cata_log_hub.api.mixins import AwareDatetimesMixin
+from cata_log_hub.database import ModelBase
 from cata_log_hub.exceptions import (
     ProviderInvalidConfigurationWarning,
     ProviderUnknownClassWarning,
@@ -24,16 +25,15 @@ from cata_log_hub.providers import Provider as ProviderType
 class OrderChoices(enum.StrEnum):
     """Enum subclass for ordering with sql."""
 
-    @property
-    def sql(self) -> sql.ColumnExpressionArgument:
+    def sql(self, model: type[ModelBase]) -> sql.ColumnExpressionArgument:
         """Translate into sql.
 
         Returns:
             SQL expression for proper ordering by the string.
         """
         if self.value.startswith("-"):
-            return sql.desc(self.value[1:])
-        return sql.text(self.value)
+            return getattr(model, self.value[1:]).desc()
+        return getattr(model, self.value)
 
 
 class AwareTimestampsMixin(AwareDatetimesMixin):

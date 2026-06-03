@@ -63,7 +63,7 @@ def list_providers(
                 database.Catalog.pages
             )
         )
-        .order_by(*[order_param.sql for order_param in order])
+        .order_by(*[order_param.sql(database.Provider) for order_param in order])
     )
 
 
@@ -312,7 +312,7 @@ def list_provider_catalogs(
         db_session.query(database.Catalog)
         .options(selectinload(database.Catalog.pages))
         .filter(database.Catalog.provider_id == provider_id)
-        .order_by(*[order_param.sql for order_param in order])
+        .order_by(*[order_param.sql(database.Catalog) for order_param in order])
     )
 
 
@@ -421,7 +421,7 @@ def list_latest_provider_catalog_pages(
         .filter(
             database.Page.catalog_id == latest_provider_catalog_id_subquery(provider_id)
         )
-        .order_by(*[order_param.sql for order_param in order])
+        .order_by(*[order_param.sql(database.Page) for order_param in order])
     )
 
 
@@ -539,7 +539,7 @@ def list_provider_current_catalogs(
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_param.sql for order_param in order])
+        .order_by(*[order_param.sql(database.Catalog) for order_param in order])
     )
 
 
@@ -563,7 +563,7 @@ def list_provider_preview_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_param.sql for order_param in order])
+        .order_by(*[order_param.sql(database.Catalog) for order_param in order])
     )
 
 
@@ -587,7 +587,7 @@ def list_provider_outdated_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_param.sql for order_param in order])
+        .order_by(*[order_param.sql(database.Catalog) for order_param in order])
     )
 
 
