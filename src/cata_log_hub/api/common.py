@@ -41,13 +41,19 @@ class ValidationError(BaseModel):
     input: str | None = None
     ctx: str | None = None
 
+    @field_validator("loc", mode="before")
+    @classmethod
+    def convert_loc(cls, loc: list[object]) -> list[str]:
+        """Convert input to string."""
+        return [str(loc_item) for loc_item in loc]
+
     @field_validator("input", mode="before")
     @classmethod
     def convert_input(cls, input: object | None) -> str | None:  # noqa: A002 # to match attribute name
         """Convert input to string."""
         return str(input) if input is not None else input
 
-    @field_validator("input", mode="before")
+    @field_validator("ctx", mode="before")
     @classmethod
     def convert_ctx(cls, ctx: object | None) -> str | None:
         """Convert ctx to string."""
