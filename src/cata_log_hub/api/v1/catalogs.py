@@ -22,41 +22,28 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Path, Query, status
 from fastapi.responses import FileResponse, Response
 from fastapi_pagination.ext.sqlalchemy import paginate
-from pydantic import AwareDatetime, BaseModel
 from pydantic.types import NonNegativeInt
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql import func
 
 from cata_log_hub import database
 from cata_log_hub.api import common
-from cata_log_hub.api.mixins import AwareTimestampsMixin
-from cata_log_hub.utils.queries import order_sql
 
-from .pages import Page
+from . import models
 from .pagination import PaginationPage
 
 router = APIRouter(prefix="/catalogs", tags=["catalogs"])
 
 
-class Catalog(AwareTimestampsMixin, BaseModel):
-    """Catalog data model."""
-
-    id: int
-    provider_id: int
-    valid_since: AwareDatetime
-    valid_until: AwareDatetime
-
-
-class FullCatalog(Catalog):
-    """Full catalog data model."""
-
-    pages: list[Page]
-
-
-@router.get("", response_model=PaginationPage[Catalog], operation_id="list-catalogs-v1")
+@router.get(
+    "", response_model=PaginationPage[models.Catalog], operation_id="list-catalogs-v1"
+)
 def list_catalogs(
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "-created_at"
+    order: Annotated[
+        list[models.CatalogOrderChoices],
+        Query(description="Fields to order by"),
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.CatalogOrderChoices.DESC_CREATED_AT
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
@@ -64,18 +51,21 @@ def list_catalogs(
     return paginate(
         db_session.query(database.Catalog)
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_sql(order_param) for order_param in order])
+        .order_by(*[order_param.sql for order_param in order])
     )
 
 
 @router.get(
     "/latest",
-    response_model=PaginationPage[Catalog],
+    response_model=PaginationPage[models.Catalog],
     operation_id="list-latest-catalogs-v1",
 )
 def list_latest_catalogs(
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "-created_at"
+    order: Annotated[
+        list[models.CatalogOrderChoices],
+        Query(description="Fields to order by"),
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.CatalogOrderChoices.DESC_CREATED_AT
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
@@ -93,18 +83,21 @@ def list_latest_catalogs(
         db_session.query(database.Catalog)
         .join(subquery, database.Catalog.id == subquery.c.id)
         .filter(subquery.c.rn == 1)
-        .order_by(*[order_sql(order_param) for order_param in order])
+        .order_by(*[order_param.sql for order_param in order])
     )
 
 
 @router.get(
     "/previews",
-    response_model=PaginationPage[Catalog],
+    response_model=PaginationPage[models.Catalog],
     operation_id="list-preview-catalogs-v1",
 )
 def list_previews_catalogs(
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "-created_at"
+    order: Annotated[
+        list[models.CatalogOrderChoices],
+        Query(description="Fields to order by"),
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.CatalogOrderChoices.DESC_CREATED_AT
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
@@ -113,18 +106,21 @@ def list_previews_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_sql(order_param) for order_param in order])
+        .order_by(*[order_param.sql for order_param in order])
     )
 
 
 @router.get(
     "/current",
-    response_model=PaginationPage[Catalog],
+    response_model=PaginationPage[models.Catalog],
     operation_id="list-current-catalogs-v1",
 )
 def list_current_catalogs(
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "-created_at"
+    order: Annotated[
+        list[models.CatalogOrderChoices],
+        Query(description="Fields to order by"),
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.CatalogOrderChoices.DESC_CREATED_AT
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
@@ -135,18 +131,21 @@ def list_current_catalogs(
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_sql(order_param) for order_param in order])
+        .order_by(*[order_param.sql for order_param in order])
     )
 
 
 @router.get(
     "/outdated",
-    response_model=PaginationPage[Catalog],
+    response_model=PaginationPage[models.Catalog],
     operation_id="list-outdated-catalogs-v1",
 )
 def list_outdated_catalogs(
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "-created_at"
+    order: Annotated[
+        list[models.CatalogOrderChoices],
+        Query(description="Fields to order by"),
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.CatalogOrderChoices.DESC_CREATED_AT
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
@@ -155,13 +154,13 @@ def list_outdated_catalogs(
         db_session.query(database.Catalog)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_sql(order_param) for order_param in order])
+        .order_by(*[order_param.sql for order_param in order])
     )
 
 
 @router.get(
     "/{catalog_id}",
-    response_model=FullCatalog,
+    response_model=models.FullCatalog,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
@@ -251,7 +250,7 @@ def embed_catalog(
 
 @router.get(
     "/{catalog_id}/pages",
-    response_model=PaginationPage[Page],
+    response_model=PaginationPage[models.Page],
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
@@ -262,8 +261,11 @@ def embed_catalog(
 )
 def get_catalog_pages(
     catalog_id: Annotated[int, Path(description="ID of the catalog")],
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "number"
+    order: Annotated[
+        list[models.PageOrderChoices],
+        Query(description="Fields to order by"),
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.PageOrderChoices.NUMBER
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Page]:
@@ -271,13 +273,13 @@ def get_catalog_pages(
     return paginate(
         db_session.query(database.Page)
         .filter(database.Page.catalog_id == catalog_id)
-        .order_by(*[order_sql(order_param) for order_param in order])
+        .order_by(*[order_param.sql for order_param in order])
     )
 
 
 @router.get(
     "/{catalog_id}/pages/{page_number}",
-    response_model=Page,
+    response_model=models.Page,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,

@@ -22,50 +22,27 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Path, Query, status
 from fastapi.responses import FileResponse
 from fastapi_pagination.ext.sqlalchemy import paginate
-from pydantic import BaseModel
-from pydantic.types import NonNegativeInt, PositiveInt, StringConstraints
 from sqlalchemy.orm import Session
 
 from cata_log_hub import database
 from cata_log_hub.api import common
-from cata_log_hub.api.mixins import AwareTimestampsMixin
-from cata_log_hub.utils.queries import order_sql
 
+from . import models
 from .pagination import PaginationPage
 
 router = APIRouter(prefix="/pages", tags=["pages"])
 
 
-class PageFile(AwareTimestampsMixin, BaseModel):
-    """Page file data model."""
-
-    id: int
-    sha256: Annotated[
-        str, StringConstraints(strip_whitespace=True, pattern=r"^[a-z0-9]{64}$")
-    ]
-    size: PositiveInt
-    width: PositiveInt
-    height: PositiveInt
-    name: str
-
-
-class Page(AwareTimestampsMixin, BaseModel):
-    """Page data model."""
-
-    id: int
-    number: NonNegativeInt
-    catalog_id: int
-    file: PageFile
-
-
 @router.get(
     "",
-    response_model=PaginationPage[Page],
+    response_model=PaginationPage[models.Page],
     operation_id="list-pages-v1",
 )
 def list_pages(
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "number",
+    order: Annotated[
+        list[models.PageOrderChoices], Query(description="Fields to order by")
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.PageOrderChoices.NUMBER,
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Page]:
@@ -75,14 +52,14 @@ def list_pages(
         .join(database.Catalog, database.Page.catalog_id == database.Catalog.id)
         .order_by(
             database.Catalog.created_at.desc(),
-            *[order_sql(order_param) for order_param in order],
+            *[order_param.sql for order_param in order],
         )
     )
 
 
 @router.get(
     "/{page_id}",
-    response_model=Page,
+    response_model=models.Page,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,

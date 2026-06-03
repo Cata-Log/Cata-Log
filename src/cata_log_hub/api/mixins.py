@@ -19,7 +19,7 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from pydantic import AwareDatetime, field_validator
+from pydantic import field_validator
 
 
 class AwareDatetimesMixin:
@@ -40,10 +40,3 @@ class AwareDatetimesMixin:
                 else value.astimezone(UTC)
             )
         return value
-
-
-class AwareTimestampsMixin(AwareDatetimesMixin):
-    """Mixin for api data with aware datetimes and database timestamps."""
-
-    created_at: AwareDatetime
-    updated_at: AwareDatetime

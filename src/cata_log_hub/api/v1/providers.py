@@ -17,218 +17,41 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import UTC, datetime
-from typing import Annotated, Any
-from zoneinfo import ZoneInfo
+from typing import Annotated
 
 from apscheduler.job import Job as SchedulerJob
-from apscheduler.triggers.base import BaseTrigger
-from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from fastapi import APIRouter, HTTPException, Path, Query, responses, status
 from fastapi.exceptions import RequestValidationError
 from fastapi_pagination import paginate as paginate_list
 from fastapi_pagination.ext.sqlalchemy import paginate
-from pydantic import BaseModel, Field, ValidationError, field_validator
-from pydantic.fields import FieldInfo
-from pydantic.types import AwareDatetime, NonNegativeInt, StringConstraints
-from pydantic_core import PydanticCustomError
-from pydantic_core.core_schema import ValidationInfo
-from pydantic_extra_types.cron import CronStr
+from pydantic import ValidationError
+from pydantic.types import NonNegativeInt, StringConstraints
 from sqlalchemy.orm import Session, selectinload
 
-from cata_log_hub import constants, database
+from cata_log_hub import database
 from cata_log_hub.api import common
-from cata_log_hub.api.mixins import AwareDatetimesMixin, AwareTimestampsMixin
 from cata_log_hub.exceptions import (
-    ProviderInvalidConfigurationWarning,
     ProviderUnknownClassWarning,
 )
 from cata_log_hub.providers import Provider as ProviderType
 from cata_log_hub.scheduler import scheduler
-from cata_log_hub.utils.queries import latest_provider_catalog_id_subquery, order_sql
+from cata_log_hub.utils.queries import latest_provider_catalog_id_subquery
 
-from .catalogs import Catalog
-from .pages import Page
+from . import models
 from .pagination import PaginationPage
 
 router = APIRouter(prefix="/providers", tags=["providers"])
 
 
-class Provider(AwareTimestampsMixin, BaseModel):
-    """Provider data model."""
-
-    id: int
-    class_uid: str
-    note: str | None
-    configuration: dict[str, Any]
-    status: constants.StatusEnum
-    job: Job | None
-
-
-class FullProvider(Provider):
-    """Full provider data model."""
-
-    catalogs: list[Catalog]
-
-
-class Job(AwareDatetimesMixin, BaseModel):
-    """Job data model."""
-
-    id: str
-    next_run_time: AwareDatetime | None = None
-    schedule: CronStr | None = Field(validation_alias="trigger")
-    jitter: int = Field(validation_alias="trigger")
-
-    @field_validator("schedule", mode="before")
-    @classmethod
-    def get_schedule_from_trigger(cls, trigger: BaseTrigger) -> str | None:
-        """Get the crontab schedule as a string."""
-        if isinstance(trigger, CronTrigger):
-            return "{minute} {hour} {day} {month} {day_of_week}".format(
-                **{field.name: str(field) for field in trigger.fields}
-            )
-        return None
-
-    @field_validator("jitter", mode="before")
-    @classmethod
-    def get_jitter_from_trigger(cls, trigger: BaseTrigger) -> int:
-        """Get the crontab schedule as a string."""
-        return (trigger.jitter if isinstance(trigger, CronTrigger) else 0) or 0
-
-
-class ProviderUpdate(BaseModel):
-    """Provider update data model."""
-
-    configuration: dict[str, Any] = {}
-    note: str = ""
-
-    @field_validator("configuration")
-    @classmethod
-    def validate_configuration(
-        cls, configuration: dict[str, Any], info: ValidationInfo
-    ) -> dict[str, Any]:
-        """Validate the provider specific configuration."""
-        class_uid = info.context.get("class_uid") if info.context else None
-        if class_uid:
-            try:
-                provider_class = ProviderType.get_class(class_uid)
-            except ProviderUnknownClassWarning as unknown_warning:
-                raise PydanticCustomError(
-                    "unknown_provider", str(unknown_warning)
-                ) from unknown_warning
-            try:
-                configuration = provider_class.validate_configuration(
-                    configuration
-                ).model_dump()  # this won't throw a ProviderUnknownWarning since class_uid is already validated
-            except ProviderInvalidConfigurationWarning as invalid_warning:
-                raise invalid_warning.__cause__ or PydanticCustomError(
-                    "invalid_configuration", str(invalid_warning)
-                ) from invalid_warning
-        return configuration
-
-
-class NewProvider(BaseModel):
-    """Provider creation data model."""
-
-    # keep this order for correct order of validation steps
-    class_uid: str
-    configuration: dict[str, Any]
-    note: str | None = None
-
-    @field_validator("class_uid")
-    @classmethod
-    def validate_class_uid(cls, class_uid: str) -> str:
-        """Validate the provider class uid."""
-        try:
-            ProviderType.get_class(class_uid)
-        except ProviderUnknownClassWarning as unknown_warning:
-            raise PydanticCustomError(
-                "unknown_provider", str(unknown_warning)
-            ) from unknown_warning
-        return class_uid
-
-    @field_validator("configuration")
-    @classmethod
-    def validate_configuration(
-        cls, configuration: dict[str, Any], info: ValidationInfo
-    ) -> dict[str, Any]:
-        """Validate the provider specific configuration."""
-        class_uid = info.data.get("class_uid")
-        if class_uid:
-            try:
-                configuration = (
-                    ProviderType.get_class(class_uid)
-                    .validate_configuration(configuration)
-                    .model_dump()
-                )  # this won't throw a ProviderUnknownWarning since class_uid is already validated
-            except ProviderInvalidConfigurationWarning as invalid_warning:
-                raise invalid_warning.__cause__ or PydanticCustomError(
-                    "invalid_configuration", str(invalid_warning)
-                ) from invalid_warning
-        return configuration
-
-
-class RegionInfo(BaseModel):
-    """Region info data model."""
-
-    local_name: str
-    language_code: str
-    timezone: str
-
-    @field_validator("timezone", mode="before")
-    @classmethod
-    def get_timezone_name(cls, timezone: ZoneInfo) -> str:
-        """Get timezone's name."""
-        return timezone.key
-
-
-class ConfigInfo(BaseModel):
-    """Configuration info data model."""
-
-    description: str = ""
-    default: str | None = None
-    type: str = Field(validation_alias="annotation")
-
-    @field_validator("type", mode="before")
-    @classmethod
-    def get_type_name(cls, annotation: type) -> str:  # type: ignore [valid-type] # mypy misinterprets type here
-        """Get the type name of the config."""
-        return annotation.__name__
-
-    @field_validator("default", mode="before")
-    @classmethod
-    def convert_default(cls, default: str | None) -> str | None:
-        """Convert default to string."""
-        return str(default) if default is not None else default
-
-
-class ProviderInfo(BaseModel):
-    """Provider info data model."""
-
-    name: str
-    description: str
-    url: str
-    region: RegionInfo
-    schedule: CronStr
-    jitter: int
-    class_uid: str = Field(validation_alias="uid")
-    configuration: dict[str, ConfigInfo] = Field(validation_alias="Configuration")
-
-    @field_validator("configuration", mode="before")
-    @classmethod
-    def get_configuration_schema(
-        cls, configuration_class: type[ProviderType.Configuration]
-    ) -> dict[str, FieldInfo]:
-        """Get the config field infos from the configuration model."""
-        return configuration_class.model_fields
-
-
 @router.get(
-    "", response_model=PaginationPage[Provider], operation_id="list-providers-v1"
+    "", response_model=PaginationPage[models.Provider], operation_id="list-providers-v1"
 )
 def list_providers(
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "class_uid"
+    order: Annotated[
+        list[models.ProviderOrderChoices], Query(description="Fields to order by")
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.ProviderOrderChoices.CLASS_UID
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Provider]:
@@ -240,13 +63,13 @@ def list_providers(
                 database.Catalog.pages
             )
         )
-        .order_by(*[order_sql(order_param) for order_param in order])
+        .order_by(*[order_param.sql for order_param in order])
     )
 
 
 @router.get(
     "/available",
-    response_model=PaginationPage[ProviderInfo],
+    response_model=PaginationPage[models.ProviderInfo],
     operation_id="list-available-providers-v1",
 )
 def list_available_providers(
@@ -291,7 +114,7 @@ def list_available_providers(
 @router.post(
     "",
     status_code=status.HTTP_201_CREATED,
-    response_model=Provider,
+    response_model=models.Provider,
     responses={
         status.HTTP_409_CONFLICT: {
             "model": common.HTTPStatusError,
@@ -301,7 +124,7 @@ def list_available_providers(
     operation_id="setup-provider-v1",
 )
 def post_provider(
-    new_provider: NewProvider, db_session: Session = database.depends_db_session
+    new_provider: models.NewProvider, db_session: Session = database.depends_db_session
 ) -> database.Provider:
     """Set up a new provider."""
     if any(
@@ -330,12 +153,9 @@ def post_provider(
     return provider
 
 
-# def validate_configuration(provider_id:Annotated[int, Path(description="ID of the provider")], provider_update: ProviderUpdate) -> ProviderUpdate:
-
-
 @router.patch(
     "/{provider_id}",
-    response_model=Provider,
+    response_model=models.Provider,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
@@ -350,7 +170,7 @@ def post_provider(
 )
 def patch_provider(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    provider_update: ProviderUpdate,
+    provider_update: models.ProviderUpdate,
     db_session: Session = database.depends_db_session,
 ) -> database.Provider:
     """Update a provider."""
@@ -369,7 +189,7 @@ def patch_provider(
         )
     if "configuration" in provider_update.model_dump(exclude_unset=True):
         try:
-            provider_update = ProviderUpdate.model_validate(
+            provider_update = models.ProviderUpdate.model_validate(
                 provider_update.model_dump(), context={"class_uid": provider.class_uid}
             )
         except ValidationError as validation_error:
@@ -402,7 +222,7 @@ def patch_provider(
 
 @router.get(
     "/{provider_id}",
-    response_model=FullProvider,
+    response_model=models.FullProvider,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
@@ -426,7 +246,7 @@ def get_provider(
 
 @router.get(
     "/available/{provider_class_uid}",
-    response_model=ProviderInfo,
+    response_model=models.ProviderInfo,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": common.HTTPStatusError,
@@ -475,13 +295,15 @@ def delete_provider(
 
 @router.get(
     "/{provider_id}/catalogs",
-    response_model=PaginationPage[Catalog],
+    response_model=PaginationPage[models.Catalog],
     operation_id="list-provider-catalogs-v1",
 )
 def list_provider_catalogs(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "-created_at"
+    order: Annotated[
+        list[models.CatalogOrderChoices], Query(description="Fields to order by")
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.CatalogOrderChoices.DESC_CREATED_AT
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
@@ -490,13 +312,13 @@ def list_provider_catalogs(
         db_session.query(database.Catalog)
         .options(selectinload(database.Catalog.pages))
         .filter(database.Catalog.provider_id == provider_id)
-        .order_by(*[order_sql(order_param) for order_param in order])
+        .order_by(*[order_param.sql for order_param in order])
     )
 
 
 @router.get(
     "/{provider_id}/catalogs/latest",
-    response_model=Catalog,
+    response_model=models.Catalog,
     operation_id="get-latest-provider-catalog-v1",
 )
 def get_latest_provider_catalog(
@@ -580,13 +402,15 @@ def embed_latest_provider_catalog(
 
 @router.get(
     "/{provider_id}/catalogs/latest/pages",
-    response_model=PaginationPage[Page],
+    response_model=PaginationPage[models.Page],
     operation_id="get-latest-provider-catalog-pages-v1",
 )
 def list_latest_provider_catalog_pages(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "number"
+    order: Annotated[
+        list[models.PageOrderChoices], Query(description="Fields to order by")
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.PageOrderChoices.NUMBER
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Page]:
@@ -597,13 +421,13 @@ def list_latest_provider_catalog_pages(
         .filter(
             database.Page.catalog_id == latest_provider_catalog_id_subquery(provider_id)
         )
-        .order_by(*[order_sql(order_param) for order_param in order])
+        .order_by(*[order_param.sql for order_param in order])
     )
 
 
 @router.get(
     "/{provider_id}/catalogs/latest/pages/{page_number}",
-    response_model=Page,
+    response_model=models.Page,
     operation_id="get-latest-provider-catalog-page-v1",
 )
 def get_latest_provider_catalog_page(
@@ -629,7 +453,7 @@ def get_latest_provider_catalog_page(
 
 @router.get(
     "/{provider_id}/catalogs/latest/pages/{page_number}/download",
-    response_model=Page,
+    response_model=models.Page,
     operation_id="download-latest-provider-catalog-page-v1",
 )
 def download_latest_provider_catalog_page(
@@ -662,7 +486,7 @@ def download_latest_provider_catalog_page(
 
 @router.get(
     "/{provider_id}/catalogs/latest/pages/{page_number}/embed",
-    response_model=Page,
+    response_model=models.Page,
     operation_id="embed-latest-provider-catalog-page-v1",
 )
 def embed_latest_provider_catalog_page(
@@ -695,13 +519,15 @@ def embed_latest_provider_catalog_page(
 
 @router.get(
     "/{provider_id}/catalogs/current",
-    response_model=PaginationPage[Catalog],
+    response_model=PaginationPage[models.Catalog],
     operation_id="list-provider-current-catalogs-v1",
 )
 def list_provider_current_catalogs(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "-created_at"
+    order: Annotated[
+        list[models.CatalogOrderChoices], Query(description="Fields to order by")
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.CatalogOrderChoices.DESC_CREATED_AT
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
@@ -713,19 +539,21 @@ def list_provider_current_catalogs(
         .filter(database.Catalog.valid_since <= now)
         .filter(database.Catalog.valid_until > now)
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_sql(order_param) for order_param in order])
+        .order_by(*[order_param.sql for order_param in order])
     )
 
 
 @router.get(
     "/{provider_id}/catalogs/previews",
-    response_model=PaginationPage[Catalog],
+    response_model=PaginationPage[models.Catalog],
     operation_id="list-provider-preview-catalogs-v1",
 )
 def list_provider_preview_catalogs(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "-created_at"
+    order: Annotated[
+        list[models.CatalogOrderChoices], Query(description="Fields to order by")
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.CatalogOrderChoices.DESC_CREATED_AT
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
@@ -735,19 +563,21 @@ def list_provider_preview_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_since >= datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_sql(order_param) for order_param in order])
+        .order_by(*[order_param.sql for order_param in order])
     )
 
 
 @router.get(
     "/{provider_id}/catalogs/outdated",
-    response_model=PaginationPage[Catalog],
+    response_model=PaginationPage[models.Catalog],
     operation_id="list-provider-outdated-catalogs-v1",
 )
 def list_provider_outdated_catalogs(
     provider_id: Annotated[int, Path(description="ID of the provider")],
-    order: Annotated[list[str], Query(description="Field names to order by")] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
-        "-created_at"
+    order: Annotated[
+        list[models.CatalogOrderChoices], Query(description="Fields to order by")
+    ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.CatalogOrderChoices.DESC_CREATED_AT
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Catalog]:
@@ -757,7 +587,7 @@ def list_provider_outdated_catalogs(
         .filter(database.Catalog.provider_id == provider_id)
         .filter(database.Catalog.valid_until < datetime.now(tz=UTC))
         .options(selectinload(database.Catalog.pages))
-        .order_by(*[order_sql(order_param) for order_param in order])
+        .order_by(*[order_param.sql for order_param in order])
     )
 
 
@@ -770,7 +600,7 @@ def list_provider_outdated_catalogs(
             "description": "Object doesn't exist",
         },
     },
-    response_model=Job,
+    response_model=models.Job,
     operation_id="run-provider-job-v1",
 )
 def post_provider_job_run(
@@ -801,7 +631,7 @@ def post_provider_job_run(
             "description": "Object doesn't exist",
         },
     },
-    response_model=Provider,
+    response_model=models.Provider,
     operation_id="add-provider-job-v1",
 )
 def post_provider_add_job(
@@ -828,7 +658,7 @@ def post_provider_add_job(
             "description": "Object doesn't exist",
         },
     },
-    response_model=Provider,
+    response_model=models.Provider,
     operation_id="delete-provider-job-v1",
 )
 def post_provider_remove_job(
@@ -855,7 +685,7 @@ def post_provider_remove_job(
             "description": "Object doesn't exist",
         },
     },
-    response_model=Job,
+    response_model=models.Job,
     operation_id="get-provider-job-v1",
 )
 def get_provider_job(
