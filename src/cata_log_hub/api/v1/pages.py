@@ -42,20 +42,17 @@ def list_pages(
     order: Annotated[
         list[models.PageOrderChoices], Query(description="Fields to order by")
     ] = [  # noqa: B006 # no alternative in fastapi, not altered after declaration
+        models.PageOrderChoices.DESC_CATALOG_ID,
         models.PageOrderChoices.NUMBER,
     ],
     db_session: Session = database.depends_db_session,
 ) -> PaginationPage[database.Page]:
     """List all pages."""
-    q = (
-        db_session.query(database.Page)
-        .join(database.Catalog, database.Page.catalog_id == database.Catalog.id)
-        .order_by(
-            database.Catalog.created_at.desc(),
-            *[order_param.sql(database.Page) for order_param in order],
+    return paginate(
+        db_session.query(database.Page).order_by(
+            *[order_param.sql(database.Page) for order_param in order]
         )
     )
-    return paginate(q)
 
 
 @router.get(
