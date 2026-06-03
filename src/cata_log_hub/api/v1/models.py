@@ -78,7 +78,7 @@ class PageFile(AwareTimestampsMixin, BaseModel):
 
     id: int
     sha256: Annotated[
-        str, StringConstraints(strip_whitespace=True, pattern=r"^[a-z0-9]{64}$")
+        str, StringConstraints(strip_whitespace=True, pattern=r"^[a-f0-9]{64}$")
     ]
     size: PositiveInt
     width: PositiveInt
