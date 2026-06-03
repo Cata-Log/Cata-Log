@@ -24,10 +24,15 @@ import pytest
 from pypdf import PdfReader
 
 from cata_log_hub.api import common
+from cata_log_hub.api.v1 import models
 
 
-def test_list_catalogs(full_database, client):
-    response = client.get("/api/v1/catalogs")
+@pytest.mark.parametrize(
+    "order",
+    [item.value for item in models.CatalogOrderChoices],
+)
+def test_list_catalogs(full_database, client, order):
+    response = client.get("/api/v1/catalogs", params={"order": order})
 
     assert response.status_code == 200
     data = response.json()
@@ -59,8 +64,12 @@ def test_list_catalogs__noauth__public_get(full_database, noauth_client, public_
     assert response.status_code == 200
 
 
-def test_list_latest_catalogs(full_database, fake_latest_catalog, client):
-    response = client.get("/api/v1/catalogs/latest")
+@pytest.mark.parametrize(
+    "order",
+    [item.value for item in models.CatalogOrderChoices],
+)
+def test_list_latest_catalogs(full_database, fake_latest_catalog, client, order):
+    response = client.get("/api/v1/catalogs/latest", params={"order": order})
 
     assert response.status_code == 200
     data = response.json()
@@ -101,8 +110,12 @@ def test_list_latest_catalogs__noauth__public_get(
     assert data["results"][0]["id"] == fake_latest_catalog.id
 
 
-def test_list_previews_catalogs(full_database, fake_catalog_preview, client):
-    response = client.get("/api/v1/catalogs/previews")
+@pytest.mark.parametrize(
+    "order",
+    [item.value for item in models.CatalogOrderChoices],
+)
+def test_list_previews_catalogs(full_database, fake_catalog_preview, client, order):
+    response = client.get("/api/v1/catalogs/previews", params={"order": order})
 
     assert response.status_code == 200
     data = response.json()
@@ -143,8 +156,12 @@ def test_list_previews_catalogs__noauth__public_get(
     assert data["results"][0]["id"] == fake_catalog_preview.id
 
 
-def test_list_current_catalogs(full_database, fake_catalog_current, client):
-    response = client.get("/api/v1/catalogs/current")
+@pytest.mark.parametrize(
+    "order",
+    [item.value for item in models.CatalogOrderChoices],
+)
+def test_list_current_catalogs(full_database, fake_catalog_current, client, order):
+    response = client.get("/api/v1/catalogs/current", params={"order": order})
 
     assert response.status_code == 200
     data = response.json()
@@ -185,8 +202,12 @@ def test_list_current_catalogs__noauth__public_get(
     assert data["results"][0]["id"] == fake_catalog_current.id
 
 
-def test_list_outdated_catalogs(full_database, fake_catalog_outdated, client):
-    response = client.get("/api/v1/catalogs/outdated")
+@pytest.mark.parametrize(
+    "order",
+    [item.value for item in models.CatalogOrderChoices],
+)
+def test_list_outdated_catalogs(full_database, fake_catalog_outdated, client, order):
+    response = client.get("/api/v1/catalogs/outdated", params={"order": order})
 
     assert response.status_code == 200
     data = response.json()
@@ -313,8 +334,14 @@ def test_get_catalog_page__noauth__public_get(
     assert data["id"] == fake_page.id
 
 
-def test_get_catalog_pages(fake_catalog, fake_page, client):
-    response = client.get(f"/api/v1/catalogs/{fake_catalog.id}/pages")
+@pytest.mark.parametrize(
+    "order",
+    [item.value for item in models.PageOrderChoices],
+)
+def test_list_catalog_pages(fake_catalog, fake_page, client, order):
+    response = client.get(
+        f"/api/v1/catalogs/{fake_catalog.id}/pages", params={"order": order}
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -323,7 +350,7 @@ def test_get_catalog_pages(fake_catalog, fake_page, client):
     assert data["results"][0]["id"] == fake_page.id
 
 
-def test_get_catalog_pages__noauth(fake_catalog, noauth_client):
+def test_list_catalog_pages__noauth(fake_catalog, noauth_client):
     response = noauth_client.get(f"/api/v1/catalogs/{fake_catalog.id}/pages")
 
     assert response.status_code == 401
@@ -332,7 +359,7 @@ def test_get_catalog_pages__noauth(fake_catalog, noauth_client):
     assert response.headers["WWW-Authenticate"] == "Basic"
 
 
-def test_get_catalog_pages__bad_auth(fake_catalog, bad_auth_client):
+def test_list_catalog_pages__bad_auth(fake_catalog, bad_auth_client):
     response = bad_auth_client.get(f"/api/v1/catalogs/{fake_catalog.id}/pages")
 
     assert response.status_code == 401
@@ -341,7 +368,7 @@ def test_get_catalog_pages__bad_auth(fake_catalog, bad_auth_client):
     assert response.headers["WWW-Authenticate"] == "Basic"
 
 
-def test_get_catalog_pages__noauth__public_get(
+def test_list_catalog_pages__noauth__public_get(
     fake_catalog, fake_page, noauth_client, public_get
 ):
     response = noauth_client.get(f"/api/v1/catalogs/{fake_catalog.id}/pages")

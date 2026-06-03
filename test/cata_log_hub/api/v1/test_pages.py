@@ -20,12 +20,18 @@
 from urllib.parse import urljoin
 
 import pytest
+from httpx import Client
 
 from cata_log_hub.api import common
+from cata_log_hub.api.v1 import models
 
 
-def test_list_pages(full_database, fake_page, client):
-    response = client.get("/api/v1/pages")
+@pytest.mark.parametrize(
+    "order",
+    [item.value for item in models.PageOrderChoices],
+)
+def test_list_pages(full_database, fake_page, client, order):
+    response = client.get("/api/v1/pages", params={"order": order})
 
     assert response.status_code == 200
     data = response.json()

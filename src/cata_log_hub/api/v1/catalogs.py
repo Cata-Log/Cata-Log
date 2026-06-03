@@ -257,9 +257,9 @@ def embed_catalog(
             "description": "Object doesn't exist",
         },
     },
-    operation_id="get-catalog-pages-v1",
+    operation_id="list-catalog-pages-v1",
 )
-def get_catalog_pages(
+def list_catalog_pages(
     catalog_id: Annotated[int, Path(description="ID of the catalog")],
     order: Annotated[
         list[models.PageOrderChoices],
